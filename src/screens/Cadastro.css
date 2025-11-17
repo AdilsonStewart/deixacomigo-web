@@ -1,0 +1,95 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #FFFFFF;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.titulo {
+  font-size: 32px;
+  font-weight: bold;
+  color: #4A3780;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.slogan {
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 40px;
+  line-height: 24px;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.input {
+  background-color: #f8f8f8;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  border: 1px solid #e0e0e0;
+  font-size: 16px;
+  color: #333;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #6C5CE7;
+}
+
+.botao {
+  background-color: #6C5CE7;
+  color: #FFFFFF;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 30px;
+  margin-bottom: 15px;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.botao:hover {
+  background-color: #5b4bc4;
+}
+
+.botao-entrar {
+  background-color: #00B894;
+}
+
+.botao-entrar:hover {
+  background-color: #00a885;
+}
+
+.botao-desabilitado {
+  background-color: #CCCCCC;
+  cursor: not-allowed;
+}
+
+.botao-desabilitado:hover {
+  background-color: #CCCCCC;
+}
+
+.voltar-text {
+  color: #6C5CE7;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}

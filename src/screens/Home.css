@@ -1,0 +1,73 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #FFFFFF;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.nao-esqueca {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4A3780;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.mascote-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.mascote-image {
+  width: 120px;
+  height: 120px;
+}
+
+.titulo {
+  font-size: 32px;
+  font-weight: bold;
+  color: #4A3780;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.slogan {
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 40px;
+  line-height: 24px;
+}
+
+.botao {
+  background-color: #6C5CE7;
+  color: #FFFFFF;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 30px;
+  margin-bottom: 15px;
+  width: 80%;
+  max-width: 300px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.botao:hover {
+  background-color: #5b4bc4;
+}
+
+.texto-pequeno {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  line-height: 20px;
+  font-style: italic;
+  margin-top: 20px;
+}
