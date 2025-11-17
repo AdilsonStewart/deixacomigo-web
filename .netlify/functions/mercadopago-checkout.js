@@ -5,22 +5,20 @@ exports.handler = async (event) =
  
   try { 
     const { valor, usuarioId, tipo = "audio" } = JSON.parse(event.body); 
-    console.log('?? SIMULA€ÇO: Criando pagamento DeixaComigo:', { valor, usuarioId, tipo }); 
+    console.log('SIMULA€ÇO: Criando pagamento'); 
  
-    // ?? SIMULA€ÇO PURA - NÇO CHAMA MERCADO PAGO ?? 
     return { 
       statusCode: 200, 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify({ 
         success: true, 
         init_point: 'https://deixacomigoweb.netlify.app/sucesso', 
-        preference_id: 'simulacao-' + Date.now(), 
+        preference_id: 'simulacao', 
         sandbox_init_point: 'https://deixacomigoweb.netlify.app/sucesso' 
       }) 
     }; 
  
   } catch (error) { 
-    console.error('Erro:', error); 
     return { statusCode: 500, body: JSON.stringify({ success: false, error: error.message }) }; 
   } 
 }; 
