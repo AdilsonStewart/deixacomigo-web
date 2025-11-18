@@ -1,0 +1,50 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+
+const AudioRecorder = ({ navigation }) => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.titulo}>Gravar Áudio</Text>
+      <Text style={styles.slogan}>Funcionalidade em desenvolvimento...</Text>
+      
+      <TouchableOpacity style={styles.botao} onPress={() => navigation.goBack()}>
+        <Text style={styles.textoBotao}>Voltar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+  },
+  titulo: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#4A3780',
+    marginBottom: 20,
+  },
+  slogan: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  botao: {
+    backgroundColor: '#6C5CE7',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+  },
+  textoBotao: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+});
+
+export default AudioRecorder;
