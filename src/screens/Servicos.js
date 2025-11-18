@@ -5,54 +5,27 @@ import './Servicos.css';
 export default function Servicos() {
   const navigate = useNavigate();
 
-  const iniciarPagamentoMercadoPago = async (valor, produto) => {
-    console.log('💰 Iniciando pagamento:', produto, 'R$', valor);
-    
+  const iniciarPagamento = async (valor, tipo) => {
     try {
-      // Carrega o SDK do Mercado Pago
-      const script = document.createElement('script');
-      script.src = 'https://sdk.mercadopago.com/js/v2';
-      
-      script.onload = () => {
-        console.log('✅ SDK Mercado Pago carregado');
-        
-        // Inicializa o Mercado Pago
-        const mp = new window.MercadoPago(process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
-        console.log('🔑 Mercado Pago inicializado');
-        
-        // Cria o checkout
-        mp.checkout({
-          preference: {
-            items: [
-              {
-                title: `Lembrete em ${produto} - DeixaComigo`,
-                unit_price: valor,
-                quantity: 1,
-                currency_id: 'BRL'
-              }
-            ],
-            back_urls: {
-              success: window.location.origin + '/sucesso',
-              failure: window.location.origin + '/erro', 
-              pending: window.location.origin + '/erro'
-            },
-            auto_return: 'approved',
-            notification_url: window.location.origin + '/webhook'
-          },
-          autoOpen: true
-        });
-      };
+      const response = await fetch("/.netlify/functions/criar-pagamento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ valor, tipo })
+      });
 
-      script.onerror = () => {
-        console.error('❌ Erro ao carregar SDK Mercado Pago');
-        alert('Erro ao carregar sistema de pagamento. Tente novamente.');
-      };
+      const data = await response.json();
 
-      document.body.appendChild(script);
-      
+      if (!data.success) {
+        alert("Erro ao criar pagamento no servidor.");
+        return;
+      }
+
+      // Redireciona para o pagamento do Mercado Pago
+      window.location.href = data.init_point;
+
     } catch (error) {
-      console.error('❌ Erro no pagamento:', error);
-      alert('Erro ao processar pagamento: ' + error.message);
+      console.error("Erro:", error);
+      alert("Falha ao iniciar pagamento. Tente novamente.");
     }
   };
 
@@ -63,16 +36,16 @@ export default function Servicos() {
 
       <button 
         className="botao botao-audio"
-        onClick={() => iniciarPagamentoMercadoPago(1.99, 'Áudio')}
+        onClick={() => iniciarPagamento(1.99, "Áudio")}
       >
         🎤 Gravar Áudio - R$ 1,99
       </button>
 
       <button 
         className="botao botao-video"
-        onClick={() => iniciarPagamentoMercadoPago(1.99, 'Vídeo')}
+        onClick={() => iniciarPagamento(4.99, "Vídeo")}
       >
-        🎥 Gravar Vídeo - R$ 1,99
+        🎥 Gravar Vídeo - R$ 4,99
       </button>
 
       <button className="botao botao-imagem" disabled>
