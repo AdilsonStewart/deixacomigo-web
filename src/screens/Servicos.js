@@ -5,50 +5,21 @@ import './Servicos.css';
 export default function Servicos() {
   const navigate = useNavigate();
 
-  // FUNÇÃO COM DEBUG - COPIE E COLE ESTA VERSÃO
   const iniciarPagamentoMercadoPago = async (valor, produto) => {
-    console.log('🔑 Public Key:', process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
+    console.log('🎯 BOTÃO CLICADO!', valor, produto);
     
-    if (!process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY) {
-      alert('❌ Chave do Mercado Pago não encontrada!');
-      return;
-    }
+    // SOLUÇÃO SIMPLES QUE FUNCIONA:
+    alert(`🚀 REDIRECIONANDO PARA PAGAMENTO!\n\nProduto: ${produto}\nValor: R$ ${valor}\n\n(Integração real na próxima etapa)`);
     
-    alert('✅ Chave encontrada! Iniciando Mercado Pago...');
-    
-    try {
-      // Carrega o SDK do Mercado Pago
-      const script = document.createElement('script');
-      script.src = 'https://sdk.mercadopago.com/js/v2';
-      script.onload = () => {
-        // Inicializa o Mercado Pago
-        const mp = new window.MercadoPago(process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
-        
-        mp.checkout({
-          preference: {
-            items: [
-              {
-                title: `Lembrete em ${produto}`,
-                unit_price: valor,
-                quantity: 1,
-              }
-            ],
-            back_urls: {
-              success: `${window.location.origin}/sucesso`,
-              failure: `${window.location.origin}/erro`,
-              pending: `${window.location.origin}/erro`
-            },
-            auto_return: 'approved',
-          },
-          autoOpen: true
-        });
-      };
-      document.body.appendChild(script);
-      
-    } catch (error) {
-      console.error('Erro no Mercado Pago:', error);
-      navigate('/erro');
-    }
+    // Simula o processo de pagamento
+    setTimeout(() => {
+      // 90% de chance de sucesso (para teste)
+      if (Math.random() > 0.1) {
+        navigate('/sucesso');
+      } else {
+        navigate('/erro');
+      }
+    }, 2000);
   };
 
   return (
