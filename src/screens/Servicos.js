@@ -5,15 +5,50 @@ import './Servicos.css';
 export default function Servicos() {
   const navigate = useNavigate();
 
-  // Função 100% simulada - não chama function
+  // INTEGRAÇÃO REAL COM MERCADO PAGO
   const abrirPagamentoAudio = async () => {
-    console.log('🔧 SIMULAÇÃO: Indo direto para sucesso');
-    window.location.href = '/sucesso';
+    await iniciarPagamentoMercadoPago(1.99, 'Áudio');
   };
 
   const abrirPagamentoVideo = async () => {
-    console.log('🔧 SIMULAÇÃO: Indo direto para sucesso');
-    window.location.href = '/sucesso';
+    await iniciarPagamentoMercadoPago(1.99, 'Vídeo');
+  };
+
+  // FUNÇÃO REAL DO MERCADO PAGO
+  const iniciarPagamentoMercadoPago = async (valor, produto) => {
+    try {
+      // Carrega o SDK do Mercado Pago
+      const script = document.createElement('script');
+      script.src = 'https://sdk.mercadopago.com/js/v2';
+      script.onload = () => {
+        // Inicializa o Mercado Pago
+        const mp = new window.MercadoPago(process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
+        
+        // Cria o checkout
+        mp.checkout({
+          preference: {
+            items: [
+              {
+                title: `Lembrete em ${produto}`,
+                unit_price: valor,
+                quantity: 1,
+              }
+            ],
+            back_urls: {
+              success: `${window.location.origin}/sucesso`,
+              failure: `${window.location.origin}/erro`,
+              pending: `${window.location.origin}/erro`
+            },
+            auto_return: 'approved',
+          }
+        }).open();
+      };
+      document.body.appendChild(script);
+      
+    } catch (error) {
+      console.error('Erro no Mercado Pago:', error);
+      navigate('/erro');
+    }
   };
 
   return (
@@ -45,4 +80,3 @@ export default function Servicos() {
     </div>
   );
 }
-
