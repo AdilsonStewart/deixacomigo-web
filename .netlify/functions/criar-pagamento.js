@@ -1,41 +1,11 @@
-const mercadopago = require('mercadopago');
+Commit changes
+There was an error committing your changes: A file with the same name already exists. Please choose a different name and try again.
+Commit message
+Create criar-pagamento.js
+Extended description
+Add an optional extended description...
+Direct commit or PR
 
-exports.handler = async (event) => {
-  // Configura o Mercado Pago
-  mercadopago.configure({
-    access_token: process.env.MERCADOPAGO_ACCESS_TOKEN
-  });
+Commit directly to the main branch
 
-  try {
-    const { valor, produto } = JSON.parse(event.body);
-    
-    const preference = {
-      items: [
-        {
-          title: `Lembrete em ${produto} - DeixaComigo`,
-          unit_price: parseFloat(valor),
-          quantity: 1,
-        }
-      ],
-      back_urls: {
-        success: "https://deixacomigoweb.netlify.app/sucesso",
-        failure: "https://deixacomigoweb.netlify.app/erro", 
-        pending: "https://deixacomigoweb.netlify.app/erro"
-      },
-      auto_return: "approved",
-    };
-
-    const result = await mercadopago.preferences.create(preference);
-    
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ id: result.body.id })
-    };
-    
-  } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error.message })
-    };
-  }
-};
+Create a new branch for this commit and start a pull request Learn more about pull requests
