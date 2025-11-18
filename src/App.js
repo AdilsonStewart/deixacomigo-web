@@ -5,6 +5,7 @@ import Cadastro from './screens/Cadastro';
 import Servicos from './screens/Servicos';
 import Sucesso from './screens/Sucesso';
 import Erro from './screens/Erro';
+import AudioRecord from './screens/AudioRecord';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/sucesso" element={<Sucesso />} />
           <Route path="/erro" element={<Erro />} />
+          <Route path="/audiorecord" element={<AudioRecord />} />
         </Routes>
       </div>
     </Router>
@@ -24,5 +26,3 @@ function App() {
 }
 
 export default App;
-
-// Force dependency update 
