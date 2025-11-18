@@ -24,7 +24,7 @@ export default function Servicos() {
         // Inicializa o Mercado Pago
         const mp = new window.MercadoPago(process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
         
-        // Cria o checkout
+        // CORREÇÃO: usar autoOpen em vez de .open()
         mp.checkout({
           preference: {
             items: [
@@ -40,8 +40,9 @@ export default function Servicos() {
               pending: `${window.location.origin}/erro`
             },
             auto_return: 'approved',
-          }
-        }).open();
+          },
+          autoOpen: true // ✅ CORREÇÃO AQUI!
+        });
       };
       document.body.appendChild(script);
       
