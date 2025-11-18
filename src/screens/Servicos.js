@@ -5,15 +5,38 @@ import './Servicos.css';
 export default function Servicos() {
   const navigate = useNavigate();
 
-  // Função 100% simulada - não chama function
+  // AGORA VAI PARA O MERCADO PAGO!
   const abrirPagamentoAudio = async () => {
-    console.log('🔧 SIMULAÇÃO: Indo direto para sucesso');
-    window.location.href = '/sucesso';
+    console.log('💰 Indo para Mercado Pago - Áudio R$ 1,99');
+    // Aqui vai a integração com Mercado Pago
+    iniciarPagamentoMercadoPago(1.99, 'audio');
   };
 
   const abrirPagamentoVideo = async () => {
-    console.log('🔧 SIMULAÇÃO: Indo direto para sucesso');
-    window.location.href = '/sucesso';
+    console.log('💰 Indo para Mercado Pago - Vídeo R$ 1,99');
+    // Aqui vai a integração com Mercado Pago  
+    iniciarPagamentoMercadoPago(1.99, 'video');
+  };
+
+  // FUNÇÃO DO MERCADO PAGO (vamos criar agora)
+  const iniciarPagamentoMercadoPago = (valor, tipo) => {
+    // Isso vai redirecionar para o checkout do Mercado Pago
+    // E depois voltar automaticamente para /sucesso ou /erro
+    console.log(`Iniciando pagamento: R$ ${valor} para ${tipo}`);
+    
+    // POR ENQUANTO: Simula redirecionamento pro Mercado Pago
+    // DEPOIS: Vamos integrar com a API real
+    alert(`🚀 REDIRECIONANDO PARA MERCADO PAGO!\nValor: R$ ${valor}\nTipo: ${tipo}`);
+    
+    // Simula o processo de pagamento
+    setTimeout(() => {
+      // 90% de chance de sucesso, 10% de erro (para teste)
+      if (Math.random() > 0.1) {
+        navigate('/sucesso');
+      } else {
+        navigate('/erro');
+      }
+    }, 2000);
   };
 
   return (
@@ -45,4 +68,3 @@ export default function Servicos() {
     </div>
   );
 }
-
