@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Sucesso.css';
 
 export default function Sucesso() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Configura o timeout para navegar para AudioRecord após 3 segundos
+    const timer = setTimeout(() => {
+      navigate('/audiorecord');
+    }, 3000); // 3 segundos
+
+    // Limpa o timeout se o componente for desmontado
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   return (
     <div className="container sucesso-container">
@@ -16,12 +26,15 @@ export default function Sucesso() {
         <p className="sucesso-detalhes">
           Agora você pode gravar seu áudio.
         </p>
+        <p className="sucesso-redirecionamento">
+          Redirecionando para gravação em 3 segundos...
+        </p>
         
         <button 
           className="botao botao-sucesso"
-          onClick={() => navigate('/servicos')}
+          onClick={() => navigate('/audiorecord')}
         >
-          🎤 Fazer Gravação
+          🎤 Fazer Gravação Agora
         </button>
         
         <button 
@@ -34,4 +47,3 @@ export default function Sucesso() {
     </div>
   );
 }
-
