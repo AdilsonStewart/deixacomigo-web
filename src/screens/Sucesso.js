@@ -36,6 +36,15 @@ export default function Sucesso() {
         >
           🎤 Fazer Gravação Agora
         </button>
+
+        {/* BOTÃO PARA ACESSO DIRETO - SEM PAGAMENTO */}
+        <button 
+          className="botao botao-teste"
+          onClick={() => navigate('/audiorecord')}
+          style={{marginTop: '10px', backgroundColor: '#ff6b35'}}
+        >
+          🎤 Acesso Direto (Teste)
+        </button>
         
         <button 
           className="botao-voltar"
