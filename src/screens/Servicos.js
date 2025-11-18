@@ -5,8 +5,17 @@ import './Servicos.css';
 export default function Servicos() {
   const navigate = useNavigate();
 
-  // FUNÇÃO REAL DO MERCADO PAGO
+  // FUNÇÃO COM DEBUG - COPIE E COLE ESTA VERSÃO
   const iniciarPagamentoMercadoPago = async (valor, produto) => {
+    console.log('🔑 Public Key:', process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
+    
+    if (!process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY) {
+      alert('❌ Chave do Mercado Pago não encontrada!');
+      return;
+    }
+    
+    alert('✅ Chave encontrada! Iniciando Mercado Pago...');
+    
     try {
       // Carrega o SDK do Mercado Pago
       const script = document.createElement('script');
@@ -15,7 +24,6 @@ export default function Servicos() {
         // Inicializa o Mercado Pago
         const mp = new window.MercadoPago(process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
         
-        // CORREÇÃO: usar autoOpen em vez de .open()
         mp.checkout({
           preference: {
             items: [
@@ -32,7 +40,7 @@ export default function Servicos() {
             },
             auto_return: 'approved',
           },
-          autoOpen: true // ✅ CORREÇÃO AQUI!
+          autoOpen: true
         });
       };
       document.body.appendChild(script);
