@@ -1,0 +1,62 @@
+.sucesso-container {
+  background: linear-gradient(135deg, #00B894, #00a885);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.sucesso-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+}
+
+.sucesso-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+}
+
+.sucesso-titulo {
+  font-size: 28px;
+  color: #00B894;
+  margin-bottom: 15px;
+}
+
+.sucesso-mensagem {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.sucesso-detalhes {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.botao-sucesso {
+  background-color: #00B894;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 30px;
+  font-size: 20px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.botao-voltar {
+  background: none;
+  border: none;
+  color: #6C5CE7;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: underline;
+}
