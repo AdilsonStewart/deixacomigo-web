@@ -5,38 +5,50 @@ import './Servicos.css';
 export default function Servicos() {
   const navigate = useNavigate();
 
-  // AGORA VAI PARA O MERCADO PAGO!
+  // INTEGRAÇÃO REAL COM MERCADO PAGO
   const abrirPagamentoAudio = async () => {
-    console.log('💰 Indo para Mercado Pago - Áudio R$ 1,99');
-    // Aqui vai a integração com Mercado Pago
-    iniciarPagamentoMercadoPago(1.99, 'audio');
+    await iniciarPagamentoMercadoPago(1.99, 'Áudio');
   };
 
   const abrirPagamentoVideo = async () => {
-    console.log('💰 Indo para Mercado Pago - Vídeo R$ 1,99');
-    // Aqui vai a integração com Mercado Pago  
-    iniciarPagamentoMercadoPago(1.99, 'video');
+    await iniciarPagamentoMercadoPago(1.99, 'Vídeo');
   };
 
-  // FUNÇÃO DO MERCADO PAGO (vamos criar agora)
-  const iniciarPagamentoMercadoPago = (valor, tipo) => {
-    // Isso vai redirecionar para o checkout do Mercado Pago
-    // E depois voltar automaticamente para /sucesso ou /erro
-    console.log(`Iniciando pagamento: R$ ${valor} para ${tipo}`);
-    
-    // POR ENQUANTO: Simula redirecionamento pro Mercado Pago
-    // DEPOIS: Vamos integrar com a API real
-    alert(`🚀 REDIRECIONANDO PARA MERCADO PAGO!\nValor: R$ ${valor}\nTipo: ${tipo}`);
-    
-    // Simula o processo de pagamento
-    setTimeout(() => {
-      // 90% de chance de sucesso, 10% de erro (para teste)
-      if (Math.random() > 0.1) {
-        navigate('/sucesso');
-      } else {
-        navigate('/erro');
-      }
-    }, 2000);
+  // FUNÇÃO REAL DO MERCADO PAGO
+  const iniciarPagamentoMercadoPago = async (valor, produto) => {
+    try {
+      // Carrega o SDK do Mercado Pago
+      const script = document.createElement('script');
+      script.src = 'https://sdk.mercadopago.com/js/v2';
+      script.onload = () => {
+        // Inicializa o Mercado Pago
+        const mp = new window.MercadoPago(process.env.REACT_APP_MERCADOPAGO_PUBLIC_KEY);
+        
+        // Cria o checkout
+        mp.checkout({
+          preference: {
+            items: [
+              {
+                title: `Lembrete em ${produto}`,
+                unit_price: valor,
+                quantity: 1,
+              }
+            ],
+            back_urls: {
+              success: `${window.location.origin}/sucesso`,
+              failure: `${window.location.origin}/erro`,
+              pending: `${window.location.origin}/erro`
+            },
+            auto_return: 'approved',
+          }
+        }).open();
+      };
+      document.body.appendChild(script);
+      
+    } catch (error) {
+      console.error('Erro no Mercado Pago:', error);
+      navigate('/erro');
+    }
   };
 
   return (
