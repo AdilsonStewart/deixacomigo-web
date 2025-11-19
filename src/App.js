@@ -5,7 +5,7 @@ import Cadastro from './screens/Cadastro';
 import Servicos from './screens/Servicos';
 import Sucesso from './screens/Sucesso';
 import Erro from './screens/Erro';
-import AudioRecorderpage from './screens/AudioRecorder';
+import AudioRecorderPage from './screens/AudioRecorderPage'; // ← NOME CORRETO
 import './App.css';
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/sucesso" element={<Sucesso />} />
           <Route path="/erro" element={<Erro />} />
-          <Route path="/audiorecorderpage" element={<AudioRecorder />} />
+          <Route path="/audiorecorder" element={<AudioRecorderPage />} /> {/* ← Atualizado */}
         </Routes>
       </div>
     </Router>
