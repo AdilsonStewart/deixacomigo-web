@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, storage } from '../firebase/config';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './AudioRecorder.css';
 
@@ -11,12 +11,14 @@ const AudioRecordPage = () => {
   const [audioURL, setAudioURL] = useState('');
   const [audioBlob, setAudioBlob] = useState(null);
   const [time, setTime] = useState(0);
+  const [saving, setSaving] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
   // Salvar gravação no Firestore
   const saveRecordingToFirestore = async (audioBlob, duration) => {
+    setSaving(true);
     try {
       // 1. Upload do áudio para Firebase Storage
       const audioRef = ref(storage, `audios/gravacao_${Date.now()}.wav`);
@@ -28,7 +30,7 @@ const AudioRecordPage = () => {
         audioUrl: audioUrl,
         duration: duration,
         timestamp: new Date().toISOString(),
-        status: 'pendente', // pendente, agendado, entregue
+        status: 'pendente',
         fileName: snapshot.ref.name,
         storagePath: snapshot.ref.fullPath
       };
@@ -36,15 +38,50 @@ const AudioRecordPage = () => {
       const docRef = await addDoc(collection(db, 'gravacoes'), recordingData);
       
       console.log('Gravação salva com ID:', docRef.id);
-      return docRef.id; // Retorna o ID para usar no agendamento
+      // Salvar o ID para usar no agendamento
+      localStorage.setItem('lastRecordingId', docRef.id);
+      return docRef.id;
 
     } catch (error) {
       console.error('Erro ao salvar gravação:', error);
       throw error;
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Parar gravação (atualizada)
+  // Iniciar gravação
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        // Esta função será chamada quando stopRecording() for executado
+      };
+
+      mediaRecorder.start();
+      setRecording(true);
+      
+      // Timer
+      setTime(0);
+      timerRef.current = setInterval(() => {
+        setTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Erro ao acessar microfone:', error);
+      alert('Erro ao acessar o microfone. Verifique as permissões.');
+    }
+  };
+
+  // Parar gravação
   const stopRecording = async () => {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
@@ -52,7 +89,7 @@ const AudioRecordPage = () => {
       setRecording(false);
       clearInterval(timerRef.current);
 
-      // Aguardar o blob ficar pronto e salvar no Firestore
+      // Aguardar e salvar no Firebase
       setTimeout(async () => {
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
@@ -61,9 +98,7 @@ const AudioRecordPage = () => {
           setAudioBlob(audioBlob);
 
           try {
-            // Salvar no Firestore
-            const recordingId = await saveRecordingToFirestore(audioBlob, time);
-            alert('✅ Gravação salva com sucesso! Agora você pode agendar a entrega.');
+            await saveRecordingToFirestore(audioBlob, time);
           } catch (error) {
             alert('❌ Erro ao salvar gravação. Tente novamente.');
           }
@@ -72,19 +107,41 @@ const AudioRecordPage = () => {
     }
   };
 
-  // ... (outras funções permanecem iguais: startRecording, playAudio, etc.)
+  // Reproduzir áudio
+  const playAudio = () => {
+    if (audioURL) {
+      const audio = new Audio(audioURL);
+      audio.play();
+    }
+  };
 
-  // Nova gravação (atualizada)
+  // Download do áudio
+  const downloadAudio = () => {
+    if (audioBlob) {
+      const url = URL.createObjectURL(audioBlob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `gravacao-${new Date().getTime()}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  // Formatar tempo
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Nova gravação
   const newRecording = () => {
     setAudioURL('');
     setAudioBlob(null);
     setTime(0);
     audioChunksRef.current = [];
-  };
-
-  // Navegar para agendamento
-  const goToAgendamento = () => {
-    navigate('/agendamento');
   };
 
   return (
@@ -114,7 +171,7 @@ const AudioRecordPage = () => {
             <button className="btn-download" onClick={downloadAudio}>
               📥 Download
             </button>
-            <button className="btn-schedule" onClick={goToAgendamento}>
+            <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
               📅 Agendar Entrega
             </button>
             <button className="btn-new" onClick={newRecording}>
@@ -126,9 +183,10 @@ const AudioRecordPage = () => {
 
       <div className="status">
         {recording && <p className="recording-status">🎙️ Gravando...</p>}
-        {audioURL && !recording && (
+        {saving && <p className="saving-status">💾 Salvando gravação...</p>}
+        {audioURL && !recording && !saving && (
           <div>
-            <p className="success-status">✅ Gravação concluída e salva!</p>
+            <p className="success-status">✅ Gravação salva com sucesso!</p>
             <p className="info-status">Clique em "Agendar Entrega" para continuar</p>
           </div>
         )}
@@ -137,4 +195,4 @@ const AudioRecordPage = () => {
   );
 };
 
-// ... (formatTime e export default permanecem)
+export default AudioRecordPage;
