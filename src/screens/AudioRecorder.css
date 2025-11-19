@@ -1,121 +1,48 @@
-.audio-container {
+/* Adicione isto ao CSS existente */
+.gif-container {
+  margin-bottom: 20px;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: #FFFFFF;
-  padding: 20px;
+}
+
+.audio-gif {
+  width: 150px;
+  height: 150px;
+  border-radius: 20px;
+  object-fit: cover;
+  border: 3px solid #6C5CE7;
+}
+
+.time-limit {
+  margin: 15px 0;
   text-align: center;
 }
 
-.audio-title {
-  font-size: 32px;
-  font-weight: bold;
-  color: #4A3780;
-  margin-bottom: 20px;
+.time-limit p {
+  color: #666;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
-.timer {
-  font-size: 48px;
-  font-weight: bold;
-  color: #4A3780;
-  margin: 20px 0;
-  font-family: 'Courier New', monospace;
+.progress-bar {
+  width: 100%;
+  max-width: 300px;
+  height: 6px;
+  background-color: #E0E0E0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0 auto;
 }
 
-.phase-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #4A3780;
-  margin-bottom: 20px;
-}
-
-.recording-phase,
-.playback-phase,
-.schedule-phase {
-  margin: 30px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  align-items: center;
-}
-
-.btn-record, .btn-stop, .btn-play, .btn-save, .btn-schedule, .btn-new {
-  padding: 15px 30px;
-  border: none;
-  border-radius: 30px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 200px;
-}
-
-.btn-record {
-  background-color: #E74C3C;
-  color: white;
-}
-
-.btn-stop {
-  background-color: #2ECC71;
-  color: white;
-}
-
-.btn-play {
-  background-color: #3498DB;
-  color: white;
-}
-
-.btn-save {
-  background-color: #F39C12;
-  color: white;
-}
-
-.btn-schedule {
-  background-color: #00B894;
-  color: white;
-}
-
-.btn-new {
-  background-color: #6C5CE7;
-  color: white;
-}
-
-.btn-record:hover { background-color: #C0392B; }
-.btn-stop:hover { background-color: #27AE60; }
-.btn-play:hover { background-color: #2980B9; }
-.btn-save:hover { background-color: #E67E22; }
-.btn-schedule:hover { background-color: #00A885; }
-.btn-new:hover { background-color: #5B4CD8; }
-
-.status {
-  margin: 20px 0;
-  min-height: 40px;
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6C5CE7, #00B894);
+  transition: width 1s linear;
 }
 
 .recording-status {
   color: #E74C3C;
   font-weight: bold;
-  font-size: 18px;
-}
-
-.playback-status {
-  color: #3498DB;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.success-message {
-  color: #27AE60;
   font-size: 16px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 768px) {
-  .btn-record, .btn-stop, .btn-play, .btn-save, .btn-schedule, .btn-new {
-    padding: 12px 25px;
-    font-size: 16px;
-    min-width: 180px;
-  }
 }
