@@ -1,92 +1,90 @@
-/* ACESSO ADMIN DISCRETO */
-.admin-access {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
+/* ADMIN CENTRALIZADO */
+.admin-centralizado {
+  text-align: center;
+  margin-top: 30px;
+  padding: 20px;
 }
 
-.admin-toggle {
-  background: rgba(108, 92, 231, 0.1);
-  border: 2px solid #6C5CE7;
-  color: #6C5CE7;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.admin-btn-central {
+  background: linear-gradient(135deg, #6C5CE7, #4A3780);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 25px;
   font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+.admin-btn-central:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(108, 92, 231, 0.4);
+}
+
+.admin-painel-central {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border: 2px solid #6C5CE7;
+  margin-top: 20px;
+  max-width: 350px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.admin-painel-central h3 {
+  color: #4A3780;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.admin-input-central {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #E0E0E0;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.admin-input-central:focus {
+  outline: none;
+  border-color: #6C5CE7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+.admin-btn-acessar {
+  width: 100%;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #00B894, #00A885);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.admin-toggle:hover {
-  background: #6C5CE7;
-  color: white;
+.admin-btn-acessar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
 }
 
-.admin-panel {
-  position: absolute;
-  bottom: 50px;
-  right: 0;
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #E0E0E0;
-  min-width: 200px;
-}
-
-.admin-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #E0E0E0;
-  border-radius: 5px;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.admin-input:focus {
-  outline: none;
-  border-color: #6C5CE7;
-}
-
-.admin-btn {
-  width: 100%;
-  padding: 8px 12px;
-  background: #6C5CE7;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.admin-btn:hover {
-  background: #5B4CD8;
-}
-
-.admin-error {
+.admin-erro-central {
   color: #E74C3C;
-  font-size: 12px;
-  margin: 5px 0 0 0;
-  text-align: center;
-}
-/* ACESSO ADMIN MINI */
-.admin-mini {
-  margin-top: 20px;
-  text-align: center;
+  font-size: 14px;
+  margin: 10px 0;
+  font-weight: 500;
 }
 
-.admin-mini-input {
-  width: 80px;
-  padding: 5px 8px;
-  border: 1px solid #E0E0E0;
-  border-radius: 15px;
+.admin-dica {
+  color: #666;
   font-size: 12px;
-  text-align: center;
-}
-
-.admin-mini-input:focus {
-  outline: none;
-  border-color: #6C5CE7;
+  margin: 15px 0 0 0;
+  font-style: italic;
 }
