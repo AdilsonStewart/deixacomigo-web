@@ -17,9 +17,19 @@
   width: 100%;
 }
 
-.success-icon {
-  font-size: 80px;
+.gif-container {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.success-gif {
+  width: 120px; /* Tamanho reduzido */
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #6C5CE7;
 }
 
 .saida-title {
@@ -119,6 +129,11 @@
   .saida-content {
     padding: 30px 20px;
     margin: 10px;
+  }
+  
+  .success-gif {
+    width: 100px;
+    height: 100px;
   }
   
   .saida-title {
