@@ -134,3 +134,16 @@
     font-size: 16px;
   }
 }
+.field-hint {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.form-group input[type="tel"] {
+  font-family: monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
