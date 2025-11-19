@@ -9,7 +9,6 @@ const PainelAdmin = () => {
   const [audios, setAudios] = useState([]);
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('audios');
 
   // Buscar todos os áudios do Firebase
   const fetchAudios = async () => {
@@ -31,7 +30,7 @@ const PainelAdmin = () => {
     }
   };
 
-  // Buscar agendamentos do localStorage (por enquanto)
+  // Buscar agendamentos do localStorage
   const fetchAgendamentos = () => {
     try {
       const lastAgendamento = localStorage.getItem('lastAgendamento');
@@ -60,6 +59,11 @@ const PainelAdmin = () => {
 
   // Formatar data
   const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  // Formatar data e hora
+  const formatDateTime = (dateString) => {
     return new Date(dateString).toLocaleString('pt-BR');
   };
 
@@ -75,101 +79,154 @@ const PainelAdmin = () => {
     <div className="painel-admin-container">
       <div className="painel-header">
         <h1>🎛️ Painel Administrativo</h1>
-        <p>Gerencie áudios e agendamentos</p>
+        <p>Gerencie links de mensagens e agendamentos</p>
         <button className="btn-voltar" onClick={() => navigate('/')}>
           ← Voltar para Home
         </button>
       </div>
 
-      {/* ABAS */}
-      <div className="tabs">
-        <button 
-          className={`tab ${activeTab === 'audios' ? 'active' : ''}`}
-          onClick={() => setActiveTab('audios')}
-        >
-          🎧 Áudios ({audios.length})
-        </button>
-        <button 
-          className={`tab ${activeTab === 'agendamentos' ? 'active' : ''}`}
-          onClick={() => setActiveTab('agendamentos')}
-        >
-          📅 Agendamentos ({agendamentos.length})
-        </button>
-      </div>
-
-      {/* CONTEÚDO DAS ABAS */}
-      <div className="tab-content">
-        {activeTab === 'audios' && (
-          <div className="audios-section">
-            <h2>Áudios Gravados</h2>
-            {audios.length === 0 ? (
-              <div className="empty-state">
-                <p>Nenhum áudio encontrado</p>
-              </div>
-            ) : (
-              <div className="audios-grid">
-                {audios.map((audio) => (
-                  <div key={audio.id} className="audio-card">
-                    <div className="audio-info">
-                      <h3>Áudio #{audio.id.slice(-6)}</h3>
-                      <p><strong>Duração:</strong> {audio.duracao}s</p>
-                      <p><strong>Criado em:</strong> {formatDate(audio.dataCriacao)}</p>
-                    </div>
-                    
-                    <div className="audio-actions">
-                      <button 
-                        className="btn-ouvir"
-                        onClick={() => window.open(audio.arquivoUrl, '_blank')}
-                      >
-                        ▶️ Ouvir
-                      </button>
-                      
-                      <button 
-                        className="btn-copiar"
-                        onClick={() => copyToClipboard(audio.arquivoUrl)}
-                      >
-                        📋 Copiar Link
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'agendamentos' && (
-          <div className="agendamentos-section">
-            <h2>Agendamentos</h2>
-            {agendamentos.length === 0 ? (
-              <div className="empty-state">
-                <p>Nenhum agendamento encontrado</p>
-              </div>
-            ) : (
-              <div className="agendamentos-list">
-                {agendamentos.map((agendamento, index) => (
-                  <div key={index} className="agendamento-card">
-                    <h3>Agendamento #{index + 1}</h3>
-                    <p><strong>Nome:</strong> {agendamento.nome}</p>
-                    <p><strong>Telefone:</strong> {agendamento.telefone}</p>
-                    <p><strong>Data:</strong> {agendamento.date}</p>
-                    <p><strong>Horário:</strong> {agendamento.time}</p>
-                    <p><strong>Criado em:</strong> {formatDate(agendamento.timestamp)}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="painel-stats">
+      {/* ESTATÍSTICAS */}
+      <div className="stats-grid">
         <div className="stat-card">
-          <h3>📊 Estatísticas</h3>
-          <p>Áudios: <strong>{audios.length}</strong></p>
-          <p>Agendamentos: <strong>{agendamentos.length}</strong></p>
+          <h3>🎧 Áudios</h3>
+          <p className="stat-number">{audios.length}</p>
+          <p>Total gravados</p>
+        </div>
+        <div className="stat-card">
+          <h3>📅 Agendamentos</h3>
+          <p className="stat-number">{agendamentos.length}</p>
+          <p>Para enviar</p>
         </div>
       </div>
+
+      {/* LISTA DE LINKS DE MENSAGENS */}
+      <div className="links-section">
+        <h2>🔗 Links de Mensagens Gerados</h2>
+        
+        {audios.length === 0 ? (
+          <div className="empty-state">
+            <p>Nenhuma mensagem gerada ainda</p>
+          </div>
+        ) : (
+          <div className="links-table">
+            <div className="table-header">
+              <div className="col-data">Data Criação</div>
+              <div className="col-link">Link da Mensagem</div>
+              <div className="col-entrega">Data Entrega</div>
+              <div className="col-acoes">Ações</div>
+            </div>
+            
+            {audios.map((audio) => {
+              // Encontrar agendamento correspondente a este áudio
+              const agendamentoCorrespondente = agendamentos.find(
+                ag => ag.recordingId === audio.id
+              );
+              
+              return (
+                <div key={audio.id} className="table-row">
+                  <div className="col-data">
+                    {formatDateTime(audio.dataCriacao)}
+                  </div>
+                  
+                  <div className="col-link">
+                    <div className="link-url">
+                      {audio.arquivoUrl.substring(0, 50)}...
+                    </div>
+                  </div>
+                  
+                  <div className="col-entrega">
+                    {agendamentoCorrespondente ? (
+                      <div>
+                        <strong>{agendamentoCorrespondente.date}</strong>
+                        <br />
+                        <small>{agendamentoCorrespondente.time}</small>
+                        <br />
+                        <small>Para: {agendamentoCorrespondente.nome}</small>
+                      </div>
+                    ) : (
+                      <span className="sem-agendamento">Não agendado</span>
+                    )}
+                  </div>
+                  
+                  <div className="col-acoes">
+                    <button 
+                      className="btn-ouvir"
+                      onClick={() => window.open(audio.arquivoUrl, '_blank')}
+                    >
+                      ▶️ Ouvir
+                    </button>
+                    
+                    <button 
+                      className="btn-copiar"
+                      onClick={() => copyToClipboard(audio.arquivoUrl)}
+                    >
+                      📋 Copiar
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* AGENDAMENTOS */}
+      <div className="agendamentos-section">
+        <h2>📅 Próximas Entregas</h2>
+        
+        {agendamentos.length === 0 ? (
+          <div className="empty-state">
+            <p>Nenhum agendamento encontrado</p>
+          </div>
+        ) : (
+          <div className="agendamentos-grid">
+            {agendamentos.map((agendamento, index) => (
+              <div key={index} className="agendamento-card">
+                <div className="agendamento-header">
+                  <h3>Entrega #{index + 1}</h3>
+                  <span className="agendamento-status">🟢 Pendente</span>
+                </div>
+                
+                <div className="agendamento-info">
+                  <div className="info-group">
+                    <label>👤 Destinatário:</label>
+                    <p>{agendamento.nome}</p>
+                  </div>
+                  
+                  <div className="info-group">
+                    <label>📞 Telefone:</label>
+                    <p>{agendamento.telefone}</p>
+                  </div>
+                  
+                  <div className="info-group">
+                    <label>📅 Data Entrega:</label>
+                    <p><strong>{agendamento.date}</strong></p>
+                  </div>
+                  
+                  <div className="info-group">
+                    <label>⏰ Horário:</label>
+                    <p>{agendamento.time}</p>
+                  </div>
+                  
+                  {agendamento.instructions && (
+                    <div className="info-group">
+                      <label>📝 Observações:</label>
+                      <p>{agendamento.instructions}</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="agendamento-actions">
+                  <button className="btn-enviar">
+                    📤 Enviar Agora
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 };
