@@ -9,7 +9,6 @@ const AudioRecordPage = () => {
   const navigate = useNavigate();
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
-  const [audioBlob, setAudioBlob] = useState(null);
   const [time, setTime] = useState(0);
   const [saving, setSaving] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -105,7 +104,6 @@ const AudioRecordPage = () => {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
           const audioUrl = URL.createObjectURL(audioBlob);
           setAudioURL(audioUrl);
-          setAudioBlob(audioBlob);
 
           try {
             await saveRecordingToFirebase(audioBlob, time);
@@ -129,7 +127,6 @@ const AudioRecordPage = () => {
   // Nova gravação
   const newRecording = () => {
     setAudioURL('');
-    setAudioBlob(null);
     setTime(0);
     setSaving(false);
     audioChunksRef.current = [];
