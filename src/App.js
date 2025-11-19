@@ -7,6 +7,7 @@ import Sucesso from './screens/Sucesso';
 import Erro from './screens/Erro';
 import AudioRecordPage from './screens/AudioRecordPage'; // ← NOME CORRETO AGORA!
 import Agendamento from './screens/Agendamento';
+import Saida from './screens/Saida';
 import './App.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/sucesso" element={<Sucesso />} />
           <Route path="/erro" element={<Erro />} />
           <Route path="/agendamento" element={<Agendamento />} />
+          <Route path="/saida" element={<Saida />} />
           <Route path="/audiorecorder" element={<AudioRecordPage />} /> {/* ← Corrigido! */}
         </Routes>
       </div>
