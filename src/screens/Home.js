@@ -33,7 +33,7 @@ export default function Home() {
       
       <div className="mascote-container">
         <img 
-          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTg0cXptZ2t1a3QxNTczY25xbzJ5bDA2MXFuMnRocWNzdXZvMHB0aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/XpfXuBYtvR9I8jjBH0/giphy.gif"
+          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTg0cXptZ2t1a3QxNTczY25xbzJ5bDA2MXFuMnRocWNzdXZvMHB0aSZlcD12MV9ibnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/XpfXuBYtvR9I8jjBH0/giphy.gif"
           alt="Mascote DeixaComigo"
           className="mascote-image"
         />
@@ -84,6 +84,33 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* TESTE EMERGÊNCIA */}
+      <div style={{
+        position: 'fixed',
+        bottom: '20px', 
+        right: '20px',
+        zIndex: 1000,
+        background: 'red',
+        color: 'white',
+        padding: '10px',
+        borderRadius: '5px'
+      }}>
+        <button 
+          onClick={toggleAdmin}
+          style={{
+            background: '#6C5CE7',
+            color: 'white',
+            border: 'none',
+            padding: '10px',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          ADMIN TESTE
+        </button>
+      </div>
+
     </div>
   );
 }
