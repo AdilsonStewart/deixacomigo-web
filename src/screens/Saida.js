@@ -49,7 +49,7 @@ const Saida = () => {
         
         <div className="saida-message">
           <p>Sua gravação foi agendada com sucesso!</p>
-          <p>Entraremos em contato no telefone informado para enviar o áudio.</p>
+          <p>Entraremos em contato no telefone informado para enviar a mensagem.</p>
         </div>
 
         <div className="saida-info">
