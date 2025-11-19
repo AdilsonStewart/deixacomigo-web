@@ -3,9 +3,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   background: #FFFFFF;
   padding: 20px;
+  text-align: center;
 }
 
 .audio-title {
@@ -15,20 +16,96 @@
   margin-bottom: 20px;
 }
 
-.audio-sub {
-  font-size: 18px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 40px;
+.timer {
+  font-size: 48px;
+  font-weight: bold;
+  color: #4A3780;
+  margin: 20px 0;
+  font-family: 'Courier New', monospace;
 }
 
-.audio-btn {
-  background-color: #6C5CE7;
+.controls {
+  margin: 30px 0;
+}
+
+.btn-record, .btn-stop, .btn-play, .btn-download, .btn-new, .btn-back {
+  padding: 15px 30px;
   border: none;
-  padding: 15px 40px;
   border-radius: 30px;
-  color: #FFFFFF;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
+  margin: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-record {
+  background-color: #E74C3C;
+  color: white;
+}
+
+.btn-stop {
+  background-color: #2ECC71;
+  color: white;
+}
+
+.btn-play {
+  background-color: #3498DB;
+  color: white;
+}
+
+.btn-download {
+  background-color: #9B59B6;
+  color: white;
+}
+
+.btn-new {
+  background-color: #F39C12;
+  color: white;
+}
+
+.btn-back {
+  background-color: #6C5CE7;
+  color: white;
+}
+
+.btn-record:hover { background-color: #C0392B; }
+.btn-stop:hover { background-color: #27AE60; }
+.btn-play:hover { background-color: #2980B9; }
+.btn-download:hover { background-color: #8E44AD; }
+.btn-new:hover { background-color: #E67E22; }
+.btn-back:hover { background-color: #5B4CD8; }
+
+.status {
+  margin: 20px 0;
+  min-height: 40px;
+}
+
+.recording-status {
+  color: #E74C3C;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.success-status {
+  color: #27AE60;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.playback-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .playback-controls {
+    flex-direction: column;
+  }
+  
+  .btn-record, .btn-stop, .btn-play, .btn-download, .btn-new, .btn-back {
+    padding: 12px 25px;
+    font-size: 16px;
+  }
 }
