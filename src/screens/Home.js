@@ -8,13 +8,19 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
 
-  // Senha do admin (pode mudar depois)
-  const ADMIN_PASSWORD = "deixacomigo2024";
+  // Senha do admin - 123456
+  const ADMIN_PASSWORD = "123456";
 
   const handleAdminAccess = () => {
+    console.log('Senha digitada:', adminPassword);
+    console.log('Senha esperada:', ADMIN_PASSWORD);
+    console.log('São iguais?', adminPassword === ADMIN_PASSWORD);
+    
     if (adminPassword === ADMIN_PASSWORD) {
-      navigate('/admin/audios');
+      console.log('✅ Senha correta! Navegando...');
+      navigate('/admin/painel');
     } else {
+      console.log('❌ Senha incorreta!');
       setPasswordError(true);
       setAdminPassword('');
       setTimeout(() => setPasswordError(false), 3000);
@@ -80,9 +86,9 @@ export default function Home() {
               🔓 Acessar Painel
             </button>
             {passwordError && (
-              <p className="admin-erro-central">Senha incorreta</p>
+              <p className="admin-erro-central">Senha incorreta - Digite: 123456</p>
             )}
-            <p className="admin-dica">Senha: deixacomigo2024</p>
+            <p className="admin-dica">Senha: 123456</p>
           </div>
         )}
       </div>
