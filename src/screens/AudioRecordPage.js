@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './AudioRecorder.css'; // Seu CSS já existe
+import './AudioRecorder.css';
 
 const AudioRecorderPage = () => {
   const navigate = useNavigate();
