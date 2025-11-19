@@ -1,73 +1,73 @@
-.container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #FFFFFF;
-  padding: 20px;
-  min-height: 100vh;
+/* ACESSO ADMIN DISCRETO */
+.admin-access {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 
-.nao-esqueca {
-  font-size: 24px;
-  font-weight: bold;
-  color: #4A3780;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.mascote-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 30px;
-}
-
-.mascote-image {
-  width: 120px;
-  height: 120px;
-}
-
-.titulo {
-  font-size: 32px;
-  font-weight: bold;
-  color: #4A3780;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.slogan {
-  font-size: 18px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 40px;
-  line-height: 24px;
-}
-
-.botao {
-  background-color: #6C5CE7;
-  color: #FFFFFF;
-  border: none;
-  padding: 15px 40px;
-  border-radius: 30px;
-  margin-bottom: 15px;
-  width: 80%;
-  max-width: 300px;
-  font-size: 18px;
-  font-weight: 600;
+.admin-toggle {
+  background: rgba(108, 92, 231, 0.1);
+  border: 2px solid #6C5CE7;
+  color: #6C5CE7;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 16px;
   cursor: pointer;
-  text-align: center;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
 }
 
-.botao:hover {
-  background-color: #5b4bc4;
+.admin-toggle:hover {
+  background: #6C5CE7;
+  color: white;
 }
 
-.texto-pequeno {
+.admin-panel {
+  position: absolute;
+  bottom: 50px;
+  right: 0;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #E0E0E0;
+  min-width: 200px;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 5px;
   font-size: 14px;
-  color: #888;
+  margin-bottom: 8px;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: #6C5CE7;
+}
+
+.admin-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: #6C5CE7;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.admin-btn:hover {
+  background: #5B4CD8;
+}
+
+.admin-error {
+  color: #E74C3C;
+  font-size: 12px;
+  margin: 5px 0 0 0;
   text-align: center;
-  line-height: 20px;
-  font-style: italic;
-  margin-top: 20px;
 }
