@@ -4,23 +4,32 @@ import './Agendamento.css';
 
 const Agendamento = () => {
   const navigate = useNavigate();
+  const [nome, setNome] = useState('');
+  const [telefone, setTelefone] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
-  const [address, setAddress] = useState('');
   const [instructions, setInstructions] = useState('');
 
   const handleSchedule = () => {
-    if (!selectedDate || !selectedTime || !address) {
-      alert('Por favor, preencha data, horário e endereço!');
+    if (!nome || !telefone || !selectedDate || !selectedTime) {
+      alert('Por favor, preencha todos os campos obrigatórios!');
+      return;
+    }
+
+    // Validar telefone (mínimo 10 dígitos com DDD)
+    const phoneDigits = telefone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      alert('Por favor, insira um telefone válido com DDD');
       return;
     }
 
     // Salvar agendamento localmente
     const agendamentoData = {
       recordingId: localStorage.getItem('lastRecordingId'),
+      nome: nome,
+      telefone: telefone,
       date: selectedDate,
       time: selectedTime,
-      address: address,
       instructions: instructions,
       timestamp: new Date().toISOString()
     };
@@ -29,6 +38,21 @@ const Agendamento = () => {
     
     alert('✅ Entrega agendada com sucesso!');
     navigate('/sucesso');
+  };
+
+  // Formatador de telefone
+  const formatPhone = (value) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else {
+      return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhone(e.target.value);
+    setTelefone(formatted);
   };
 
   const getMinDate = () => {
@@ -44,8 +68,35 @@ const Agendamento = () => {
   return (
     <div className="agendamento-container">
       <h1 className="agendamento-title">📅 Agendar Entrega</h1>
-      <p className="agendamento-subtitle">Escolha a data e horário para entrega da sua gravação</p>
+      <p className="agendamento-subtitle">Preencha seus dados para receber a gravação</p>
       
+      {/* CAMPO NOME */}
+      <div className="form-group">
+        <label>👤 Nome Completo *</label>
+        <input 
+          type="text" 
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Digite seu nome completo"
+          required
+        />
+      </div>
+
+      {/* CAMPO TELEFONE */}
+      <div className="form-group">
+        <label>📞 Telefone para Entrega *</label>
+        <input 
+          type="tel" 
+          value={telefone}
+          onChange={handlePhoneChange}
+          placeholder="(00) 00000-0000"
+          maxLength="15"
+          required
+        />
+        <small className="field-hint">Com DDD - enviaremos a gravação por mensagem</small>
+      </div>
+
+      {/* DATA DE ENTREGA */}
       <div className="form-group">
         <label>📆 Data de Entrega *</label>
         <input 
@@ -58,6 +109,7 @@ const Agendamento = () => {
         />
       </div>
 
+      {/* HORÁRIO */}
       <div className="form-group">
         <label>⏰ Horário de Preferência *</label>
         <select 
@@ -74,47 +126,39 @@ const Agendamento = () => {
         </select>
       </div>
 
+      {/* INSTRUÇÕES OPCIONAIS */}
       <div className="form-group">
-        <label>🏠 Endereço de Entrega *</label>
-        <textarea 
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="Digite o endereço completo: rua, número, bairro, cidade, CEP..."
-          rows="3"
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>📝 Instruções Adicionais (opcional)</label>
+        <label>📝 Observações (opcional)</label>
         <textarea 
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Portaria, ponto de referência, instruções especiais..."
+          placeholder="Alguma observação especial sobre a entrega..."
           rows="2"
         />
       </div>
 
+      {/* INFORMAÇÕES IMPORTANTES */}
       <div className="agendamento-info">
         <h3>ℹ️ Informações Importantes:</h3>
         <ul>
           <li>• Entregas de segunda a sábado</li>
           <li>• Horário comercial: 8h às 20h</li>
-          <li>• Confirmação por WhatsApp 1h antes da entrega</li>
+          <li>• Entregas feitas por mensagens MSN</li>
+          <li>• Você receberá o áudio no telefone informado</li>
         </ul>
       </div>
 
+      {/* BOTÕES */}
       <div className="agendamento-buttons">
         <button className="btn-confirm" onClick={handleSchedule}>
           ✅ Confirmar Agendamento
         </button>
         <button className="btn-back" onClick={() => navigate(-1)}>
-          ↩️ Voltar
+          ↩️ Voltar para Gravação
         </button>
       </div>
     </div>
   );
 };
 
-// ESTA LINHA É ESSENCIAL ↓
 export default Agendamento;
