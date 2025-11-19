@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+viarimport React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Agendamento.css';
 
@@ -68,7 +68,7 @@ const Agendamento = () => {
   return (
     <div className="agendamento-container">
       <h1 className="agendamento-title">📅 Agendar Entrega</h1>
-      <p className="agendamento-subtitle">Preencha seus dados para receber a gravação</p>
+      <p className="agendamento-subtitle">Preencha seus dados para enviar a gravação</p>
       
       {/* CAMPO NOME */}
       <div className="form-group">
@@ -77,7 +77,7 @@ const Agendamento = () => {
           type="text" 
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          placeholder="Digite seu nome completo"
+          placeholder="Digite o nome de quem receberá"
           required
         />
       </div>
@@ -144,7 +144,7 @@ const Agendamento = () => {
           <li>• Entregas de segunda a sábado</li>
           <li>• Horário comercial: 8h às 20h</li>
           <li>• Entregas feitas por mensagens MSN</li>
-          <li>• Você receberá o áudio no telefone informado</li>
+          <li>• Confirme às informações antes de enviar</li>
         </ul>
       </div>
 
