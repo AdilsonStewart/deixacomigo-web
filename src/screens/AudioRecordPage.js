@@ -7,24 +7,24 @@ const AudioRecordPage = () => {
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
   const [time, setTime] = useState(0);
+  const [saved, setSaved] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
   // Salvar gravação localmente
-  const saveRecordingLocally = (duration) => {
+  const saveRecording = () => {
     const recordingData = {
       id: 'rec_' + Date.now(),
-      duration: duration,
+      duration: time,
       timestamp: new Date().toISOString(),
-      status: 'pendente'
+      status: 'salvo'
     };
     
-    // Salvar no localStorage
     localStorage.setItem('lastRecording', JSON.stringify(recordingData));
     localStorage.setItem('lastRecordingId', recordingData.id);
-    
-    return recordingData.id;
+    setSaved(true);
+    alert('✅ Áudio salvo com sucesso!');
   };
 
   // Iniciar gravação
@@ -41,6 +41,8 @@ const AudioRecordPage = () => {
 
       mediaRecorder.start();
       setRecording(true);
+      setAudioURL('');
+      setSaved(false);
       setTime(0);
       
       timerRef.current = setInterval(() => {
@@ -53,7 +55,7 @@ const AudioRecordPage = () => {
   };
 
   // Parar gravação
-  const stopRecording = async () => {
+  const stopRecording = () => {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
@@ -65,10 +67,6 @@ const AudioRecordPage = () => {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
           const audioUrl = URL.createObjectURL(audioBlob);
           setAudioURL(audioUrl);
-
-          // Salvar localmente
-          saveRecordingLocally(time);
-          alert('✅ Gravação salva! Clique em "Agendar Entrega".');
         }
       }, 100);
     }
@@ -82,20 +80,11 @@ const AudioRecordPage = () => {
     }
   };
 
-  // Download
-  const downloadAudio = () => {
-    if (audioURL) {
-      const a = document.createElement('a');
-      a.href = audioURL;
-      a.download = `gravacao-${Date.now()}.wav`;
-      a.click();
-    }
-  };
-
   // Nova gravação
   const newRecording = () => {
     setAudioURL('');
     setTime(0);
+    setSaved(false);
     audioChunksRef.current = [];
   };
 
@@ -112,45 +101,54 @@ const AudioRecordPage = () => {
       
       <div className="timer">{formatTime(time)}</div>
 
-      <div className="controls">
-        {!recording && !audioURL && (
-          <button className="btn-record" onClick={startRecording}>
-            🎤 Iniciar Gravação
-          </button>
-        )}
-        
-        {recording && (
-          <button className="btn-stop" onClick={stopRecording}>
-            ⏹️ Parar Gravação
-          </button>
-        )}
+      {/* FASE 1: GRAVAÇÃO */}
+      {!audioURL && (
+        <div className="recording-phase">
+          {!recording ? (
+            <button className="btn-record" onClick={startRecording}>
+              🎤 Gravar Áudio
+            </button>
+          ) : (
+            <button className="btn-stop" onClick={stopRecording}>
+              ⏹️ Parar Gravação
+            </button>
+          )}
+        </div>
+      )}
 
-        {audioURL && (
-          <div className="playback-controls">
-            <button className="btn-play" onClick={playAudio}>
-              ▶️ Reproduzir
-            </button>
-            <button className="btn-download" onClick={downloadAudio}>
-              📥 Download
-            </button>
-            <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
-              📅 Agendar Entrega
-            </button>
-            <button className="btn-new" onClick={newRecording}>
-              🔄 Nova Gravação
-            </button>
-          </div>
-        )}
-      </div>
+      {/* FASE 2: OUVIR E SALVAR */}
+      {audioURL && !saved && (
+        <div className="playback-phase">
+          <div className="phase-title">Ouvir Gravação</div>
+          <button className="btn-play" onClick={playAudio}>
+            ▶️ Ouvir Gravação
+          </button>
+          <button className="btn-save" onClick={saveRecording}>
+            💾 Salvar Áudio
+          </button>
+          <button className="btn-new" onClick={newRecording}>
+            🔄 Nova Gravação
+          </button>
+        </div>
+      )}
+
+      {/* FASE 3: AGENDAR (após salvar) */}
+      {saved && (
+        <div className="schedule-phase">
+          <div className="phase-title">Áudio Salvo!</div>
+          <p className="success-message">Seu áudio foi salvo com sucesso.</p>
+          <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
+            📅 Agendar Entrega
+          </button>
+          <button className="btn-new" onClick={newRecording}>
+            🔄 Fazer Nova Gravação
+          </button>
+        </div>
+      )}
 
       <div className="status">
         {recording && <p className="recording-status">🎙️ Gravando...</p>}
-        {audioURL && !recording && (
-          <div>
-            <p className="success-status">✅ Gravação concluída!</p>
-            <p className="info-status">Pronto para agendar a entrega</p>
-          </div>
-        )}
+        {audioURL && !saved && <p className="playback-status">✅ Gravação concluída - Ouça e salve</p>}
       </div>
     </div>
   );
