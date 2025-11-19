@@ -37,7 +37,7 @@ const Agendamento = () => {
     localStorage.setItem('lastAgendamento', JSON.stringify(agendamentoData));
     
     alert('✅ Entrega agendada com sucesso!');
-    navigate('/sucesso');
+    navigate('/saida');
   };
 
   // Formatador de telefone
