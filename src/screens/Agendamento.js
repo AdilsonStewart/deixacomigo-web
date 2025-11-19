@@ -10,6 +10,20 @@ const Agendamento = () => {
   const [selectedTime, setSelectedTime] = useState('');
   const [instructions, setInstructions] = useState('');
 
+  // Função para ouvir a gravação salva no Firebase
+  const ouvirGravacao = () => {
+    const audioUrl = localStorage.getItem('lastRecordingUrl');
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audio.play().catch(error => {
+        console.error('Erro ao reproduzir áudio:', error);
+        alert('Erro ao reproduzir a gravação.');
+      });
+    } else {
+      alert('Nenhuma gravação encontrada. Grave um áudio primeiro.');
+    }
+  };
+
   const handleSchedule = () => {
     if (!nome || !telefone || !selectedDate || !selectedTime) {
       alert('Por favor, preencha todos os campos obrigatórios!');
@@ -26,6 +40,7 @@ const Agendamento = () => {
     // Salvar agendamento localmente
     const agendamentoData = {
       recordingId: localStorage.getItem('lastRecordingId'),
+      recordingUrl: localStorage.getItem('lastRecordingUrl'),
       nome: nome,
       telefone: telefone,
       date: selectedDate,
@@ -70,6 +85,14 @@ const Agendamento = () => {
       <h1 className="agendamento-title">📅 Agendar Entrega</h1>
       <p className="agendamento-subtitle">Preencha seus dados para enviar a gravação</p>
       
+      {/* BOTÃO PARA OUVIR GRAVAÇÃO */}
+      <div className="audio-preview-section">
+        <button className="btn-ouvir" onClick={ouvirGravacao}>
+          🔊 Ouvir Minha Gravação
+        </button>
+        <p className="audio-preview-hint">Ouça sua gravação antes de enviar</p>
+      </div>
+
       {/* CAMPO NOME */}
       <div className="form-group">
         <label>👤 Nome Completo *</label>
@@ -162,4 +185,3 @@ const Agendamento = () => {
 };
 
 export default Agendamento;
-
