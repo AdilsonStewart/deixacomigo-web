@@ -1,0 +1,199 @@
+.painel-admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.painel-header {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.painel-header h1 {
+  color: #4A3780;
+  margin-bottom: 10px;
+}
+
+.painel-header p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.btn-voltar {
+  background: #6C5CE7;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ABAS */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  background: white;
+  padding: 10px;
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab {
+  flex: 1;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.tab.active {
+  background: #6C5CE7;
+  color: white;
+}
+
+/* CONTEÚDO */
+.tab-content {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+/* ÁUDIOS */
+.audios-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.audio-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  background: #f8f9fa;
+}
+
+.audio-info h3 {
+  color: #4A3780;
+  margin-bottom: 10px;
+}
+
+.audio-info p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.audio-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-ouvir, .btn-copiar {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-ouvir {
+  background: #3498DB;
+  color: white;
+}
+
+.btn-ouvir:hover {
+  background: #2980B9;
+}
+
+.btn-copiar {
+  background: #00B894;
+  color: white;
+}
+
+.btn-copiar:hover {
+  background: #00A885;
+}
+
+/* AGENDAMENTOS */
+.agendamentos-list {
+  display: grid;
+  gap: 20px;
+}
+
+.agendamento-card {
+  padding: 20px;
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  background: #f8f9fa;
+}
+
+.agendamento-card h3 {
+  color: #4A3780;
+  margin-bottom: 15px;
+}
+
+.agendamento-card p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* ESTATÍSTICAS */
+.painel-stats {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+  color: #4A3780;
+  margin-bottom: 15px;
+}
+
+.stat-card p {
+  margin: 8px 0;
+  color: #555;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .audio-card {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .audio-actions {
+    width: 100%;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+}
