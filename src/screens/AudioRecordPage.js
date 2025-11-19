@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, storage } from '../firebase/config';
+import { db, storage } from '../firebase/firebase-client';
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './AudioRecorder.css';
@@ -32,7 +32,7 @@ const AudioRecordPage = () => {
       const audioUrl = await getDownloadURL(snapshot.ref);
       console.log('🔗 URL gerada:', audioUrl);
 
-      // 2. Salvar metadados no Firestore - USANDO A COLEÇÃO 'audios'
+      // 2. Salvar metadados no Firestore
       const recordingData = {
         tipo: 'audio',
         arquivoUrl: audioUrl,
@@ -45,12 +45,10 @@ const AudioRecordPage = () => {
 
       console.log('💾 Salvando no Firestore...', recordingData);
       
-      // ⚠️ ESTA LINHA É A IMPORTANTE - use 'audios'
       const docRef = await addDoc(collection(db, 'audios'), recordingData);
       
       console.log('🎉 Gravacao salva no Firestore com ID:', docRef.id);
       
-      // Salvar o ID para usar no agendamento
       localStorage.setItem('lastRecordingId', docRef.id);
       localStorage.setItem('lastRecordingUrl', audioUrl);
       
@@ -61,6 +59,31 @@ const AudioRecordPage = () => {
       throw error;
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Parar gravação automaticamente aos 30 segundos
+  const stopRecordingAutomatically = () => {
+    if (mediaRecorderRef.current && recording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setRecording(false);
+      clearInterval(timerRef.current);
+
+      setTimeout(async () => {
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setAudioURL(audioUrl);
+
+          try {
+            await saveRecordingToFirebase(audioBlob, time);
+            alert('✅ Áudio guardado! Prossiga para agendamento.');
+          } catch (error) {
+            alert('❌ Erro ao guardar áudio. Tente novamente.');
+          }
+        }
+      }, 100);
     }
   };
 
@@ -82,8 +105,15 @@ const AudioRecordPage = () => {
       setSaving(false);
       setTime(0);
       
+      // Timer que para automaticamente em 30 segundos
       timerRef.current = setInterval(() => {
-        setTime(prev => prev + 1);
+        setTime(prev => {
+          const newTime = prev + 1;
+          if (newTime >= 30) { // Para automaticamente em 30 segundos
+            stopRecordingAutomatically();
+          }
+          return newTime;
+        });
       }, 1000);
 
     } catch (error) {
@@ -91,29 +121,9 @@ const AudioRecordPage = () => {
     }
   };
 
-  // Parar gravação
-  const stopRecording = async () => {
-    if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      setRecording(false);
-      clearInterval(timerRef.current);
-
-      setTimeout(async () => {
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setAudioURL(audioUrl);
-
-          try {
-            await saveRecordingToFirebase(audioBlob, time);
-            alert('✅ Áudio salvo no Firebase! Agora você pode agendar a entrega.');
-          } catch (error) {
-            alert('❌ Erro ao salvar áudio. Tente novamente.');
-          }
-        }
-      }, 100);
-    }
+  // Parar gravação manual
+  const stopRecording = () => {
+    stopRecordingAutomatically();
   };
 
   // Reproduzir áudio
@@ -141,16 +151,37 @@ const AudioRecordPage = () => {
 
   return (
     <div className="audio-container">
+      <div className="gif-container">
+        <img 
+          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGU3djB5cHR4bjJuaXpwZDBrMnRwanJrMmJycDJ6YWt0bmN0OXVsbCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/PSo7PO7VvWgKuhq4r0/giphy.gif" 
+          alt="Gravar áudio"
+          className="audio-gif"
+        />
+      </div>
+      
       <h1 className="audio-title">Gravar Áudio</h1>
       
       <div className="timer">{formatTime(time)}</div>
+      
+      {/* Indicador de tempo máximo */}
+      {recording && (
+        <div className="time-limit">
+          <p>Tempo máximo: 30 segundos</p>
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{width: `${(time / 30) * 100}%`}}
+            ></div>
+          </div>
+        </div>
+      )}
 
       {/* FASE 1: GRAVAÇÃO */}
       {!audioURL && (
         <div className="recording-phase">
           {!recording ? (
             <button className="btn-record" onClick={startRecording}>
-              🎤 Gravar Áudio
+              🎤 Iniciar Gravação
             </button>
           ) : (
             <button className="btn-stop" onClick={stopRecording}>
@@ -171,14 +202,15 @@ const AudioRecordPage = () => {
         </div>
       )}
 
-      {/* FASE 3: AGENDAR (após salvar) */}
+      {/* FASE 3: SALVANDO */}
       {saving && (
         <div className="saving-phase">
           <div className="phase-title">Guardando seu áudio...</div>
-<p className="saving-status">⏳ Estamos guardando com carinho</p>
+          <p className="saving-status">⏳ Estamos guardando com carinho</p>
         </div>
       )}
 
+      {/* FASE 4: AGENDAR */}
       {audioURL && !saving && (
         <div className="schedule-phase">
           <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
@@ -191,7 +223,7 @@ const AudioRecordPage = () => {
       )}
 
       <div className="status">
-        {recording && <p className="recording-status">🎙️ Gravando...</p>}
+        {recording && <p className="recording-status">🎙️ Gravando... {30 - time}s restantes</p>}
         {audioURL && !saving && <p className="success-status">✅ Áudio processado</p>}
       </div>
     </div>
@@ -199,4 +231,3 @@ const AudioRecordPage = () => {
 };
 
 export default AudioRecordPage;
-
