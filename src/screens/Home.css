@@ -71,3 +71,22 @@
   margin: 5px 0 0 0;
   text-align: center;
 }
+/* ACESSO ADMIN MINI */
+.admin-mini {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.admin-mini-input {
+  width: 80px;
+  padding: 5px 8px;
+  border: 1px solid #E0E0E0;
+  border-radius: 15px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.admin-mini-input:focus {
+  outline: none;
+  border-color: #6C5CE7;
+}
