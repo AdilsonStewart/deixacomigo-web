@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AudioRecorder.css'; // Seu CSS já existe
 
-const AudioRecorder = () => {
+const AudioRecorderPage = () => {
   const navigate = useNavigate();
 
   return (
@@ -20,4 +20,4 @@ const AudioRecorder = () => {
   );
 };
 
-export default AudioRecorder;
+export default AudioRecorderPage;
