@@ -8,6 +8,7 @@ import Erro from './screens/Erro';
 import AudioRecordPage from './screens/AudioRecordPage'; // ← NOME CORRETO AGORA!
 import Agendamento from './screens/Agendamento';
 import Saida from './screens/Saida';
+import VideoRecordPage from './screens/VideoRecordPage';
 import './App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/erro" element={<Erro />} />
           <Route path="/agendamento" element={<Agendamento />} />
           <Route path="/saida" element={<Saida />} />
+          <Route path="/videorecorder" element={<VideoRecordPage />} />
           <Route path="/audiorecorder" element={<AudioRecordPage />} /> {/* ← Corrigido! */}
         </Routes>
       </div>
