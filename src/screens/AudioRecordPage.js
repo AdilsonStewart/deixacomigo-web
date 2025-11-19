@@ -174,8 +174,8 @@ const AudioRecordPage = () => {
       {/* FASE 3: AGENDAR (após salvar) */}
       {saving && (
         <div className="saving-phase">
-          <div className="phase-title">Salvando no Firebase...</div>
-          <p className="saving-status">⏳ Enviando para nuvem</p>
+          <div className="phase-title">Guardando seu áudio...</div>
+<p className="saving-status">⏳ Estamos guardando com carinho</p>
         </div>
       )}
 
