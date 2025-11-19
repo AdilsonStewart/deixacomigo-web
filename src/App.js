@@ -18,7 +18,7 @@ function App() {
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/sucesso" element={<Sucesso />} />
           <Route path="/erro" element={<Erro />} />
-          <Route path="/audiorecord" element={<AudioRecorder />} />
+          <Route path="/audiorecorder" element={<AudioRecorder />} />
         </Routes>
       </div>
     </Router>
