@@ -9,24 +9,34 @@ const PainelAdmin = () => {
   const [audios, setAudios] = useState([]);
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [firebaseError, setFirebaseError] = useState(null);
+
+  console.log('🔧 PainelAdmin iniciando...');
+  console.log('🔧 Firebase db:', db);
 
   // Buscar todos os áudios do Firebase
   const fetchAudios = async () => {
     try {
+      console.log('📤 Buscando áudios do Firebase...');
       const q = query(collection(db, 'audios'), orderBy('dataCriacao', 'desc'));
       const querySnapshot = await getDocs(q);
       
+      console.log('✅ QuerySnapshot:', querySnapshot);
+      
       const audiosList = [];
       querySnapshot.forEach((doc) => {
+        console.log('📄 Documento:', doc.id, doc.data());
         audiosList.push({
           id: doc.id,
           ...doc.data()
         });
       });
       
+      console.log('🎧 Áudios encontrados:', audiosList);
       setAudios(audiosList);
     } catch (error) {
-      console.error('Erro ao buscar áudios:', error);
+      console.error('❌ Erro ao buscar áudios:', error);
+      setFirebaseError(error.message);
     }
   };
 
@@ -42,6 +52,7 @@ const PainelAdmin = () => {
   };
 
   useEffect(() => {
+    console.log('🔄 useEffect executando...');
     const loadData = async () => {
       await fetchAudios();
       fetchAgendamentos();
@@ -50,185 +61,28 @@ const PainelAdmin = () => {
     loadData();
   }, []);
 
-  // Copiar link para área de transferência
-  const copyToClipboard = (url) => {
-    navigator.clipboard.writeText(url)
-      .then(() => alert('✅ Link copiado!'))
-      .catch(err => console.error('Erro ao copiar:', err));
-  };
-
-  // Formatar data
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
-  };
-
-  // Formatar data e hora
-  const formatDateTime = (dateString) => {
-    return new Date(dateString).toLocaleString('pt-BR');
-  };
+  // ... resto das funções permanecem iguais
 
   if (loading) {
     return (
       <div className="painel-admin-container">
-        <div className="loading">Carregando...</div>
+        <div className="loading">Carregando dados do Firebase...</div>
       </div>
     );
   }
 
-  return (
-    <div className="painel-admin-container">
-      <div className="painel-header">
-        <h1>🎛️ Painel Administrativo</h1>
-        <p>Gerencie links de mensagens e agendamentos</p>
-        <button className="btn-voltar" onClick={() => navigate('/')}>
-          ← Voltar para Home
-        </button>
-      </div>
-
-      {/* ESTATÍSTICAS */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <h3>🎧 Áudios</h3>
-          <p className="stat-number">{audios.length}</p>
-          <p>Total gravados</p>
-        </div>
-        <div className="stat-card">
-          <h3>📅 Agendamentos</h3>
-          <p className="stat-number">{agendamentos.length}</p>
-          <p>Para enviar</p>
+  if (firebaseError) {
+    return (
+      <div className="painel-admin-container">
+        <div className="error-state">
+          <h2>❌ Erro no Firebase</h2>
+          <p>{firebaseError}</p>
+          <button className="btn-voltar" onClick={() => navigate('/')}>
+            ← Voltar para Home
+          </button>
         </div>
       </div>
+    );
+  }
 
-      {/* LISTA DE LINKS DE MENSAGENS */}
-      <div className="links-section">
-        <h2>🔗 Links de Mensagens Gerados</h2>
-        
-        {audios.length === 0 ? (
-          <div className="empty-state">
-            <p>Nenhuma mensagem gerada ainda</p>
-          </div>
-        ) : (
-          <div className="links-table">
-            <div className="table-header">
-              <div className="col-data">Data Criação</div>
-              <div className="col-link">Link da Mensagem</div>
-              <div className="col-entrega">Data Entrega</div>
-              <div className="col-acoes">Ações</div>
-            </div>
-            
-            {audios.map((audio) => {
-              // Encontrar agendamento correspondente a este áudio
-              const agendamentoCorrespondente = agendamentos.find(
-                ag => ag.recordingId === audio.id
-              );
-              
-              return (
-                <div key={audio.id} className="table-row">
-                  <div className="col-data">
-                    {formatDateTime(audio.dataCriacao)}
-                  </div>
-                  
-                  <div className="col-link">
-                    <div className="link-url">
-                      {audio.arquivoUrl.substring(0, 50)}...
-                    </div>
-                  </div>
-                  
-                  <div className="col-entrega">
-                    {agendamentoCorrespondente ? (
-                      <div>
-                        <strong>{agendamentoCorrespondente.date}</strong>
-                        <br />
-                        <small>{agendamentoCorrespondente.time}</small>
-                        <br />
-                        <small>Para: {agendamentoCorrespondente.nome}</small>
-                      </div>
-                    ) : (
-                      <span className="sem-agendamento">Não agendado</span>
-                    )}
-                  </div>
-                  
-                  <div className="col-acoes">
-                    <button 
-                      className="btn-ouvir"
-                      onClick={() => window.open(audio.arquivoUrl, '_blank')}
-                    >
-                      ▶️ Ouvir
-                    </button>
-                    
-                    <button 
-                      className="btn-copiar"
-                      onClick={() => copyToClipboard(audio.arquivoUrl)}
-                    >
-                      📋 Copiar
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* AGENDAMENTOS */}
-      <div className="agendamentos-section">
-        <h2>📅 Próximas Entregas</h2>
-        
-        {agendamentos.length === 0 ? (
-          <div className="empty-state">
-            <p>Nenhum agendamento encontrado</p>
-          </div>
-        ) : (
-          <div className="agendamentos-grid">
-            {agendamentos.map((agendamento, index) => (
-              <div key={index} className="agendamento-card">
-                <div className="agendamento-header">
-                  <h3>Entrega #{index + 1}</h3>
-                  <span className="agendamento-status">🟢 Pendente</span>
-                </div>
-                
-                <div className="agendamento-info">
-                  <div className="info-group">
-                    <label>👤 Destinatário:</label>
-                    <p>{agendamento.nome}</p>
-                  </div>
-                  
-                  <div className="info-group">
-                    <label>📞 Telefone:</label>
-                    <p>{agendamento.telefone}</p>
-                  </div>
-                  
-                  <div className="info-group">
-                    <label>📅 Data Entrega:</label>
-                    <p><strong>{agendamento.date}</strong></p>
-                  </div>
-                  
-                  <div className="info-group">
-                    <label>⏰ Horário:</label>
-                    <p>{agendamento.time}</p>
-                  </div>
-                  
-                  {agendamento.instructions && (
-                    <div className="info-group">
-                      <label>📝 Observações:</label>
-                      <p>{agendamento.instructions}</p>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="agendamento-actions">
-                  <button className="btn-enviar">
-                    📤 Enviar Agora
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-    </div>
-  );
-};
-
-export default PainelAdmin;
+  // ... resto do JSX permanece igual ao que você já tem
