@@ -38,7 +38,13 @@ const Saida = () => {
   return (
     <div className="saida-container">
       <div className="saida-content">
-        <div className="success-icon">✅</div>
+        <div className="gif-container">
+          <img 
+            src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTFxazJnZHYxaWJnNW4xb2dwcGlzbm1jemR3a3praTUydGVjNmljciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/9yKwHwVJDRSmkSRPr5/giphy.gif" 
+            alt="Confirmação de agendamento"
+            className="success-gif"
+          />
+        </div>
         <h1 className="saida-title">Agendamento Confirmado!</h1>
         
         <div className="saida-message">
