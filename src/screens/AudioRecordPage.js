@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './AudioRecord.css';
+import './AudioRecorder.css';
 
 const AudioRecordPage = () => {
   const navigate = useNavigate();
