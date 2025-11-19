@@ -5,20 +5,34 @@ import './Saida.css';
 const Saida = () => {
   const navigate = useNavigate();
 
+  // Pegar o nome do último agendamento salvo
+  const getNomeDestinatario = () => {
+    try {
+      const lastAgendamento = localStorage.getItem('lastAgendamento');
+      if (lastAgendamento) {
+        const agendamentoData = JSON.parse(lastAgendamento);
+        return agendamentoData.nome || 'Não informado';
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados do agendamento:', error);
+    }
+    return 'Não informado';
+  };
+
+  const nomeDestinatario = getNomeDestinatario();
+
   const handleNovaMensagem = () => {
-    // Limpar dados anteriores e voltar para gravação
     localStorage.removeItem('lastRecordingId');
     localStorage.removeItem('lastRecording');
     navigate('/audiorecorder');
   };
 
   const handleSair = () => {
-    // Fechar a aba/janela do navegador
-    window.close();
-    
-    // Fallback para mobile ou navegadores que não permitem fechar
-    alert('Obrigado por usar nosso serviço!');
-    navigate('/');
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.close();
+    }
   };
 
   return (
@@ -38,10 +52,10 @@ const Saida = () => {
             <strong>Status:</strong> <span className="status-confirmado">Confirmado</span>
           </div>
           <div className="info-item">
-            <strong>Entrega:</strong> Via mensagem
+            <strong>Nome:</strong> {nomeDestinatario}
           </div>
           <div className="info-item">
-            <strong>Prazo:</strong> Até 24 horas
+            <strong>Entrega:</strong> Via mensagem
           </div>
         </div>
 
