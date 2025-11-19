@@ -6,12 +6,11 @@ export default function Sucesso() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Configura o timeout para navegar para AudioRecord após 3 segundos
+    // Redireciona após 3 segundos
     const timer = setTimeout(() => {
-      navigate('/audiorecord');
-    }, 3000); // 3 segundos
+      navigate('/audiorecorder');
+    }, 3000);
 
-    // Limpa o timeout se o componente for desmontado
     return () => clearTimeout(timer);
   }, [navigate]);
 
@@ -32,15 +31,15 @@ export default function Sucesso() {
         
         <button 
           className="botao botao-sucesso"
-          onClick={() => navigate('/audiorecord')}
+          onClick={() => navigate('/audiorecorder')}
         >
           🎤 Fazer Gravação Agora
         </button>
 
-        {/* BOTÃO PARA ACESSO DIRETO - SEM PAGAMENTO */}
+        {/* ACESSO DIRETO PARA TESTES */}
         <button 
           className="botao botao-teste"
-          onClick={() => navigate('/audiorecord')}
+          onClick={() => navigate('/audiorecorder')}
           style={{marginTop: '10px', backgroundColor: '#ff6b35'}}
         >
           🎤 Acesso Direto (Teste)
