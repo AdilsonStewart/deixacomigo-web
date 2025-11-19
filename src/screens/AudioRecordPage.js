@@ -151,13 +151,11 @@ const AudioRecordPage = () => {
 
   return (
     <div className="audio-container">
-      <div className="gif-container">
-        <img 
-          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGU3djB5cHR4bjJuaXpwZDBrMnRwanJrMmJycDJ6YWt0bmN0OXVsbCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/PSo7PO7VvWgKuhq4r0/giphy.gif" 
-          alt="Gravar áudio"
-          className="audio-gif"
-        />
-      </div>
+      <img 
+        src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGU3djB5cHR4bjJuaXpwZDBrMnRwanJrMmJycDJ6YWt0bmN0OXVsbCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/PSo7PO7VvWgKuhq4r0/giphy.gif" 
+        alt="Gravar áudio"
+        className="audio-gif"
+      />
       
       <h1 className="audio-title">Gravar Áudio</h1>
       
@@ -194,7 +192,6 @@ const AudioRecordPage = () => {
       {/* FASE 2: OUVIR E SALVAR */}
       {audioURL && !saving && (
         <div className="playback-phase">
-          <div className="phase-title">Ouvir Gravação</div>
           <button className="btn-play" onClick={playAudio}>
             ▶️ Ouvir Gravação
           </button>
@@ -205,8 +202,7 @@ const AudioRecordPage = () => {
       {/* FASE 3: SALVANDO */}
       {saving && (
         <div className="saving-phase">
-          <div className="phase-title">Guardando seu áudio...</div>
-          <p className="saving-status">⏳ Estamos guardando com carinho</p>
+          <p className="saving-status">⏳ Guardando seu áudio...</p>
         </div>
       )}
 
