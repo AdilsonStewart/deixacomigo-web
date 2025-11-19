@@ -33,7 +33,7 @@ export default function Home() {
       
       <div className="mascote-container">
         <img 
-          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTg0cXptZ2t1a3QxNTczY25xbzJ5bDA2MXFuMnRocWNzdXZvMHB0aSZlcD12MV9ibnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/XpfXuBYtvR9I8jjBH0/giphy.gif"
+          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTg0cXptZ2t1a3QxNTczY25xbzJ5bDA2MXFuMnRocWNzdXZvMHB0aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/XpfXuBYtvR9I8jjBH0/giphy.gif"
           alt="Mascote DeixaComigo"
           className="mascote-image"
         />
@@ -53,62 +53,38 @@ export default function Home() {
         Sua voz, na hora certa.<br/>Todo mundo acha que você nunca esquece.
       </p>
 
-      {/* ACESSO ADMIN DISCRETO */}
-      <div className="admin-access">
+      {/* ADMIN CENTRALIZADO E BONITO */}
+      <div className="admin-centralizado">
         <button 
-          className="admin-toggle"
+          className="admin-btn-central"
           onClick={toggleAdmin}
         >
-          {showAdmin ? '✖' : '⚙'}
+          {showAdmin ? '✖ Fechar Admin' : '⚙ Acesso Admin'}
         </button>
         
         {showAdmin && (
-          <div className="admin-panel">
+          <div className="admin-painel-central">
+            <h3>Área Administrativa</h3>
             <input
               type="password"
-              placeholder="Senha admin"
+              placeholder="Digite a senha admin"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
-              className="admin-input"
+              className="admin-input-central"
               onKeyPress={(e) => e.key === 'Enter' && handleAdminAccess()}
             />
             <button 
-              className="admin-btn"
+              className="admin-btn-acessar"
               onClick={handleAdminAccess}
             >
-              Acessar
+              🔓 Acessar Painel
             </button>
             {passwordError && (
-              <p className="admin-error">Senha incorreta</p>
+              <p className="admin-erro-central">Senha incorreta</p>
             )}
+            <p className="admin-dica">Senha: deixacomigo2024</p>
           </div>
         )}
-      </div>
-
-      {/* TESTE EMERGÊNCIA */}
-      <div style={{
-        position: 'fixed',
-        bottom: '20px', 
-        right: '20px',
-        zIndex: 1000,
-        background: 'red',
-        color: 'white',
-        padding: '10px',
-        borderRadius: '5px'
-      }}>
-        <button 
-          onClick={toggleAdmin}
-          style={{
-            background: '#6C5CE7',
-            color: 'white',
-            border: 'none',
-            padding: '10px',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          ADMIN TESTE
-        </button>
       </div>
 
     </div>
