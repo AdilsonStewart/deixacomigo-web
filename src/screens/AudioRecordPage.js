@@ -1,30 +1,68 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { db, storage } from '../firebase/config';
+import { collection, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './AudioRecorder.css';
 
 const AudioRecordPage = () => {
   const navigate = useNavigate();
   const [recording, setRecording] = useState(false);
   const [audioURL, setAudioURL] = useState('');
+  const [audioBlob, setAudioBlob] = useState(null);
   const [time, setTime] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // Salvar gravação localmente
-  const saveRecording = () => {
-    const recordingData = {
-      id: 'rec_' + Date.now(),
-      duration: time,
-      timestamp: new Date().toISOString(),
-      status: 'salvo'
-    };
-    
-    localStorage.setItem('lastRecording', JSON.stringify(recordingData));
-    localStorage.setItem('lastRecordingId', recordingData.id);
-    setSaved(true);
-    alert('✅ Áudio salvo com sucesso!');
+  // Salvar gravação no Firebase
+  const saveRecordingToFirebase = async (audioBlob, duration) => {
+    setSaving(true);
+    try {
+      console.log('📤 Iniciando upload para Firebase Storage...');
+      
+      // 1. Upload do áudio para Firebase Storage
+      const fileName = `audios/gravacao_${Date.now()}.wav`;
+      const audioRef = ref(storage, fileName);
+      console.log('📁 Fazendo upload do arquivo:', fileName);
+      
+      const snapshot = await uploadBytes(audioRef, audioBlob);
+      console.log('✅ Upload do Storage concluído');
+      
+      const audioUrl = await getDownloadURL(snapshot.ref);
+      console.log('🔗 URL gerada:', audioUrl);
+
+      // 2. Salvar metadados no Firestore - USANDO A COLEÇÃO 'audios'
+      const recordingData = {
+        tipo: 'audio',
+        arquivoUrl: audioUrl,
+        duracao: duration,
+        nomeArquivo: snapshot.ref.name,
+        caminhoStorage: snapshot.ref.fullPath,
+        dataCriacao: new Date().toISOString(),
+        status: 'salvo'
+      };
+
+      console.log('💾 Salvando no Firestore...', recordingData);
+      
+      // ⚠️ ESTA LINHA É A IMPORTANTE - use 'audios'
+      const docRef = await addDoc(collection(db, 'audios'), recordingData);
+      
+      console.log('🎉 Gravacao salva no Firestore com ID:', docRef.id);
+      
+      // Salvar o ID para usar no agendamento
+      localStorage.setItem('lastRecordingId', docRef.id);
+      localStorage.setItem('lastRecordingUrl', audioUrl);
+      
+      return docRef.id;
+
+    } catch (error) {
+      console.error('❌ Erro ao salvar gravação:', error);
+      throw error;
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Iniciar gravação
@@ -42,7 +80,7 @@ const AudioRecordPage = () => {
       mediaRecorder.start();
       setRecording(true);
       setAudioURL('');
-      setSaved(false);
+      setSaving(false);
       setTime(0);
       
       timerRef.current = setInterval(() => {
@@ -55,18 +93,26 @@ const AudioRecordPage = () => {
   };
 
   // Parar gravação
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setRecording(false);
       clearInterval(timerRef.current);
 
-      setTimeout(() => {
+      setTimeout(async () => {
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
           const audioUrl = URL.createObjectURL(audioBlob);
           setAudioURL(audioUrl);
+          setAudioBlob(audioBlob);
+
+          try {
+            await saveRecordingToFirebase(audioBlob, time);
+            alert('✅ Áudio salvo no Firebase! Agora você pode agendar a entrega.');
+          } catch (error) {
+            alert('❌ Erro ao salvar áudio. Tente novamente.');
+          }
         }
       }, 100);
     }
@@ -83,8 +129,9 @@ const AudioRecordPage = () => {
   // Nova gravação
   const newRecording = () => {
     setAudioURL('');
+    setAudioBlob(null);
     setTime(0);
-    setSaved(false);
+    setSaving(false);
     audioChunksRef.current = [];
   };
 
@@ -117,14 +164,28 @@ const AudioRecordPage = () => {
       )}
 
       {/* FASE 2: OUVIR E SALVAR */}
-      {audioURL && !saved && (
+      {audioURL && !saving && (
         <div className="playback-phase">
           <div className="phase-title">Ouvir Gravação</div>
           <button className="btn-play" onClick={playAudio}>
             ▶️ Ouvir Gravação
           </button>
-          <button className="btn-save" onClick={saveRecording}>
-            💾 Salvar Áudio
+          <p className="info-status">Áudio pronto para envio</p>
+        </div>
+      )}
+
+      {/* FASE 3: AGENDAR (após salvar) */}
+      {saving && (
+        <div className="saving-phase">
+          <div className="phase-title">Salvando no Firebase...</div>
+          <p className="saving-status">⏳ Enviando para nuvem</p>
+        </div>
+      )}
+
+      {audioURL && !saving && (
+        <div className="schedule-phase">
+          <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
+            📅 Agendar Entrega
           </button>
           <button className="btn-new" onClick={newRecording}>
             🔄 Nova Gravação
@@ -132,27 +193,12 @@ const AudioRecordPage = () => {
         </div>
       )}
 
-      {/* FASE 3: AGENDAR (após salvar) */}
-      {saved && (
-        <div className="schedule-phase">
-          <div className="phase-title">Áudio Salvo!</div>
-          <p className="success-message">Seu áudio foi salvo com sucesso.</p>
-          <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
-            📅 Agendar Entrega
-          </button>
-          <button className="btn-new" onClick={newRecording}>
-            🔄 Fazer Nova Gravação
-          </button>
-        </div>
-      )}
-
       <div className="status">
         {recording && <p className="recording-status">🎙️ Gravando...</p>}
-        {audioURL && !saved && <p className="playback-status">✅ Gravação concluída - Ouça e salve</p>}
+        {audioURL && !saving && <p className="success-status">✅ Áudio processado</p>}
       </div>
     </div>
   );
 };
 
 export default AudioRecordPage;
-
