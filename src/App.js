@@ -9,7 +9,7 @@ import AudioRecordPage from './screens/AudioRecordPage'; // ← NOME CORRETO AGO
 import Agendamento from './screens/Agendamento';
 import Saida from './screens/Saida';
 import VideoRecordPage from './screens/VideoRecordPage';
-import PainelAdmin from './screens/PainelAdmin';
+import AdminDashboard from './screens/AdminDashboard';
 import './App.css';
 
 function App() {
@@ -25,7 +25,7 @@ function App() {
           <Route path="/agendamento" element={<Agendamento />} />
           <Route path="/saida" element={<Saida />} />
           <Route path="/videorecorder" element={<VideoRecordPage />} />
-          <Route path="/admin/painel" element={<PainelAdmin />} />
+          <Route path="/admin/painel" element={<AdminDashboard />} />
           <Route path="/audiorecorder" element={<AudioRecordPage />} /> {/* ← Corrigido! */}
         </Routes>
       </div>
