@@ -1,4 +1,4 @@
-viarimport React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Agendamento.css';
 
@@ -144,7 +144,7 @@ const Agendamento = () => {
           <li>• Entregas de segunda a sábado</li>
           <li>• Horário comercial: 8h às 20h</li>
           <li>• Entregas feitas por mensagens MSN</li>
-          <li>• Confirme às informações antes de enviar</li>
+          <li>• Confirme as informações antes de enviar</li>
         </ul>
       </div>
 
