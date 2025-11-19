@@ -17,8 +17,42 @@
 .agendamento-subtitle {
   text-align: center;
   color: #666;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
   font-size: 16px;
+}
+
+/* SEÇÃO DE PREVIEW DE ÁUDIO */
+.audio-preview-section {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #F8F9FA;
+  border-radius: 15px;
+  border-left: 4px solid #3498DB;
+}
+
+.btn-ouvir {
+  background-color: #3498DB;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.btn-ouvir:hover {
+  background-color: #2980B9;
+  transform: translateY(-2px);
+}
+
+.audio-preview-hint {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
 }
 
 .form-group {
@@ -56,6 +90,20 @@
 .form-group textarea {
   resize: vertical;
   font-family: inherit;
+}
+
+.field-hint {
+  display: block;
+  color: #666;
+  font-size: 12px;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.form-group input[type="tel"] {
+  font-family: monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
 }
 
 .agendamento-info {
@@ -133,17 +181,9 @@
     padding: 14px 25px;
     font-size: 16px;
   }
-}
-.field-hint {
-  display: block;
-  color: #666;
-  font-size: 12px;
-  margin-top: 5px;
-  font-style: italic;
-}
-
-.form-group input[type="tel"] {
-  font-family: monospace;
-  font-size: 16px;
-  letter-spacing: 1px;
+  
+  .btn-ouvir {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
 }
