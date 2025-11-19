@@ -1,0 +1,177 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../firebase/firebase-client';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import './PainelAdmin.css';
+
+const PainelAdmin = () => {
+  const navigate = useNavigate();
+  const [audios, setAudios] = useState([]);
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('audios');
+
+  // Buscar todos os áudios do Firebase
+  const fetchAudios = async () => {
+    try {
+      const q = query(collection(db, 'audios'), orderBy('dataCriacao', 'desc'));
+      const querySnapshot = await getDocs(q);
+      
+      const audiosList = [];
+      querySnapshot.forEach((doc) => {
+        audiosList.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      setAudios(audiosList);
+    } catch (error) {
+      console.error('Erro ao buscar áudios:', error);
+    }
+  };
+
+  // Buscar agendamentos do localStorage (por enquanto)
+  const fetchAgendamentos = () => {
+    try {
+      const lastAgendamento = localStorage.getItem('lastAgendamento');
+      const agendamentosList = lastAgendamento ? [JSON.parse(lastAgendamento)] : [];
+      setAgendamentos(agendamentosList);
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos:', error);
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchAudios();
+      fetchAgendamentos();
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  // Copiar link para área de transferência
+  const copyToClipboard = (url) => {
+    navigator.clipboard.writeText(url)
+      .then(() => alert('✅ Link copiado!'))
+      .catch(err => console.error('Erro ao copiar:', err));
+  };
+
+  // Formatar data
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('pt-BR');
+  };
+
+  if (loading) {
+    return (
+      <div className="painel-admin-container">
+        <div className="loading">Carregando...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="painel-admin-container">
+      <div className="painel-header">
+        <h1>🎛️ Painel Administrativo</h1>
+        <p>Gerencie áudios e agendamentos</p>
+        <button className="btn-voltar" onClick={() => navigate('/')}>
+          ← Voltar para Home
+        </button>
+      </div>
+
+      {/* ABAS */}
+      <div className="tabs">
+        <button 
+          className={`tab ${activeTab === 'audios' ? 'active' : ''}`}
+          onClick={() => setActiveTab('audios')}
+        >
+          🎧 Áudios ({audios.length})
+        </button>
+        <button 
+          className={`tab ${activeTab === 'agendamentos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('agendamentos')}
+        >
+          📅 Agendamentos ({agendamentos.length})
+        </button>
+      </div>
+
+      {/* CONTEÚDO DAS ABAS */}
+      <div className="tab-content">
+        {activeTab === 'audios' && (
+          <div className="audios-section">
+            <h2>Áudios Gravados</h2>
+            {audios.length === 0 ? (
+              <div className="empty-state">
+                <p>Nenhum áudio encontrado</p>
+              </div>
+            ) : (
+              <div className="audios-grid">
+                {audios.map((audio) => (
+                  <div key={audio.id} className="audio-card">
+                    <div className="audio-info">
+                      <h3>Áudio #{audio.id.slice(-6)}</h3>
+                      <p><strong>Duração:</strong> {audio.duracao}s</p>
+                      <p><strong>Criado em:</strong> {formatDate(audio.dataCriacao)}</p>
+                    </div>
+                    
+                    <div className="audio-actions">
+                      <button 
+                        className="btn-ouvir"
+                        onClick={() => window.open(audio.arquivoUrl, '_blank')}
+                      >
+                        ▶️ Ouvir
+                      </button>
+                      
+                      <button 
+                        className="btn-copiar"
+                        onClick={() => copyToClipboard(audio.arquivoUrl)}
+                      >
+                        📋 Copiar Link
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'agendamentos' && (
+          <div className="agendamentos-section">
+            <h2>Agendamentos</h2>
+            {agendamentos.length === 0 ? (
+              <div className="empty-state">
+                <p>Nenhum agendamento encontrado</p>
+              </div>
+            ) : (
+              <div className="agendamentos-list">
+                {agendamentos.map((agendamento, index) => (
+                  <div key={index} className="agendamento-card">
+                    <h3>Agendamento #{index + 1}</h3>
+                    <p><strong>Nome:</strong> {agendamento.nome}</p>
+                    <p><strong>Telefone:</strong> {agendamento.telefone}</p>
+                    <p><strong>Data:</strong> {agendamento.date}</p>
+                    <p><strong>Horário:</strong> {agendamento.time}</p>
+                    <p><strong>Criado em:</strong> {formatDate(agendamento.timestamp)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="painel-stats">
+        <div className="stat-card">
+          <h3>📊 Estatísticas</h3>
+          <p>Áudios: <strong>{audios.length}</strong></p>
+          <p>Agendamentos: <strong>{agendamentos.length}</strong></p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PainelAdmin;
