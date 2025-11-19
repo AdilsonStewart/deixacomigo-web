@@ -102,23 +102,6 @@ const VideoRecordPage = () => {
     }
   };
 
-  // Reproduzir vídeo
-  const playVideo = () => {
-    if (videoURL && videoRef.current) {
-      videoRef.current.play();
-    }
-  };
-
-  // Download do vídeo
-  const downloadVideo = () => {
-    if (videoURL) {
-      const a = document.createElement('a');
-      a.href = videoURL;
-      a.download = `video-${Date.now()}.webm`;
-      a.click();
-    }
-  };
-
   // Nova gravação
   const newRecording = () => {
     setVideoURL('');
