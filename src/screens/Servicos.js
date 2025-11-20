@@ -4,10 +4,10 @@ import './Servicos.css';
 const Servicos = () => {
   const criarPagamento = async (valor, tipo) => {
     try {
-      // ALERTA DE TESTE
-      alert(`🚨 Teste: chamando criar-pagamento para ${tipo} R$${valor}`);
+      // Alerta de teste para confirmar que a função é chamada
+      console.log(`🚨 Chamando criar-pagamento para ${tipo} R$${valor}`);
 
-      // fetch ajustado para o caminho correto do Netlify
+      // Chama a função Netlify (note o /api/ que mapeia para functions)
       const response = await fetch("/api/criar-pagamento", {
         method: "POST",
         headers: {
@@ -16,7 +16,6 @@ const Servicos = () => {
         body: JSON.stringify({ valor, tipo })
       });
 
-      // Verificação de JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Função não encontrada (404) - verifique o deploy');
@@ -28,15 +27,16 @@ const Servicos = () => {
       }
 
       if (data.success && data.init_point) {
-        // Redireciona para o Mercado Pago
+        // Redireciona para o checkout do Mercado Pago
         window.location.href = data.init_point;
       } else {
         alert("Erro ao criar pagamento. Tente novamente.");
         console.error("Resposta inesperada:", data);
       }
+
     } catch (error) {
       console.error("Erro:", error);
-      alert(error.message || "Houve um erro na comunicação com o servidor. Verifique sua conexão e tente novamente.");
+      alert(error.message || "Houve um erro na comunicação com o servidor.");
     }
   };
 
