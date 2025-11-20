@@ -6,16 +6,15 @@ export const handler = async (event) => {
   try {
     const { valor, tipo } = JSON.parse(event.body);
 
-    // Remove acentos para evitar erro silencioso no Mercado Pago
-    const tipoSanitizado = tipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const titulo = tipo.toLowerCase() === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    const preferenceData = {
+    const preference = {
       items: [
         {
-          title: `Lembrete em ${tipoSanitizado}`,
-          quantity: 1,
+          title: titulo,
+          unit_price: Number(valor),
           currency_id: "BRL",
-          unit_price: Number(valor)
+          quantity: 1
         }
       ],
       back_urls: {
@@ -23,49 +22,40 @@ export const handler = async (event) => {
         failure: "https://deixacomigoweb.netlify.app/erro",
         pending: "https://deixacomigoweb.netlify.app/erro"
       },
-      auto_return: "approved"
+      auto_return: "approved",
+      statement_descriptor: "DEIXA COMIGO"
     };
 
-    // Chamada oficial Mercado Pago
-    const response = await fetch(
-      "https://api.mercadopago.com/checkout/preferences",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(preferenceData)
-      }
-    );
+    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify(preference)
+    });
 
     const data = await response.json();
 
-    // Se houver erro na API, retornar mensagem clara
-    if (data.error) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          message: "Erro do Mercado Pago",
-          details: data
-        })
-      };
+    if (!response.ok) {
+      console.error("Erro MP:", data);
+      return { statusCode: 400, body: JSON.stringify({ success: false, message: data.message || "Erro no Mercado Pago" }) };
     }
 
+    // <<< AQUI É O QUE O FRONTEND ESPERA >>>
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        init_point: data.init_point,
-        sandbox_init_point: data.sandbox_init_point,
-        preference_id: data.id
+        init_point: data.init_point   // exatamente esse nome e formato
       })
     };
+
   } catch (error) {
+    console.error("Erro interno:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message })
+      body: JSON.stringify({ success: false, message: "Erro interno no servidor" })
     };
   }
 };
