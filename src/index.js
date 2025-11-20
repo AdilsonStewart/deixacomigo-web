@@ -1,4 +1,3 @@
-// src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -11,5 +10,5 @@ root.render(
   </React.StrictMode>
 );
 
-// Opcional: se quiser monitorar performance
+// Se quiser medir performance, mantém a função; caso contrário, pode deixar como está
 reportWebVitals();
