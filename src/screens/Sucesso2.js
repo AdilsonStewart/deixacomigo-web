@@ -1,24 +1,22 @@
-import React, { useEffect } from "react";
+// Sucesso2.js
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Sucesso.css"; // usa o mesmo CSS da tela Sucesso
 
-const Sucesso2 = () => {
+export default function Sucesso2() {
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/videorecorder"); // ← Destino diferente!
+      navigate("/video-recorder"); // rota da sua VideoRecorderPage.js
     }, 3000);
 
     return () => clearTimeout(timer);
   }, [navigate]);
 
   return (
-    <div className="sucesso-container">
-      <h1 className="sucesso-title">Pagamento Confirmado! 🎉</h1>
-      <p className="sucesso-message">Preparando sua gravação de vídeo...</p>
+    <div style={{ textAlign: "center", padding: "40px" }}>
+      <h1>Pagamento Aprovado! 🎉</h1>
+      <p>Redirecionando para a gravação do vídeo em instantes...</p>
     </div>
   );
-};
-
-export default Sucesso2;
+}
