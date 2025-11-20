@@ -1,6 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { initializeApp } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import './Agendamento.css';
+
+// Configuração do Firebase (você já tem essas variáveis no .env do Netlify)
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const Agendamento = () => {
   const navigate = useNavigate();
@@ -9,39 +29,65 @@ const Agendamento = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSchedule = () => {
+  // Pega o link da última gravação (você já salva isso depois do pagamento)
+  const linkMensagem = localStorage.getItem('lastRecordingUrl');
+  if (!linkMensagem) {
+    alert('Ops! Não encontramos a gravação. Volte e grave novamente.');
+    navigate(-1);
+    return null;
+  }
+
+  const handleSchedule = async () => {
     if (!nome || !telefone || !selectedDate || !selectedTime) {
       alert('Por favor, preencha todos os campos obrigatórios!');
       return;
     }
 
-    // Validar telefone (mínimo 10 dígitos com DDD)
-    const phoneDigits = telefone.replace(/\D/g, '');
-    if (phoneDigits.length < 10) {
+    // Validação e formatação do telefone (+55...)
+    const digits = telefone.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 11) {
       alert('Por favor, insira um telefone válido com DDD');
       return;
     }
+    const telefoneFull = `+55${digits}`;
 
-    // Salvar agendamento localmente
-    const agendamentoData = {
-      recordingId: localStorage.getItem('lastRecordingId'),
-      recordingUrl: localStorage.getItem('lastRecordingUrl'),
-      nome,
-      telefone,
-      date: selectedDate,
-      time: selectedTime,
-      instructions,
-      timestamp: new Date().toISOString()
-    };
+    // Regra das 24h de antecedência
+    const hoje = new Date();
+    const dataEscolhida = new Date(selectedDate);
+    const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000 + 5 * 60 * 1000); // +5min de folga
 
-    localStorage.setItem('lastAgendamento', JSON.stringify(agendamentoData));
-    
-    alert('✅ Entrega agendada com sucesso!');
-    navigate('/saida');
+    if (dataEscolhida < minimo24h) {
+      alert('A corujinha precisa de no mínimo 24 horas de antecedência para garantir a entrega! 🦉❤️');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await addDoc(collection(db, 'agendamentos'), {
+        linkMensagem,
+        nomeDestinatario: nome.trim(),
+        telefoneDestinatario: telefoneFull,
+        dataEnvio: selectedDate,           // só a data (ex: 2025-12-25)
+        horarioPreferido: selectedTime,     // ex: "08:00-10:00"
+        observacoes: instructions.trim(),
+        enviado: false,
+        criadoEm: serverTimestamp(),
+      });
+
+      alert('✅ Agendamento salvo com sucesso!\nA corujinha entrega no horário escolhido! 🦉🎉');
+      navigate('/saida');
+    } catch (error) {
+      console.error('Erro ao salvar agendamento:', error);
+      alert('Ocorreu um erro ao salvar. Tenta de novo ou me chama que eu te ajudo ❤️');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Formatador de telefone
+  // Máscara de telefone (igualzinha a que você já tinha)
   const formatPhone = (value) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 10) {
@@ -56,69 +102,77 @@ const Agendamento = () => {
     setTelefone(formatted);
   };
 
+  // Data mínima = amanhã (para respeitar as 24h)
   const getMinDate = () => {
-    return new Date().toISOString().split('T')[0];
+    const amanha = new Date();
+    amanha.setDate(amanha.getDate() + 1);
+    return amanha.toISOString().split('T')[0];
   };
 
   const getMaxDate = () => {
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 30);
-    return maxDate.toISOString().split('T')[0];
+    const max = new Date();
+    max.setDate(max.getDate() + 365); // até 1 ano
+    return max.toISOString().split('T')[0];
   };
 
   return (
     <div className="agendamento-container">
       <h1 className="agendamento-title">📅 Agendar Entrega</h1>
-      <p className="agendamento-subtitle">Preencha seus dados para enviar a gravação</p>
+      <p className="agendamento-subtitle">
+        A corujinha entrega sua surpresa no dia e horário escolhidos!
+      </p>
 
-      {/* CAMPO NOME */}
+      {/* NOME */}
       <div className="form-group">
-        <label>👤 Nome Completo *</label>
-        <input 
-          type="text" 
+        <label>👤 Nome de quem vai receber *</label>
+        <input
+          type="text"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          placeholder="Digite o nome de quem receberá"
+          placeholder="Ex: Maria Silva"
           required
         />
       </div>
 
-      {/* CAMPO TELEFONE */}
+      {/* TELEFONE */}
       <div className="form-group">
-        <label>📞 Telefone para Entrega *</label>
-        <input 
-          type="tel" 
+        <label>📞 Celular com DDD *</label>
+        <input
+          type="tel"
           value={telefone}
           onChange={handlePhoneChange}
-          placeholder="(00) 00000-0000"
+          placeholder="(41) 99999-8888"
           maxLength="15"
           required
         />
-        <small className="field-hint">Com DDD - enviaremos a gravação por mensagem</small>
+        <small className="field-hint">
+          Vamos enviar o link da surpresa por SMS
+        </small>
       </div>
 
-      {/* DATA DE ENTREGA */}
+      {/* DATA */}
       <div className="form-group">
-        <label>📆 Data de Entrega *</label>
-        <input 
-          type="date" 
+        <label>📆 Data da entrega *</label>
+        <input
+          type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           min={getMinDate()}
           max={getMaxDate()}
           required
         />
+        <small>Mínimo 24h de antecedência</small>
       </div>
 
       {/* HORÁRIO */}
       <div className="form-group">
-        <label>⏰ Horário de Preferência *</label>
-        <select 
+        <label>⏰ Horário de preferência *</label>
+        <select
           value={selectedTime}
           onChange={(e) => setSelectedTime(e.target.value)}
           required
         >
-          <option value="">Selecione um horário</option>
+          <option value="">Selecione o horário</option>
           <option value="08:00-10:00">🕗 08:00 - 10:00 (Manhã)</option>
           <option value="10:00-12:00">🕙 10:00 - 12:00 (Manhã)</option>
           <option value="14:00-16:00">🕑 14:00 - 16:00 (Tarde)</option>
@@ -127,35 +181,38 @@ const Agendamento = () => {
         </select>
       </div>
 
-      {/* INSTRUÇÕES OPCIONAIS */}
+      {/* OBSERVAÇÕES */}
       <div className="form-group">
         <label>📝 Observações (opcional)</label>
-        <textarea 
+        <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Alguma observação especial sobre a entrega..."
-          rows="2"
+          placeholder="Ex: É aniversário dela, capricha na entrega! 🎉"
+          rows="3"
         />
       </div>
 
-      {/* INFORMAÇÕES IMPORTANTES */}
+      {/* INFO */}
       <div className="agendamento-info">
-        <h3>ℹ️ Informações Importantes:</h3>
+        <h3>ℹ️ Importante</h3>
         <ul>
           <li>• Entregas de segunda a sábado</li>
-          <li>• Horário comercial: 8h às 20h</li>
-          <li>• Entregas feitas por mensagens MSN</li>
-          <li>• Confirme as informações antes de enviar</li>
+          <li>• Mínimo 24h de antecedência</li>
+          <li>• A corujinha entrega automaticamente no horário escolhido</li>
         </ul>
       </div>
 
       {/* BOTÕES */}
       <div className="agendamento-buttons">
-        <button className="btn-confirm" onClick={handleSchedule}>
-          ✅ Confirmar Agendamento
+        <button
+          className="btn-confirm"
+          onClick={handleSchedule}
+          disabled={loading}
+        >
+          {loading ? '🦉 Salvando no ninho...' : '✅ Confirmar Agendamento'}
         </button>
         <button className="btn-back" onClick={() => navigate(-1)}>
-          ↩️ Voltar para Gravação
+          ↩️ Voltar
         </button>
       </div>
     </div>
