@@ -7,6 +7,7 @@ const Servicos = () => {
       // ALERTA DE TESTE
       alert(`🚨 Teste: chamando criar-pagamento para ${tipo} R$${valor}`);
 
+      // fetch ajustado para o caminho correto do Netlify
       const response = await fetch("/api/criar-pagamento", {
         method: "POST",
         headers: {
@@ -15,6 +16,7 @@ const Servicos = () => {
         body: JSON.stringify({ valor, tipo })
       });
 
+      // Verificação de JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Função não encontrada (404) - verifique o deploy');
@@ -24,7 +26,9 @@ const Servicos = () => {
       if (!response.ok) {
         throw new Error(data.message || "Erro no servidor");
       }
+
       if (data.success && data.init_point) {
+        // Redireciona para o Mercado Pago
         window.location.href = data.init_point;
       } else {
         alert("Erro ao criar pagamento. Tente novamente.");
