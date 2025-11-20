@@ -1,28 +1,20 @@
-[build] 
-  publish = "build" 
-  functions = ".netlify/functions" 
- 
-[build.environment] 
-  NODE_VERSION = "18" 
- 
-[[redirects]] 
-  from = "/*" 
-  to = "/index.html" 
-  status = 200 
-  force = true 
 [build]
-  functions = "netlify/functions"
   publish = "build"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
 
-# Despertadores da corujinha (horário de Brasília)
+# Despertadores da corujinha – entrega pontual de segunda a sábado
 [[functions]]
   function = "enviar-agendados"
-  schedule = "0 9 * * 1-6"   # 09:00 de seg a sáb
+  schedule = "0 9 * * 1-6"   # 09:00
 
 [[functions]]
   function = "enviar-agendados"
@@ -34,7 +26,7 @@
 
 [[functions]]
   function = "enviar-agendados"
-  schedule = "0 17 * * 1-6"  # 17:00
+  schedule = "0 17 * * 1-6"   # 17:00
 
 [[functions]]
   function = "enviar-agendados"
