@@ -4,9 +4,6 @@ import './Servicos.css';
 const Servicos = () => {
   const criarPagamento = async (valor, tipo) => {
     try {
-      // ALERTA DE TESTE
-      alert(`🚨 Teste: chamando criar-pagamento para ${tipo} R$${valor}`);
-
       const response = await fetch("/api/criar-pagamento", {
         method: "POST",
         headers: {
@@ -15,7 +12,6 @@ const Servicos = () => {
         body: JSON.stringify({ valor, tipo })
       });
 
-      // Check pra evitar o erro de JSON (se for HTML de 404)
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Função não encontrada (404) - verifique o deploy');
@@ -27,6 +23,7 @@ const Servicos = () => {
       }
 
       if (data.success && data.init_point) {
+        // Redireciona para o checkout do Mercado Pago
         window.location.href = data.init_point;
       } else {
         alert("Erro ao criar pagamento. Tente novamente.");
