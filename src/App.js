@@ -10,6 +10,8 @@ import Agendamento from './screens/Agendamento';
 import Saida from './screens/Saida';
 import VideoRecordPage from './screens/VideoRecordPage';
 import AdminDashboard from './screens/AdminDashboard';
+import PagamentoAudio from './PagamentoAudio';
+import PagamentoVideo from './PagamentoVideo';
 import './App.css';
 
 function App() {
@@ -26,6 +28,8 @@ function App() {
           <Route path="/saida" element={<Saida />} />
           <Route path="/videorecorder" element={<VideoRecordPage />} />
           <Route path="/admin/painel" element={<AdminDashboard />} />
+          <Route path="/pagamento-audio" element={<PagamentoAudio />} />
+          <Route path="/pagamento-video" element={<PagamentoVideo />} />
           <Route path="/audiorecorder" element={<AudioRecordPage />} /> {/* ← Corrigido! */}
         </Routes>
       </div>
