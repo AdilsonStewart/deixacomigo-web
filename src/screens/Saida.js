@@ -21,18 +21,17 @@ const Saida = () => {
 
   const nomeDestinatario = getNomeDestinatario();
 
+  // Enviar nova mensagem → volta para SERVICOS
   const handleNovaMensagem = () => {
     localStorage.removeItem('lastRecordingId');
-    localStorage.removeItem('lastRecording');
-    navigate('/audiorecorder');
+    localStorage.removeItem('lastRecordingUrl');
+    navigate('/servicos');
   };
 
+  // Sair do App → volta para HOME
   const handleSair = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.close();
-    }
+    localStorage.clear(); // opcional, mas bom para limpeza
+    navigate('/');
   };
 
   return (
@@ -45,6 +44,7 @@ const Saida = () => {
             className="success-gif"
           />
         </div>
+
         <h1 className="saida-title">Agendamento Confirmado!</h1>
         
         <div className="saida-message">
