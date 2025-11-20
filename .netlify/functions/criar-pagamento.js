@@ -5,24 +5,15 @@ mercadopago.configure({
 });
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Método não permitido" };
-  }
+  if (event.httpMethod !== "POST") return { statusCode: 405, body: "Método não permitido" };
 
   try {
     const { valor, tipo } = JSON.parse(event.body);
 
-    const titulo = tipo.toLowerCase() === "vídeo"
-      ? "Mensagem em Vídeo Surpresa"
-      : "Mensagem em Áudio Surpresa";
+    const titulo = tipo.toLowerCase() === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
     const preference = {
-      items: [{
-        title: titulo,
-        unit_price: Number(valor),
-        currency_id: "BRL",
-        quantity: 1
-      }],
+      items: [{ title: titulo, unit_price: Number(valor), currency_id: "BRL", quantity: 1 }],
       back_urls: {
         success: "https://deixacomigoweb.netlify.app/sucesso",
         failure: "https://deixacomigoweb.netlify.app/erro",
