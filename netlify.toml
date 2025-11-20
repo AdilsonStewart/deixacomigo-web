@@ -10,3 +10,32 @@
   to = "/index.html" 
   status = 200 
   force = true 
+[build]
+  functions = "netlify/functions"
+  publish = "build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Despertadores da corujinha (horário de Brasília)
+[[functions]]
+  function = "enviar-agendados"
+  schedule = "0 9 * * 1-6"   # 09:00 de seg a sáb
+
+[[functions]]
+  function = "enviar-agendados"
+  schedule = "0 11 * * 1-6"  # 11:00
+
+[[functions]]
+  function = "enviar-agendados"
+  schedule = "0 15 * * 1-6"  # 15:00
+
+[[functions]]
+  function = "enviar-agendados"
+  schedule = "0 17 * * 1-6"  # 17:00
+
+[[functions]]
+  function = "enviar-agendados"
+  schedule = "0 19 * * 1-6"  # 19:00
