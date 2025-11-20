@@ -12,7 +12,7 @@ if (!admin.apps.length) {
 exports.handler = async (event, context) => {
   try {
     const mensagem = "Oi Adilson! Sou a corujinha do DeixaComigo e já estou funcionando direitinho! 🦉❤️";
-    const telefone = "+5541999999999"; // ← TROQUE AQUI PELO SEU CELULAR COM +55 (ex: +5541988887777)
+    const telefone = "+5511988265000"; // ← TROQUE AQUI PELO SEU CELULAR COM +55 (ex: +5541988887777)
 
     await axios.post('https://api.clicksend.com/v3/sms/send', {
       messages: [
