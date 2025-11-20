@@ -1,12 +1,8 @@
 [build]
-  publish = "build"
-  functions = "netlify/functions"
-
-[build.environment]
-  NODE_VERSION = "18"
+  publish = "build"  # ou "dist" se usar Vite
+  functions = ".netlify/functions"  # confirma a pasta
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
-  force = true
