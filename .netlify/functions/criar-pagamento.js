@@ -12,8 +12,8 @@ exports.handler = async (event) => {
   try {
     const { valor, tipo } = JSON.parse(event.body);
 
-    const titulo = tipo.toLowerCase() === "vídeo" 
-      ? "Mensagem em Vídeo Surpresa" 
+    const titulo = tipo.toLowerCase() === "vídeo"
+      ? "Mensagem em Vídeo Surpresa"
       : "Mensagem em Áudio Surpresa";
 
     const preference = {
@@ -28,8 +28,7 @@ exports.handler = async (event) => {
         failure: "https://deixacomigoweb.netlify.app/erro",
         pending: "https://deixacomigoweb.netlify.app/erro"
       },
-      auto_return: "approved",
-      statement_descriptor: "DEIXA COMIGO"
+      auto_return: "approved"
     };
 
     const result = await mercadopago.preferences.create(preference);
