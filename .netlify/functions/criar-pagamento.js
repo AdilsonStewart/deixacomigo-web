@@ -1,30 +1,42 @@
-import mercadopago from "mercadopago";
+// deixacomigo-web/.netlify/functions/criar-pagamento.js
 
-export const handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: "Método não permitido" }),
-    };
-  }
+const mercadopago = require("mercadopago");
 
+exports.handler = async (event) => {
   try {
-    const { valor, tipo } = JSON.parse(event.body);
+    const { valor, tipo } = JSON.parse(event.body || "{}");
 
-    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
+    if (!valor || !tipo) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, message: "Dados inválidos" }),
+      };
+    }
 
+    // CONFIGURAR MERCADO PAGO
+    mercadopago.configure({
+      access_token: process.env.MP_ACCESS_TOKEN, // variável do Netlify
+    });
+
+    // Definir URLs de retorno conforme tipo
+    let successUrl = "";
+    if (tipo === "áudio") successUrl = "https://deixacomigo.netlify.app/sucesso";
+    if (tipo === "vídeo") successUrl = "https://deixacomigo.netlify.app/sucesso2";
+
+    // CRIAÇÃO DA PREFERÊNCIA
     const preference = {
       items: [
         {
-          title: `Lembrete em ${tipo}`,
+          title: `Mensageiro - ${tipo}`,
           quantity: 1,
+          currency_id: "BRL",
           unit_price: Number(valor),
         },
       ],
       back_urls: {
-        success: "https://seu-site.netlify.app/sucesso",
-        failure: "https://seu-site.netlify.app/falha",
-        pending: "https://seu-site.netlify.app/pendente",
+        success: successUrl,
+        failure: "https://deixacomigo.netlify.app/erro",
+        pending: "https://deixacomigo.netlify.app/pendente",
       },
       auto_return: "approved",
     };
@@ -33,18 +45,21 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        init_point: result.body.init_point,
-        preference_id: result.body.id,
+        init_point: result.body.init_point, // link para pagamento
       }),
     };
   } catch (error) {
-    console.error("Erro MP:", error);
+    console.error("Erro ao criar pagamento:", error);
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
+      body: JSON.stringify({
+        success: false,
+        message: "Erro interno ao criar pagamento",
+        error: error.message,
+      }),
     };
   }
 };
