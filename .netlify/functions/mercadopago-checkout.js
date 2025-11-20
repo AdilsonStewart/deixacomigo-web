@@ -1,77 +1,83 @@
-const mercadopago = require("mercadopago");
-
-exports.handler = async (event) => {
+export const handler = async (event) => {
+  // Só aceita POST
   if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: "Método não permitido" }),
-    };
+    return { statusCode: 405, body: "Método não permitido" };
   }
 
   try {
-    const { tipo } = JSON.parse(event.body);
+    const { valor, tipo } = JSON.parse(event.body);
 
-    // 🔥 Definindo valores fixos por segurança
-    const precos = {
-      audio: 1.99,
-      video: 4.99
-    };
-
-    const valor = precos[tipo] || null;
-
-    if (!valor) {
+    if (!valor || !tipo) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Tipo de pagamento inválido" }),
+        body: JSON.stringify({ success: false, message: "Valor ou tipo ausente" })
       };
     }
 
-    // 🔐 Token armazenado no Netlify
-    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
-
-    // 🔄 Redirecionamentos conforme o tipo
-    const successUrl =
-      tipo === "audio"
-        ? "https://deixacomigoweb.netlify.app/sucesso"
-        : "https://deixacomigoweb.netlify.app/sucesso2";
+    // Título limpo (Mercado Pago rejeita acentos e caracteres especiais em produção)
+    const titulo = tipo === "video" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
     const preference = {
       items: [
         {
-          title: `Lembrete em ${tipo}`,
-          quantity: 1,
-          unit_price: Number(valor),
+          title: titulo,
+          unit_price: Number(valor),   // já chega como número do front
           currency_id: "BRL",
+          quantity: 1
         }
       ],
       back_urls: {
-        success: successUrl,
+        success: "https://deixacomigoweb.netlify.app/sucesso",
         failure: "https://deixacomigoweb.netlify.app/erro",
         pending: "https://deixacomigoweb.netlify.app/erro"
       },
-      auto_return: "approved"
+      auto_return: "approved",
+      notification_url: "https://deixacomigoweb.netlify.app/.netlify/functions/webhook-mp", // opcional, mas recomendado
+      statement_descriptor: "DEIXA COMIGO" // aparece no cartão do cliente
     };
 
-    const result = await mercadopago.preferences.create(preference);
+    const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`   // token de produção
+      },
+      body: JSON.stringify(preference)
+    });
+
+    const data = await mpResponse.json();
+
+    // Erro da API do Mercado Pago
+    if (!mpResponse.ok || data.error) {
+      console.error("Erro Mercado Pago:", data);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          message: "Erro no Mercado Pago",
+          details: data.message || data
+        })
+      };
+    }
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        init_point: result.body.init_point,
-        preference_id: result.body.id
+        preferenceId: data.id,
+        init_point: data.init_point   // esse é o link que abre o checkout de verdade
       })
     };
 
   } catch (error) {
-    console.error("Erro MP:", error);
+    console.error("Erro interno:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
-        error: error.message,
-      }),
+        message: "Erro interno no servidor",
+        error: error.message
+      })
     };
   }
 };
