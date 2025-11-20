@@ -1,4 +1,10 @@
-export const handler = async (event) => {
+const mercadopago = require("mercadopago");
+
+mercadopago.configure({
+  access_token: process.env.MP_ACCESS_TOKEN
+});
+
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Método não permitido" };
   }
@@ -6,17 +12,17 @@ export const handler = async (event) => {
   try {
     const { valor, tipo } = JSON.parse(event.body);
 
-    const titulo = tipo.toLowerCase() === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
+    const titulo = tipo.toLowerCase() === "vídeo" 
+      ? "Mensagem em Vídeo Surpresa" 
+      : "Mensagem em Áudio Surpresa";
 
     const preference = {
-      items: [
-        {
-          title: titulo,
-          unit_price: Number(valor),
-          currency_id: "BRL",
-          quantity: 1
-        }
-      ],
+      items: [{
+        title: titulo,
+        unit_price: Number(valor),
+        currency_id: "BRL",
+        quantity: 1
+      }],
       back_urls: {
         success: "https://deixacomigoweb.netlify.app/sucesso",
         failure: "https://deixacomigoweb.netlify.app/erro",
@@ -26,36 +32,22 @@ export const handler = async (event) => {
       statement_descriptor: "DEIXA COMIGO"
     };
 
-    const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`
-      },
-      body: JSON.stringify(preference)
-    });
+    const result = await mercadopago.preferences.create(preference);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Erro MP:", data);
-      return { statusCode: 400, body: JSON.stringify({ success: false, message: data.message || "Erro no Mercado Pago" }) };
-    }
-
-    // <<< AQUI É O QUE O FRONTEND ESPERA >>>
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        init_point: data.init_point   // exatamente esse nome e formato
+        init_point: result.body.init_point || result.body.sandbox_init_point
       })
     };
 
   } catch (error) {
-    console.error("Erro interno:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, message: "Erro interno no servidor" })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ success: false })
     };
   }
 };
