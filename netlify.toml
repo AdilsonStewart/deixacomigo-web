@@ -1,8 +1,9 @@
 [build]
-  publish = "build"  # ou "dist" se usar Vite
-  functions = ".netlify/functions"  # confirma a pasta
+  publish = "build"
+  functions = ".netlify/functions"
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+  force = true
