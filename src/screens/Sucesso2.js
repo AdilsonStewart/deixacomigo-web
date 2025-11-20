@@ -1,52 +1,30 @@
-.sucesso2-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: #f4f4f4;
-  padding: 20px;
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Sucesso2.css";
+
+function Sucesso2() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/videorecorder");
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return (
+    <div className="sucesso2-container">
+      <div className="sucesso2-card">
+        <h2 className="sucesso2-title">Pagamento Aprovado! 🎉</h2>
+        <p className="sucesso2-text">Aguarde um instante…</p>
+        <div className="sucesso2-loader"></div>
+        <p className="sucesso2-subtext">
+          Você será redirecionado para a gravação do vídeo.
+        </p>
+      </div>
+    </div>
+  );
 }
 
-.sucesso2-card {
-  background: #ffffff;
-  padding: 40px;
-  border-radius: 14px;
-  max-width: 400px;
-  width: 100%;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-  text-align: center;
-}
-
-.sucesso2-title {
-  font-size: 24px;
-  color: #28a745;
-  margin-bottom: 10px;
-}
-
-.sucesso2-text {
-  font-size: 18px;
-  margin-bottom: 30px;
-  color: #333;
-}
-
-.sucesso2-subtext {
-  font-size: 14px;
-  color: #777;
-  margin-top: 15px;
-}
-
-.sucesso2-loader {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #28a745;
-  border-top-color: transparent;
-  border-radius: 50%;
-  margin: 0 auto;
-  animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+export default Sucesso2;
