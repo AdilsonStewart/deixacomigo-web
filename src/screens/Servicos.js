@@ -3,7 +3,6 @@ import './Servicos.css';
 
 const Servicos = () => {
 
-  // Função para chamar sua Function criar-pagamento
   const criarPagamento = async (valor, tipo) => {
     try {
       const response = await fetch("/.netlify/functions/criar-pagamento", {
@@ -16,13 +15,20 @@ const Servicos = () => {
 
       const data = await response.json();
 
-      if (data.init_point) {
-        window.location.href = data.init_point; // Redireciona ao Mercado Pago
+      if (!response.ok) {
+        throw new Error(data.message || "Erro no servidor");
+      }
+
+      if (data.success && data.init_point) {
+        // Redireciona pro checkout do Mercado Pago
+        window.location.href = data.init_point;
       } else {
-        alert("Erro ao iniciar pagamento.");
+        alert("Erro ao criar pagamento. Tente novamente.");
+        console.error("Resposta inesperada:", data);
       }
     } catch (error) {
-      alert("Houve um erro na comunicação com o servidor.");
+      console.error("Erro:", error);
+      alert("Houve um erro na comunicação com o servidor. Verifique sua conexão e tente novamente.");
     }
   };
 
@@ -38,14 +44,14 @@ const Servicos = () => {
 
       <button 
         className="botao botao-audio"
-        onClick={() => criarPagamento(1.99, "Áudio")}
+        onClick={() => criarPagamento(1.99, "áudio")}
       >
         Áudio 30s — R$ 1,99
       </button>
 
       <button 
         className="botao botao-video"
-        onClick={() => criarPagamento(4.99, "Vídeo")}
+        onClick={() => criarPagamento(4.99, "vídeo")}
       >
         Vídeo 30s — R$ 4,99
       </button>
