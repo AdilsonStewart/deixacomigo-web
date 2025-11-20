@@ -1,13 +1,14 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import "./Sucesso2.css";
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Sucesso2.css';
 
-function Sucesso2() {
+const Sucesso2 = () => {
   const navigate = useNavigate();
 
+  // Após 3 segundos → vai para a VideoRecorderPage
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/videorecorder");
+      navigate('/videorecorder');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -15,16 +16,16 @@ function Sucesso2() {
 
   return (
     <div className="sucesso2-container">
-      <div className="sucesso2-card">
-        <h2 className="sucesso2-title">Pagamento Aprovado! 🎉</h2>
-        <p className="sucesso2-text">Aguarde um instante…</p>
-        <div className="sucesso2-loader"></div>
-        <p className="sucesso2-subtext">
-          Você será redirecionado para a gravação do vídeo.
-        </p>
-      </div>
+      <img
+        className="sucesso2-gif"
+        src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDg4aHBpM2V0cG50N2phN3R0M2txdzZkY3hucDJpN2gyNmlrYzV4NCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26xBIygOcC3bAWg3S/giphy.gif"
+        alt="Sucesso"
+      />
+
+      <h1>Pagamento Aprovado!</h1>
+      <p>Redirecionando para gravação de vídeo...</p>
     </div>
   );
-}
+};
 
 export default Sucesso2;
