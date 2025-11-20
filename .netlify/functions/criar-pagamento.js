@@ -1,25 +1,32 @@
-const mercadopago = require("mercadopago");
+import mercadopago from "mercadopago";
 
-mercadopago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN
-});
-
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return { statusCode: 405, body: "Método não permitido" };
+export const handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: "Método não permitido" }),
+    };
+  }
 
   try {
     const { valor, tipo } = JSON.parse(event.body);
 
-    const titulo = tipo.toLowerCase() === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
+    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
 
     const preference = {
-      items: [{ title: titulo, unit_price: Number(valor), currency_id: "BRL", quantity: 1 }],
+      items: [
+        {
+          title: `Lembrete em ${tipo}`,
+          quantity: 1,
+          unit_price: Number(valor),
+        },
+      ],
       back_urls: {
-        success: "https://deixacomigoweb.netlify.app/sucesso",
-        failure: "https://deixacomigoweb.netlify.app/erro",
-        pending: "https://deixacomigoweb.netlify.app/erro"
+        success: "https://seu-site.netlify.app/sucesso",
+        failure: "https://seu-site.netlify.app/falha",
+        pending: "https://seu-site.netlify.app/pendente",
       },
-      auto_return: "approved"
+      auto_return: "approved",
     };
 
     const result = await mercadopago.preferences.create(preference);
@@ -29,15 +36,15 @@ exports.handler = async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        init_point: result.body.init_point || result.body.sandbox_init_point
-      })
+        init_point: result.body.init_point,
+        preference_id: result.body.id,
+      }),
     };
-
   } catch (error) {
+    console.error("Erro MP:", error);
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ success: false })
+      body: JSON.stringify({ success: false, error: error.message }),
     };
   }
 };
