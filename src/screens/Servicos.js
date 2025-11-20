@@ -6,31 +6,42 @@ const Servicos = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container">
+    <div className="servicos-container">
       <h1 className="titulo">Serviços</h1>
 
-      <img 
-        className="gif-servicos"
+      {/* GIF */}
+      <img
         src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3dqMDloZHlsM2sxY3RrMHQ3cjluYzBpYjlwNXFqNmI2ZXF1NjUxdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/rKYYa2fMQNRfBwvtZJ/giphy.gif"
-        alt="Animação serviços"
+        alt="Serviços GIF"
+        className="servicos-gif"
       />
 
-      <button 
-        className="botao botao-audio"
+      {/* Botões de Pagamento */}
+      <button
+        className="botao pagamento"
         onClick={() => navigate('/pagamento-audio')}
       >
-        Áudio 30s — R$ 1,99
+        🎤 Áudio 30s — R$ 1,99
       </button>
 
-      <button 
-        className="botao botao-video"
+      <button
+        className="botao pagamento"
         onClick={() => navigate('/pagamento-video')}
       >
-        Vídeo 30s — R$ 4,99
+        🎬 Vídeo 30s — R$ 4,99
       </button>
 
+      {/* Botão para gravar áudio */}
       <button 
-        className="voltar-text"
+        className="botao"
+        onClick={() => navigate('/audiorecorder')}
+      >
+        Gravar Áudio
+      </button>
+
+      {/* Voltar */}
+      <button 
+        className="botao voltar" 
         onClick={() => navigate('/')}
       >
         Voltar
