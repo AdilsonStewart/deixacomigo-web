@@ -5,7 +5,7 @@ const Servicos = () => {
 
   const criarPagamento = async (valor, tipo) => {
     try {
-      const response = await fetch("/api/criar-pagamento", {
+      const response = await fetch("/.netlify/functions/criar-pagamento", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
