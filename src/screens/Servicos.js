@@ -12,7 +12,6 @@ const Servicos = () => {
         body: JSON.stringify({ valor, tipo })
       });
 
-      // Check pra evitar o erro de JSON (se for HTML de 404)
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error('Função não encontrada (404) - verifique o deploy');
@@ -36,6 +35,20 @@ const Servicos = () => {
 
   return (
     <div className="servicos-container">
+
+      {/* ALERTA DE TESTE EM VERMELHO */}
+      <div style={{
+        backgroundColor: 'red',
+        color: 'white',
+        padding: '10px',
+        textAlign: 'center',
+        marginBottom: '15px',
+        fontWeight: 'bold',
+        borderRadius: '5px'
+      }}>
+        🚨 ALERTA DE TESTE: Esta é uma mensagem de teste!
+      </div>
+
       <img
         src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3dqMDloZHlsM2sxY3RrMHQ3cjluYzBpYjlwNXFqNmI2ZXF1NjUxdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/rKYYa2fMQNRfBwvtZJ/giphy.gif"
         alt="Serviços"
