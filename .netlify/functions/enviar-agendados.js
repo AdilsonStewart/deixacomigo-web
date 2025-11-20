@@ -1,3 +1,4 @@
+const { schedule } from "@netlify/functions";
 const admin = require('firebase-admin');
 const axios = require('axios');
 
@@ -9,7 +10,7 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
-// Horários que a corujinha entrega
+// Horários da corujinha
 const HORARIOS_MAP = {
   '9':  '08:00-10:00',
   '11': '10:00-12:00',
@@ -45,14 +46,12 @@ const handler = async () => {
 
     try {
       await axios.post('https://api.clicksend.com/v3/sms/send', {
-        messages: [
-          {
-            source: "sdk",
-            from: "DeixaComigo",
-            to: data.telefoneDestinatario,
-            body: mensagem
-          }
-        ]
+        messages: [{
+          source: "sdk",
+          from: "DeixaComigo",
+          to: data.telefoneDestinatario,
+          body: mensagem
+        }]
       }, {
         auth: {
           username: process.env.CLICKSEND_USERNAME,
@@ -73,5 +72,5 @@ const handler = async () => {
   };
 };
 
-// MUDANÇA AQUI: removido o schedule (não está sendo usado)
-exports.handler = handler;
+// AGENDAMENTO ATIVO: segunda a sábado nos horários 9h, 11h, 15h, 17h e 19h
+exports.handler = schedule("0 9,11,15,17,19 * * 1-6", handler);
