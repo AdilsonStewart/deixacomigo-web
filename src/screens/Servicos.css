@@ -83,3 +83,10 @@
   cursor: pointer;
   text-decoration: underline;
 }
+.gif-servicos {
+  width: 220px;
+  height: auto;
+  margin-bottom: 25px;
+  border-radius: 20px;
+}
+
