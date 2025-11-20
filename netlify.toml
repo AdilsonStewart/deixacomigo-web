@@ -11,23 +11,27 @@
   status = 200
   force = true
 
-# Despertadores da corujinha – entrega automática de segunda a sábado
-[[functions]]
-  function = "enviar-agendados"
-  schedule = "0 9 * * 1-6"
+# ============== CORUJINHA AGENDADA ==============
+[functions]
+  directory = "netlify/functions"
 
-[[functions]]
+[[functions.scheduled]]
   function = "enviar-agendados"
-  schedule = "0 11 * * 1-6"
+  schedule = "0 9 * * 1-6"   # 09:00 seg–sáb
 
-[[functions]]
+[[functions.scheduled]]
   function = "enviar-agendados"
-  schedule = "0 15 * * 1-6"
+  schedule = "0 11 * * 1-6"  #11:00
 
-[[functions]]
+[[functions.scheduled]]
   function = "enviar-agendados"
-  schedule = "0 17 * * 1-6"
+  schedule = "0 15 * * 1-6"  #15:00
 
-[[functions]]
+[[functions.scheduled]]
   function = "enviar-agendados"
+  schedule = "0 17 * * 1-6"  #17:00
+
+[[functions.scheduled]]
+  function = "enviar-agendados"
+  #19:00
   schedule = "0 19 * * 1-6"
