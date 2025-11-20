@@ -4,6 +4,9 @@ import './Servicos.css';
 const Servicos = () => {
   const criarPagamento = async (valor, tipo) => {
     try {
+      // ALERTA DE TESTE
+      alert(`🚨 Teste: chamando criar-pagamento para ${tipo} R$${valor}`);
+
       const response = await fetch("/api/criar-pagamento", {
         method: "POST",
         headers: {
@@ -21,9 +24,7 @@ const Servicos = () => {
       if (!response.ok) {
         throw new Error(data.message || "Erro no servidor");
       }
-
       if (data.success && data.init_point) {
-        // Redireciona para o checkout do Mercado Pago
         window.location.href = data.init_point;
       } else {
         alert("Erro ao criar pagamento. Tente novamente.");
