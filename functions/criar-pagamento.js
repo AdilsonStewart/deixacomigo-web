@@ -1,19 +1,4 @@
-import MercadoPagoConfig from 'mercadopago';
-import Payment from 'mercadopago/dist/clients/payment';
-
-// ------------------------------------------------------------------------------------------------
-// CONFIGURAÇÃO
-// ------------------------------------------------------------------------------------------------
-
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN
-});
-
-const payment = new Payment(client);
-
-// ------------------------------------------------------------------------------------------------
-// HANDLER
-// ------------------------------------------------------------------------------------------------
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 export const handler = async (event) => {
   try {
@@ -25,13 +10,20 @@ export const handler = async (event) => {
     console.log(`🎯 VALOR: ${valor} TIPO: ${tipo}`);
 
     if (!valor || !tipo) {
-      throw new Error("Valor ou tipo não enviado.");
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, message: "Dados inválidos" })
+      };
     }
 
-    // ------------------------------------------------------------------------------------------------
-    // CRIAÇÃO DO PAGAMENTO
-    // ------------------------------------------------------------------------------------------------
+    // CONFIGURA CLIENTE
+    const client = new MercadoPagoConfig({
+      accessToken: process.env.MP_ACCESS_TOKEN
+    });
 
+    const payment = new Payment(client);
+
+    // CRIAR PAGAMENTO PIX
     const resposta = await payment.create({
       body: {
         transaction_amount: Number(valor),
@@ -52,6 +44,7 @@ export const handler = async (event) => {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        success: true,
         copiaCola,
         qrBase64
       })
@@ -63,7 +56,7 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: true,
+        success: false,
         message: error.message
       })
     };
