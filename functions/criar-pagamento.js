@@ -1,66 +1,71 @@
-// functions/criar-pagamento.js
-const mercadopago = require("mercadopago");
+import MercadoPagoConfig from 'mercadopago';
+import Payment from 'mercadopago/dist/clients/payment';
 
-exports.handler = async (event) => {
+// ------------------------------------------------------------------------------------------------
+// CONFIGURAÇÃO
+// ------------------------------------------------------------------------------------------------
+
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN
+});
+
+const payment = new Payment(client);
+
+// ------------------------------------------------------------------------------------------------
+// HANDLER
+// ------------------------------------------------------------------------------------------------
+
+export const handler = async (event) => {
   try {
-    const { valor, tipo } = JSON.parse(event.body || "{}");
+    console.log("📩 EVENTO RECEBIDO:", event.body);
+
+    const body = JSON.parse(event.body || '{}');
+    const { valor, tipo } = body;
+
+    console.log(`🎯 VALOR: ${valor} TIPO: ${tipo}`);
 
     if (!valor || !tipo) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ success: false, message: "Dados inválidos" }),
-      };
+      throw new Error("Valor ou tipo não enviado.");
     }
 
-    // Configura Mercado Pago
-    mercadopago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN,
+    // ------------------------------------------------------------------------------------------------
+    // CRIAÇÃO DO PAGAMENTO
+    // ------------------------------------------------------------------------------------------------
+
+    const resposta = await payment.create({
+      body: {
+        transaction_amount: Number(valor),
+        description: `Pagamento por ${tipo}`,
+        payment_method_id: 'pix',
+        payer: {
+          email: "user@example.com"
+        }
+      }
     });
 
-    // USE SEU DOMÍNIO CORRETO
-    const BASE = "https://deixacomigoweb.netlify.app";
+    console.log("💰 RESPOSTA MERCADO PAGO:", resposta);
 
-    let successUrl = "";
-    if (tipo === "áudio") successUrl = `${BASE}/sucesso`;
-    if (tipo === "vídeo") successUrl = `${BASE}/sucesso2`;
-
-    const preference = {
-      items: [
-        {
-          title: `Mensageiro - ${tipo}`,
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: Number(valor),
-        },
-      ],
-      back_urls: {
-        success: successUrl,
-        failure: `${BASE}/erro`,
-        pending: `${BASE}/pendente`,
-      },
-      auto_return: "approved",
-    };
-
-    const result = await mercadopago.preferences.create(preference);
+    const copiaCola = resposta.point_of_interaction.transaction_data.qr_code;
+    const qrBase64 = resposta.point_of_interaction.transaction_data.qr_code_base64;
 
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        success: true,
-        init_point: result.body.init_point,
-      }),
+        copiaCola,
+        qrBase64
+      })
     };
 
   } catch (error) {
-    console.error("Erro ao criar pagamento:", error);
+    console.error("🔥 ERRO NO SERVIDOR:", error);
 
     return {
       statusCode: 500,
       body: JSON.stringify({
-        success: false,
-        message: "Erro interno ao criar pagamento",
-        error: error.message,
-      }),
+        error: true,
+        message: error.message
+      })
     };
   }
 };
