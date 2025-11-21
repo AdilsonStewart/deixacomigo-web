@@ -5,10 +5,10 @@ const Servicos = () => {
   const criarPagamento = async (valor, tipo) => {
     try {
       // Alerta de teste para confirmar que a função é chamada
-      console.log(`🚨 Chamando criar-pagamento para ${tipo} R$${valor}`);
+      console.log(`🚨 Chamando criarpagamento para ${tipo} R$${valor}`);
 
       // Chama a função Netlify (note o /api/ que mapeia para functions)
-      const response = await fetch("/api/criar-pagamento", {
+      const response = await fetch("/api/criarpagamento", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
