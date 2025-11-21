@@ -1,45 +1,30 @@
 // functions/criar-pagamento.js
-const { MercadoPagoConfig, Preference } = require("mercadopago");
+const mercadopago = require("mercadopago");
 
 exports.handler = async (event) => {
   try {
-    console.log("📩 EVENTO RECEBIDO:", event.body);
-
     const { valor, tipo } = JSON.parse(event.body || "{}");
 
-    console.log("🎯 VALOR:", valor, "TIPO:", tipo);
-
     if (!valor || !tipo) {
-      console.log("❌ Dados inválidos!");
       return {
         statusCode: 400,
         body: JSON.stringify({ success: false, message: "Dados inválidos" }),
       };
     }
 
-    if (!process.env.MP_ACCESS_TOKEN) {
-      console.log("❌ MP_ACCESS_TOKEN está vazio!");
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          success: false,
-          message: "Token Mercado Pago não configurado",
-        }),
-      };
-    }
-
-    // ⚡ SDK nova — assim que se configura
-    const client = new MercadoPagoConfig({
-      accessToken: process.env.MP_ACCESS_TOKEN,
+    // Configura Mercado Pago
+    mercadopago.configure({
+      access_token: process.env.MP_ACCESS_TOKEN,
     });
 
-    const preference = new Preference(client);
+    // USE SEU DOMÍNIO CORRETO
+    const BASE = "https://deixacomigoweb.netlify.app";
 
     let successUrl = "";
-    if (tipo === "áudio") successUrl = "https://deixacomigo.netlify.app/sucesso";
-    if (tipo === "vídeo") successUrl = "https://deixacomigo.netlify.app/sucesso2";
+    if (tipo === "áudio") successUrl = `${BASE}/sucesso`;
+    if (tipo === "vídeo") successUrl = `${BASE}/sucesso2`;
 
-    const prefData = {
+    const preference = {
       items: [
         {
           title: `Mensageiro - ${tipo}`,
@@ -50,27 +35,24 @@ exports.handler = async (event) => {
       ],
       back_urls: {
         success: successUrl,
-        failure: "https://deixacomigo.netlify.app/erro",
-        pending: "https://deixacomigo.netlify.app/pendente",
+        failure: `${BASE}/erro`,
+        pending: `${BASE}/pendente`,
       },
       auto_return: "approved",
     };
 
-    console.log("📦 Preferência enviada:", prefData);
-
-    const result = await preference.create({ body: prefData });
-
-    console.log("✅ RESULTADO MP:", result);
+    const result = await mercadopago.preferences.create(preference);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        init_point: result.init_point,
+        init_point: result.body.init_point,
       }),
     };
+
   } catch (error) {
-    console.error("🔥 ERRO NO SERVIDOR:", error);
+    console.error("Erro ao criar pagamento:", error);
 
     return {
       statusCode: 500,
