@@ -1,28 +1,40 @@
-// functions/criar-pagamento.js
 const mercadopago = require("mercadopago");
 
 exports.handler = async (event) => {
   try {
+    console.log("📩 EVENTO RECEBIDO:", event.body);
+
     const { valor, tipo } = JSON.parse(event.body || "{}");
 
+    console.log("🎯 VALOR:", valor, "TIPO:", tipo);
+
     if (!valor || !tipo) {
+      console.log("❌ Dados inválidos!");
       return {
         statusCode: 400,
         body: JSON.stringify({ success: false, message: "Dados inválidos" }),
       };
     }
 
-    // Configura Mercado Pago
+    if (!process.env.MP_ACCESS_TOKEN) {
+      console.log("❌ MP_ACCESS_TOKEN está vazio!");
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          success: false,
+          message: "Token do Mercado Pago não configurado",
+        }),
+      };
+    }
+
     mercadopago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN, // coloque no Netlify como variável
+      access_token: process.env.MP_ACCESS_TOKEN,
     });
 
-    // Define URLs de retorno conforme tipo
     let successUrl = "";
     if (tipo === "áudio") successUrl = "https://deixacomigo.netlify.app/sucesso";
     if (tipo === "vídeo") successUrl = "https://deixacomigo.netlify.app/sucesso2";
 
-    // Criação da preferência
     const preference = {
       items: [
         {
@@ -40,17 +52,21 @@ exports.handler = async (event) => {
       auto_return: "approved",
     };
 
+    console.log("📦 Preferência enviada:", preference);
+
     const result = await mercadopago.preferences.create(preference);
+
+    console.log("✅ RESULTADO MP:", result.body);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        init_point: result.body.init_point, // link para checkout
+        init_point: result.body.init_point,
       }),
     };
   } catch (error) {
-    console.error("Erro ao criar pagamento:", error);
+    console.error("🔥 ERRO NO SERVIDOR:", error);
 
     return {
       statusCode: 500,
