@@ -1,4 +1,5 @@
-const mercadopago = require("mercadopago");
+// functions/criar-pagamento.js
+const { MercadoPagoConfig, Preference } = require("mercadopago");
 
 exports.handler = async (event) => {
   try {
@@ -22,20 +23,23 @@ exports.handler = async (event) => {
         statusCode: 500,
         body: JSON.stringify({
           success: false,
-          message: "Token do Mercado Pago não configurado",
+          message: "Token Mercado Pago não configurado",
         }),
       };
     }
 
-    mercadopago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN,
+    // ⚡ SDK nova — assim que se configura
+    const client = new MercadoPagoConfig({
+      accessToken: process.env.MP_ACCESS_TOKEN,
     });
+
+    const preference = new Preference(client);
 
     let successUrl = "";
     if (tipo === "áudio") successUrl = "https://deixacomigo.netlify.app/sucesso";
     if (tipo === "vídeo") successUrl = "https://deixacomigo.netlify.app/sucesso2";
 
-    const preference = {
+    const prefData = {
       items: [
         {
           title: `Mensageiro - ${tipo}`,
@@ -52,17 +56,17 @@ exports.handler = async (event) => {
       auto_return: "approved",
     };
 
-    console.log("📦 Preferência enviada:", preference);
+    console.log("📦 Preferência enviada:", prefData);
 
-    const result = await mercadopago.preferences.create(preference);
+    const result = await preference.create({ body: prefData });
 
-    console.log("✅ RESULTADO MP:", result.body);
+    console.log("✅ RESULTADO MP:", result);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        init_point: result.body.init_point,
+        init_point: result.init_point,
       }),
     };
   } catch (error) {
