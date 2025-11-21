@@ -6,7 +6,7 @@ const Servicos = () => {
     try {
       console.log(`🚨 Chamando criar-pagamento para ${tipo} R$${valor}`);
 
-      // CHAMADA CORRETA — COM HÍFEN
+      // CHAMADA CORRETA PARA NETLIFY
       const response = await fetch("/.netlify/functions/criar-pagamento", {
         method: "POST",
         headers: {
@@ -15,14 +15,13 @@ const Servicos = () => {
         body: JSON.stringify({ valor, tipo })
       });
 
-      const contentType = response.headers.get('content-type');
       if (!response.ok) {
-  const text = await response.text();
-  console.error("Resposta da função:", text);
-  throw new Error("Erro ao chamar a função: " + response.status);
-}
-        throw new Error(data.message || "Erro no servidor");
+        const text = await response.text();
+        console.error("Resposta da função:", text);
+        throw new Error("Erro ao chamar a função: " + response.status);
       }
+
+      const data = await response.json();
 
       if (data.success && data.init_point) {
         window.location.href = data.init_point;
