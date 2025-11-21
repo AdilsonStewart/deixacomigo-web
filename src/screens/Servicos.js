@@ -4,11 +4,10 @@ import './Servicos.css';
 const Servicos = () => {
   const criarPagamento = async (valor, tipo) => {
     try {
-      // Alerta de teste para confirmar que a função é chamada
-      console.log(`🚨 Chamando criarpagamento para ${tipo} R$${valor}`);
+      console.log(`🚨 Chamando criar-pagamento para ${tipo} R$${valor}`);
 
-      // Chama a função Netlify (note o /api/ que mapeia para functions)
-      const response = await fetch("/api/criarpagamento", {
+      // CHAMADA CORRETA — COM HÍFEN
+      const response = await fetch("/api/criar-pagamento", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -27,7 +26,6 @@ const Servicos = () => {
       }
 
       if (data.success && data.init_point) {
-        // Redireciona para o checkout do Mercado Pago
         window.location.href = data.init_point;
       } else {
         alert("Erro ao criar pagamento. Tente novamente.");
@@ -47,6 +45,7 @@ const Servicos = () => {
         alt="Serviços"
         className="servicos-gif"
       />
+
       <h1 className="titulo">Serviços</h1>
 
       <button
