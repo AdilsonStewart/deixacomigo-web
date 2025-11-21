@@ -7,7 +7,7 @@ const Servicos = () => {
       console.log(`🚨 Chamando criar-pagamento para ${tipo} R$${valor}`);
 
       // CHAMADA CORRETA — COM HÍFEN
-      const response = await fetch("/api/criar-pagamento", {
+      const response = await fetch("/.netlify/functions/criar-pagamento", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -16,12 +16,11 @@ const Servicos = () => {
       });
 
       const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Função não encontrada (404) - verifique o deploy');
-      }
-
-      const data = await response.json();
       if (!response.ok) {
+  const text = await response.text();
+  console.error("Resposta da função:", text);
+  throw new Error("Erro ao chamar a função: " + response.status);
+}
         throw new Error(data.message || "Erro no servidor");
       }
 
