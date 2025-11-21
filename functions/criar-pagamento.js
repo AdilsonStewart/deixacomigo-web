@@ -1,3 +1,4 @@
+// functions/criar-pagamento.js
 const mercadopago = require("mercadopago");
 
 exports.handler = async (event) => {
@@ -11,12 +12,12 @@ exports.handler = async (event) => {
       };
     }
 
-    // Configurar Mercado Pago
+    // Configura Mercado Pago
     mercadopago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN, // variável de ambiente no Netlify
+      access_token: process.env.MP_ACCESS_TOKEN, // coloque no Netlify como variável
     });
 
-    // URLs de retorno conforme o tipo
+    // Define URLs de retorno conforme tipo
     let successUrl = "";
     if (tipo === "áudio") successUrl = "https://deixacomigo.netlify.app/sucesso";
     if (tipo === "vídeo") successUrl = "https://deixacomigo.netlify.app/sucesso2";
@@ -45,7 +46,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        init_point: result.body.init_point, // link do pagamento
+        init_point: result.body.init_point, // link para checkout
       }),
     };
   } catch (error) {
