@@ -5,32 +5,42 @@ import './Saida.css';
 const Saida = () => {
   const navigate = useNavigate();
 
-  // Pegar o nome do último agendamento salvo
-  const getNomeDestinatario = () => {
+  const getAgendamentoInfo = () => {
     try {
-      const lastAgendamento = localStorage.getItem('lastAgendamento');
-      if (lastAgendamento) {
-        const agendamentoData = JSON.parse(lastAgendamento);
-        return agendamentoData.nome || 'Não informado';
-      }
-    } catch (error) {
-      console.error('Erro ao buscar dados do agendamento:', error);
+      const last = localStorage.getItem('lastAgendamento');
+      if (!last) return {};
+
+      const data = JSON.parse(last);
+
+      // Formata data: DD/MM/YYYY
+      const dataFormatada = data.dataEnvio
+        ? new Date(data.dataEnvio).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+        : 'Não informada';
+
+      return {
+        nome: data.nome || 'Não informado',
+        data: dataFormatada,
+      };
+    } catch (err) {
+      console.error('Erro ao carregar agendamento:', err);
+      return {};
     }
-    return 'Não informado';
   };
 
-  const nomeDestinatario = getNomeDestinatario();
+  const { nome, data } = getAgendamentoInfo();
 
-  // Enviar nova mensagem → volta para SERVICOS
   const handleNovaMensagem = () => {
     localStorage.removeItem('lastRecordingId');
     localStorage.removeItem('lastRecordingUrl');
     navigate('/servicos');
   };
 
-  // Sair do App → volta para HOME
   const handleSair = () => {
-    localStorage.clear(); // opcional, mas bom para limpeza
+    localStorage.clear();
     navigate('/');
   };
 
@@ -38,28 +48,30 @@ const Saida = () => {
     <div className="saida-container">
       <div className="saida-content">
         <div className="gif-container">
-          <img 
-            src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTFxazJnZHYxaWJnNW4xb2dwcGlzbm1jemR3a3praTUydGVjNmljciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/9yKwHwVJDRSmkSRPr5/giphy.gif" 
+          <img
+            src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTFxazJnZHYxaWJnNW4xb2dwcGlzbm1jemR3a3praTUydGVjNmljciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/9yKwHwVJDRSmkSRPr5/giphy.gif"
             alt="Confirmação de agendamento"
             className="success-gif"
           />
         </div>
 
         <h1 className="saida-title">Agendamento Confirmado!</h1>
-        
-        <div className="saida-message">
-          <p>Sua gravação foi agendada com sucesso!</p>
-          <p>Entraremos em contato no telefone informado para enviar a mensagem.</p>
-        </div>
 
         <div className="saida-info">
           <h3>📋 Resumo do Agendamento:</h3>
+
           <div className="info-item">
             <strong>Status:</strong> <span className="status-confirmado">Confirmado</span>
           </div>
+
           <div className="info-item">
-            <strong>Nome:</strong> {nomeDestinatario}
+            <strong>Nome:</strong> {nome}
           </div>
+
+          <div className="info-item">
+            <strong>Data da entrega:</strong> {data}
+          </div>
+
           <div className="info-item">
             <strong>Entrega:</strong> Via mensagem
           </div>
