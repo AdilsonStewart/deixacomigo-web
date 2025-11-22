@@ -7,33 +7,6 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [nascimento, setNascimento] = useState(''); // formato dd/mm/aaaa
-  const [carregando, setCarregando] = useState(false);
-
-  const salvarCadastro = async () => {
-    if (!nome.trim() || !telefone.trim() || !nascimento.trim()) {
-      alert('Por favor, preencha todos os campos!');
-      return;
-    }
-
-    if (!/^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento)) {
-      alert('Data de nascimento inválida. Use o formato dd/mm/aaaa');
-      return;
-    }
-
-    setCarregando(true);
-
-    try {
-      console.log('Cadastro realizado!', { nome, telefone, nascimento });
-      alert('Cadastro concluído com sucesso! 🎉');
-      navigate('/servicos');
-    } catch (error) {
-      console.log('Cadastro realizado!', { nome, telefone, nascimento });
-      alert('Cadastro concluído com sucesso! 🎉');
-      navigate('/servicos');
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   return (
     <div className="container">
