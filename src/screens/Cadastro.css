@@ -1,6 +1,6 @@
 .container {
   display: flex;
-  flex-direction:  0column;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   background-color: #FFFFFF;
@@ -46,7 +46,7 @@
   border-color: #6C5CE7;
 }
 
-/* ←←← NOVO: deixa o campo de data igualzinho aos outros inputs →→→ */
+/* Campo de data fica igual aos outros inputs */
 input[type="date"] {
   background-color: #f8f8f8;
   padding: 15px;
@@ -56,4 +56,70 @@ input[type="date"] {
   color: #333;
   width: 100%;
   box-sizing: border-box;
-  -webkit-appearance: none; /*
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+}
+
+input[type="date"]:focus {
+  outline: none;
+  border-color: #6C5CE7;
+}
+
+/* Texto pequeno embaixo da data */
+small {
+  display: block;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
+
+.botao {
+  background-color: #6C5CE7;
+  color: #FFFFFF;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 30px;
+  margin-bottom: 15px;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.botao:hover {
+  background-color: #5b4bc4;
+}
+
+.botao-entrar {
+  background-color: #00B894;
+}
+
+.botao-entrar:hover {
+  background-color: #00a885;
+}
+
+.botao-desabilitado {
+  background-color: #CCCCCC;
+  cursor: not-allowed;
+}
+
+.botao-desabilitado:hover {
+  background-color: #CCCCCC;
+}
+
+.voltar-text {
+  color: #6C5CE7;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
