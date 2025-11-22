@@ -73,6 +73,17 @@ const Agendamento = () => {
         criadoEm: serverTimestamp(),
       });
 
+      // ✅ ÚNICA ALTERAÇÃO — salva para a tela de saída
+      localStorage.setItem(
+        'lastAgendamento',
+        JSON.stringify({
+          status: 'Pendente',
+          nome,
+          dataEntrega: selectedDate,
+          horario: selectedTime,
+        })
+      );
+
       alert('✅ Agendamento salvo com sucesso!\nA corujinha entrega no horário escolhido! 🦉🎉');
       navigate('/saida');
     } catch (error) {
