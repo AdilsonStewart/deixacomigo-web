@@ -6,12 +6,19 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
-  const [nascimento, setNascimento] = useState(''); // formato dd/mm/aaaa
+  const [nascimento, setNascimento] = useState('');
 
   return (
     <div className="container">
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
+
+      {/* ✅ GIF ADICIONADO */}
+      <img
+        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
+        alt="Cadastro animado"
+        className="cadastro-gif"
+      />
 
       <div className="form-container">
         <input
