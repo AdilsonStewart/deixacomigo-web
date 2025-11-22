@@ -5,7 +5,7 @@ import './Saida.css';
 const Saida = () => {
   const navigate = useNavigate();
 
-  // ✅ Busca segura dos dados do agendamento
+  // ✅ Busca dos dados salvos no agendamento
   const getAgendamentoData = () => {
     try {
       const saved = localStorage.getItem('lastAgendamento');
@@ -15,7 +15,7 @@ const Saida = () => {
 
       return {
         nome: data.nome || 'Não informado',
-        dataEnvio: data.dataEnvio || null,
+        dataEntrega: data.dataEntrega || null,
       };
     } catch (err) {
       console.error('Erro ao ler agendamento:', err);
@@ -74,7 +74,7 @@ const Saida = () => {
 
           <div className="info-item">
             <strong>Data da entrega:</strong>{' '}
-            {formatDate(agendamento?.dataEnvio)}
+            {formatDate(agendamento?.dataEntrega)}
           </div>
 
           <div className="info-item">
