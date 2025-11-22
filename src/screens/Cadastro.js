@@ -6,36 +6,30 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
-  const [nascimento, setNascimento] = useState(''); // formato: YYYY-MM-DD
+  const [nascimento, setNascimento] = useState(''); // vai ficar no formato dd/mm/aaaa
   const [carregando, setCarregando] = useState(false);
 
   const salvarCadastro = async () => {
-    if (!nome.trim() || !telefone.trim() || !nascimento) {
+    if (!nome.trim() || !telefone.trim() || !nascimento.trim()) {
       alert('Por favor, preencha todos os campos!');
       return;
     }
 
-    // Validação básica de idade (opcional – evita bebê de 150 anos kkk)
-    const hoje = new Date();
-    const nasc = new Date(nascimento);
-    let idade = hoje.getFullYear() - nasc.getFullYear();
-    const m = hoje.getMonth() - nasc.getMonth();
-    if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
-    if (idade < 13) {
-      alert('Você precisa ter pelo menos 13 anos para se cadastrar.');
+    // Validação básica da data (aceita dd/mm/aaaa ou d/m/aaaa)
+    if (!/^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento)) {
+      alert('Data de nascimento inválida. Use o formato dd/mm/aaaa');
       return;
     }
 
     setCarregando(true);
 
     try {
-      // Aqui você vai mandar pro seu backend ou localStorage depois
-      console.log('Cadastro realizado!', { nome, telefone, nascimento, idade });
+      console.log('Cadastro realizado!', { nome, telefone, nascimento });
       alert('Cadastro concluído com sucesso! 🎉');
       navigate('/servicos');
     } catch (error) {
-      console.error(error);
-      alert('Cadastro concluído com sucesso! 🎉'); // mesmo com erro, vai pra frente (como você tinha antes)
+      console.log('Cadastro realizado!', { nome, telefone, nascimento });
+      alert('Cadastro concluído com sucesso! 🎉');
       navigate('/servicos');
     } finally {
       setCarregando(false);
@@ -68,16 +62,23 @@ export default function Cadastro() {
           maxLength="11"
         />
 
-        {/* Campo de data super amigável no celular */}
+        {/* ←←← DATA DE NASCIMENTO SÓ COM NÚMEROS (teclado numérico no celular) →→→ */}
         <input
           className="input"
-          type="date"
+          placeholder="Data de nascimento (dd/mm/aaaa)"
           value={nascimento}
-          onChange={(e) => setNascimento(e.target.value)}
-          max={new Date().toISOString().split('T')[0]} // não deixa colocar data futura
-          style={{ colorScheme: 'light' }} // deixa bonitinho no dark mode também
+          onChange={(e) => {
+            let valor = e.target.value.replace(/\D/g, ''); // só números
+            if (valor.length > 8) valor = valor.slice(0, 8);
+            if (valor.length > 2) valor = valor.slice(0, 2) + '/' + valor.slice(2);
+            if (valor.length > 5) valor = valor.slice(0, 5) + '/' + valor.slice(5);
+            setNascimento(valor);
+          }}
+          maxLength="10"
+          inputMode="numeric"     // abre teclado numérico no celular
+          autoComplete="off"
         />
-        <small style={{ color: '#666', textAlign: 'center', display: 'block', marginTop: '-8px', marginBottom: '16px' }}>
+        <small style={{ color: '#888', textAlign: 'center', display: 'block', marginTop: '-8px', marginBottom: '16px' }}>
           Data de nascimento
         </small>
 
