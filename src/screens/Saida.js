@@ -5,37 +5,34 @@ import './Saida.css';
 const Saida = () => {
   const navigate = useNavigate();
 
-  const getAgendamentoInfo = () => {
+  // ✅ Busca segura dos dados do agendamento
+  const getAgendamentoData = () => {
     try {
-      const last = localStorage.getItem('lastAgendamento');
-      if (!last) return {};
+      const saved = localStorage.getItem('lastAgendamento');
+      if (!saved) return null;
 
-      const data = JSON.parse(last);
-
-      // Formata data: DD/MM/YYYY
-      const dataFormatada = data.dataEnvio
-        ? new Date(data.dataEnvio).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          })
-        : 'Não informada';
+      const data = JSON.parse(saved);
 
       return {
         nome: data.nome || 'Não informado',
-        data: dataFormatada,
+        dataEnvio: data.dataEnvio || null,
       };
     } catch (err) {
-      console.error('Erro ao carregar agendamento:', err);
-      return {};
+      console.error('Erro ao ler agendamento:', err);
+      return null;
     }
   };
 
-  const { nome, data } = getAgendamentoInfo();
+  const agendamento = getAgendamentoData();
+
+  // ✅ Formatar data para DD/MM/AAAA
+  const formatDate = (isoDate) => {
+    if (!isoDate) return 'Não informado';
+    const [yyyy, mm, dd] = isoDate.split('-');
+    return `${dd}/${mm}/${yyyy}`;
+  };
 
   const handleNovaMensagem = () => {
-    localStorage.removeItem('lastRecordingId');
-    localStorage.removeItem('lastRecordingUrl');
     navigate('/servicos');
   };
 
@@ -47,6 +44,7 @@ const Saida = () => {
   return (
     <div className="saida-container">
       <div className="saida-content">
+
         <div className="gif-container">
           <img
             src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeTFxazJnZHYxaWJnNW4xb2dwcGlzbm1jemR3a3praTUydGVjNmljciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/9yKwHwVJDRSmkSRPr5/giphy.gif"
@@ -57,19 +55,26 @@ const Saida = () => {
 
         <h1 className="saida-title">Agendamento Confirmado!</h1>
 
+        <p className="saida-message">
+          Sua gravação foi agendada com sucesso! 🦉✨
+        </p>
+
         <div className="saida-info">
           <h3>📋 Resumo do Agendamento:</h3>
 
           <div className="info-item">
-            <strong>Status:</strong> <span className="status-confirmado">Confirmado</span>
+            <strong>Status:</strong>
+            <span className="status-confirmado"> Confirmado ✅</span>
           </div>
 
           <div className="info-item">
-            <strong>Nome:</strong> {nome}
+            <strong>Nome:</strong>{' '}
+            {agendamento?.nome || 'Não informado'}
           </div>
 
           <div className="info-item">
-            <strong>Data da entrega:</strong> {data}
+            <strong>Data da entrega:</strong>{' '}
+            {formatDate(agendamento?.dataEnvio)}
           </div>
 
           <div className="info-item">
@@ -81,6 +86,7 @@ const Saida = () => {
           <button className="btn-nova-mensagem" onClick={handleNovaMensagem}>
             🎤 Enviar Nova Mensagem
           </button>
+
           <button className="btn-sair" onClick={handleSair}>
             🚪 Sair do App
           </button>
