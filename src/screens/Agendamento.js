@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import './Agendamento.css';
 
-// Configuração do Firebase (você já tem essas variáveis no .env do Netlify)
+// Firebase config (já vindo do Netlify env)
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -28,11 +28,10 @@ const Agendamento = () => {
   const [telefone, setTelefone] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
-  const [instructions, setInstructions] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Pega o link da última gravação (você já salva isso depois do pagamento)
   const linkMensagem = localStorage.getItem('lastRecordingUrl');
+
   if (!linkMensagem) {
     alert('Ops! Não encontramos a gravação. Volte e grave novamente.');
     navigate(-1);
@@ -45,7 +44,6 @@ const Agendamento = () => {
       return;
     }
 
-    // Validação e formatação do telefone (+55...)
     const digits = telefone.replace(/\D/g, '');
     if (digits.length < 10 || digits.length > 11) {
       alert('Por favor, insira um telefone válido com DDD');
@@ -53,10 +51,9 @@ const Agendamento = () => {
     }
     const telefoneFull = `+55${digits}`;
 
-    // Regra das 24h de antecedência
     const hoje = new Date();
     const dataEscolhida = new Date(selectedDate);
-    const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000 + 5 * 60 * 1000); // +5min de folga
+    const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000 + 5 * 60 * 1000);
 
     if (dataEscolhida < minimo24h) {
       alert('A corujinha precisa de no mínimo 24 horas de antecedência para garantir a entrega! 🦉❤️');
@@ -70,9 +67,8 @@ const Agendamento = () => {
         linkMensagem,
         nomeDestinatario: nome.trim(),
         telefoneDestinatario: telefoneFull,
-        dataEnvio: selectedDate,           // só a data (ex: 2025-12-25)
-        horarioPreferido: selectedTime,     // ex: "08:00-10:00"
-        observacoes: instructions.trim(),
+        dataEnvio: selectedDate,
+        horarioPreferido: selectedTime,
         enviado: false,
         criadoEm: serverTimestamp(),
       });
@@ -87,7 +83,6 @@ const Agendamento = () => {
     }
   };
 
-  // Máscara de telefone (igualzinha a que você já tinha)
   const formatPhone = (value) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 10) {
@@ -98,11 +93,9 @@ const Agendamento = () => {
   };
 
   const handlePhoneChange = (e) => {
-    const formatted = formatPhone(e.target.value);
-    setTelefone(formatted);
+    setTelefone(formatPhone(e.target.value));
   };
 
-  // Data mínima = amanhã (para respeitar as 24h)
   const getMinDate = () => {
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
@@ -111,7 +104,7 @@ const Agendamento = () => {
 
   const getMaxDate = () => {
     const max = new Date();
-    max.setDate(max.getDate() + 365); // até 1 ano
+    max.setDate(max.getDate() + 365);
     return max.toISOString().split('T')[0];
   };
 
@@ -179,17 +172,6 @@ const Agendamento = () => {
           <option value="16:00-18:00">🕓 16:00 - 18:00 (Tarde)</option>
           <option value="18:00-20:00">🕕 18:00 - 20:00 (Noite)</option>
         </select>
-      </div>
-
-      {/* OBSERVAÇÕES */}
-      <div className="form-group">
-        <label>📝 Observações (opcional)</label>
-        <textarea
-          value={instructions}
-          onChange={(e) => setInstructions(e.target.value)}
-          placeholder="Ex: É aniversário dela, capricha na entrega! 🎉"
-          rows="3"
-        />
       </div>
 
       {/* INFO */}
