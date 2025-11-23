@@ -1,5 +1,5 @@
 // netlify/functions/criar-pagamento.js
-export const handler = async (event) => {
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405 };
 
   try {
@@ -13,16 +13,15 @@ export const handler = async (event) => {
     const valorCorrigido = Number(Number(valor).toFixed(2));
     const isBarato = valorCorrigido === 4.99;
 
-    // CLIENTE FIXO (pra teste – depois você pode pegar do formulário)
+    // Cliente fixo pra teste
     const customerPayload = {
       name: "Cliente Teste",
-      cpfCnpj: "24971563792",         // CPF válido pra teste
+      cpfCnpj: "24971563792",
       email: "teste@deixacomigo.com",
       phone: "11999999999",
       mobilePhone: "11999999999"
     };
 
-    // Primeiro cria o customer
     const customerRes = await fetch("https://api.asaas.com/v3/customers", {
       method: "POST",
       headers: {
@@ -35,7 +34,7 @@ export const handler = async (event) => {
     const customerData = await customerRes.json();
 
     const payload = {
-      customer: customerData.id || customerData.object?.id,
+      customer: customerData.id,
       value: valorCorrigido,
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
       description: tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa",
@@ -49,4 +48,30 @@ export const handler = async (event) => {
       }
     };
 
-    const res = await fetch("https://api.asaas.com/v
+    const res = await fetch("https://api.asaas.com/v3/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "access_token": process.env.ASAAS_API_KEY
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        paymentLink: `https://pay.asaas.com/${data.id}`
+      })
+    };
+
+  } catch (err) {
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+  }
+};
