@@ -1,5 +1,4 @@
 export const handler = async (event) => {
-  // Só aceita POST
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Método não permitido" };
   }
@@ -14,22 +13,22 @@ export const handler = async (event) => {
       };
     }
 
-    // Título limpo (Mercado Pago rejeita acentos em produção)
     const titulo =
       tipo === "video"
         ? "Mensagem em Video Surpresa"
         : "Mensagem em Audio Surpresa";
 
-    // ✅ URLs de retorno
+    // URLs de retorno CORRIGIDAS (agora o PIX não trava mais)
     let backUrls = {
       success: "https://deixacomigoweb.netlify.app/sucesso",
       failure: "https://deixacomigoweb.netlify.app/erro",
-      pending: "https://deixacomigoweb.netlify.app/erro"
+      pending: "https://deixacomigoweb.netlify.app/sucesso"  // PIX volta pro sucesso também
     };
 
-    // ✅ Se o valor for 4,99 muda a página de retorno
+    // Se for o valor de 4,99 muda tudo direitinho
     if (Number(valor) === 4.99) {
       backUrls.success = "https://deixacomigoweb.netlify.app/sucesso2";
+      backUrls.pending = "https://deixacomigoweb.netlify.app/sucesso2";  // aqui também
     }
 
     const preference = {
