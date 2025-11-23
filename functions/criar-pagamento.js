@@ -9,8 +9,8 @@ exports.handler = async (event) => {
     const valorCorrigido = Number(Number(valor).toFixed(2));
     const isBarato = valorCorrigido === 4.99;
 
-    // CLIENTE FIXO QUE JÁ EXISTE NA TUA CONTA ASAAS (eu criei pra você)
-    const customerId = "cus_000005357145";   // ← esse já existe e aceita tudo
+    // CLIENTE FIXO
+    const customerId = "cus_000005357145";
 
     const payload = {
       customer: customerId,
@@ -18,13 +18,7 @@ exports.handler = async (event) => {
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
       description: tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa",
       externalReference: `surpresa-${Date.now()}`,
-      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX",
-      callback: {
-        successUrl: isBarato 
-          ? "https://deixacomigoweb.netlify.app/sucesso2"
-          : "https://deixacomigoweb.netlify.app/sucesso",
-        autoRedirect: true
-      }
+      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX"
     };
 
     const res = await fetch("https://api.asaas.com/v3/payments", {
@@ -46,7 +40,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        paymentLink: `https://pay.asaas.com/${data.id}`
+        paymentLink: data.invoiceUrl
       })
     };
 
