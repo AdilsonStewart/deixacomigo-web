@@ -17,7 +17,8 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         name: `Cliente ${Date.now()}`,
-        cpfCnpj: "00000000000" // permitido para testes
+        cpfCnpj: "12345678909",
+        email: `cliente${Date.now()}@teste.com`
       })
     });
 
