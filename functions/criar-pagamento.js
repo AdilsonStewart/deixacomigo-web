@@ -2,21 +2,22 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405 };
 
   try {
-    const { valor, tipo, metodo } = JSON.parse(event.body); // novo campo "metodo"
+    const body = JSON.parse(event.body || "{}");
+    const { valor, tipo, metodo = "pix" } = body; // padrão PIX se não mandar
 
-    const descricao = tipo === "video" 
-      ? "Mensagem em Vídeo Surpresa" 
-      : "Mensagem em Áudio Surpresa";
+    if (!valor || !tipo) {
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: "Faltou valor ou tipo" }) };
+    }
 
-    const valorNum = Number(valor);
-    const isBarato = valorNum === 4.99;
+    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
+    const isBarato = Number(valor) === 4.99;
 
     const payload = {
-      value: valorNum,
+      value: Number(valor),
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
       description: descricao,
       externalReference: `surpresa-${Date.now()}`,
-      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX", // aqui decide
+      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX",
       callback: {
         successUrl: isBarato 
           ? "https://deixacomigoweb.netlify.app/sucesso2"
@@ -37,6 +38,7 @@ export const handler = async (event) => {
     const data = await res.json();
 
     if (!res.ok) {
+      console.error("Erro Asaas:", data);
       return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
     }
 
@@ -44,13 +46,12 @@ export const handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        paymentLink: `https://pay.asaas.com/${data.id}`,
-        qrCode: data.pix?.qrCodeImage || null,
-        copiaECola: data.pix?.payload || null
+        paymentLink: `https://pay.asaas.com/${data.id}`
       })
     };
 
   } catch (err) {
+    console.error("Erro na função:", err);
     return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
