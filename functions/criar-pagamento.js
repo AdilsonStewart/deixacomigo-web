@@ -1,84 +1,56 @@
-// functions/criar-pagamento.js
-const { MercadoPagoConfig, Preference } = require("mercadopago");
+export const handler = async (event) => {
+  if (event.httpMethod !== "POST") return { statusCode: 405 };
 
-exports.handler = async (event) => {
   try {
-    console.log("📩 EVENTO RECEBIDO:", event.body);
+    const { valor, tipo } = JSON.parse(event.body);
 
-    const { valor, tipo } = JSON.parse(event.body || "{}");
+    const descricao = tipo === "video" 
+      ? "Mensagem em Vídeo Surpresa" 
+      : "Mensagem em Áudio Surpresa";
 
-    console.log("🎯 VALOR:", valor, "TIPO:", tipo);
+    const valorNum = Number(valor);
+    const isBarato = valorNum === 4.99;
 
-    if (!valor || !tipo) {
-      console.log("❌ Dados inválidos!");
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ success: false, message: "Dados inválidos" }),
-      };
-    }
-
-    if (!process.env.MP_ACCESS_TOKEN) {
-      console.log("❌ MP_ACCESS_TOKEN está vazio!");
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          success: false,
-          message: "Token Mercado Pago não configurado",
-        }),
-      };
-    }
-
-    // ⚡ SDK nova — assim que se configura
-    const client = new MercadoPagoConfig({
-      accessToken: process.env.MP_ACCESS_TOKEN,
-    });
-
-    const preference = new Preference(client);
-
-    let successUrl = "";
-    if (tipo === "áudio") successUrl = "https://deixacomigo.netlify.app/sucesso";
-    if (tipo === "vídeo") successUrl = "https://deixacomigo.netlify.app/sucesso2";
-
-    const prefData = {
-      items: [
-        {
-          title: `Mensageiro - ${tipo}`,
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: Number(valor),
-        },
-      ],
-      back_urls: {
-        success: successUrl,
-        failure: "https://deixacomigo.netlify.app/erro",
-        pending: "https://deixacomigo.netlify.app/pendente",
-      },
-      auto_return: "approved",
+    const payload = {
+      billingType: "PIX",           // pode mudar pra "CREDIT_CARD" se quiser cartão também
+      value: valorNum,
+      dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0], // vence em 1 dia
+      description: descricao,
+      externalReference: `surpresa-${Date.now()}`,
+      callback: {
+        successUrl: isBarato 
+          ? "https://deixacomigoweb.netlify.app/sucesso2"
+          : "https://deixacomigoweb.netlify.app/sucesso",
+        autoRedirect: true
+      }
     };
 
-    console.log("📦 Preferência enviada:", prefData);
+    const res = await fetch("https://api.asaas.com/v3/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "access_token": process.env.ASAAS_API_KEY
+      },
+      body: JSON.stringify(payload)
+    });
 
-    const result = await preference.create({ body: prefData });
+    const data = await res.json();
 
-    console.log("✅ RESULTADO MP:", result);
+    if (!res.ok) {
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
+    }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        init_point: result.init_point,
-      }),
+        paymentLink: `https://pay.asaas.com/${data.id}`,  // abre direto o QR Code ou cartão
+        qrCode: data.pix?.qrCodeImage || null,
+        copiaECola: data.pix?.payload || null
+      })
     };
-  } catch (error) {
-    console.error("🔥 ERRO NO SERVIDOR:", error);
 
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        message: "Erro interno ao criar pagamento",
-        error: error.message,
-      }),
-    };
+  } catch (err) {
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
