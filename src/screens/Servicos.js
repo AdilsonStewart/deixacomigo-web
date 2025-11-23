@@ -1,71 +1,48 @@
-import React from 'react';
+import React from "react";
 
 const Servicos = () => {
-  const pagar = async (tipo) => {
-    try {
-      const res = await fetch("/api/criar-pagamento", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          valor: 5.00,   // 🔥 fixo para evitar erro da Asaas
-          tipo,
-          metodo: "pix"
-        })
-      });
+  const pagarAudio = async () => {
+    const res = await fetch("/api/criar-pix-asaas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        valor: 5.00,
+        tipo: "áudio",
+        metodo: "pix"
+      })
+    });
 
-      const data = await res.json();
-
-      if (data.success && data.paymentLink) {
-        window.location.href = data.paymentLink;
-      } else {
-        alert("Erro: " + JSON.stringify(data));
-      }
-    } catch (e) {
-      alert("Erro de rede. Tente novamente.");
+    const data = await res.json();
+    if (data.success && data.paymentLink) {
+      window.location.href = data.paymentLink;
+    } else {
+      alert("Erro: " + JSON.stringify(data));
     }
   };
 
   return (
-    <div style={{ textAlign: "center", padding: "40px" }}>
-      <img 
-        src="https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif"
-        alt="Corujinha"
+    <div style={{ textAlign: "center", padding: "50px" }}>
+      <img
+        src="https://i.ibb.co/mT1t7Lx/coruja-rosa.gif"
+        alt="coruja"
         style={{ width: "180px", marginBottom: "30px" }}
       />
 
-      <button
-        onClick={() => pagar("áudio")}
-        style={{
-          padding: "18px 35px",
-          fontSize: "1.4rem",
-          background: "#ff6ec7",
-          color: "white",
-          border: "none",
-          borderRadius: "12px",
-          marginBottom: "20px",
-          cursor: "pointer",
-          width: "250px"
-        }}
-      >
-        Áudio — R$ 5,00
-      </button>
-
-      <br />
+      <h2>Escolha seu serviço</h2>
 
       <button
-        onClick={() => pagar("vídeo")}
+        onClick={pagarAudio}
         style={{
-          padding: "18px 35px",
-          fontSize: "1.4rem",
-          background: "#ff9f43",
+          padding: "20px 40px",
+          fontSize: "1.5rem",
+          background: "#ff4dd2",
           color: "white",
           border: "none",
-          borderRadius: "12px",
-          cursor: "pointer",
-          width: "250px"
+          borderRadius: "10px",
+          marginTop: "30px"
         }}
       >
-        Vídeo — R$ 8,00
+        ÁUDIO — R$ 5,00
       </button>
     </div>
   );
