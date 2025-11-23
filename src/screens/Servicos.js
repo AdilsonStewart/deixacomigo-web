@@ -1,38 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Servicos.css';
 
 const Servicos = () => {
+  // Estado pra guardar o método de pagamento escolhido
+  const [metodo, setMetodo] = useState('pix'); // padrão = PIX (mais rápido)
+
   const criarPagamento = async (valor, tipo) => {
     try {
-      console.log(`🚨 Chamando criar-pagamento para ${tipo} R$${valor}`);
+      console.log(`Chamando pagamento: ${tipo} R$${valor} via ${metodo}`);
 
-      // CHAMADA CORRETA PARA NETLIFY
       const response = await fetch("/.netlify/functions/criar-pagamento", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ valor, tipo })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          valor, 
+          tipo, 
+          metodo // "pix" ou "cartao"
+        })
       });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Resposta da função:", text);
-        throw new Error("Erro ao chamar a função: " + response.status);
-      }
 
       const data = await response.json();
 
-      if (data.success && data.init_point) {
-        window.location.href = data.init_point;
-      } else {
-        alert("Erro ao criar pagamento. Tente novamente.");
-        console.error("Resposta inesperada:", data);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Erro no servidor");
       }
+
+      // Abre direto a página de pagamento do Asaas (PIX ou Cartão)
+      window.location.href = data.paymentLink;
 
     } catch (error) {
       console.error("Erro:", error);
-      alert(error.message || "Houve um erro na comunicação com o servidor.");
+      alert("Ops! Algo deu errado. Tente novamente ou escolha outro método.");
     }
   };
 
@@ -44,21 +42,54 @@ const Servicos = () => {
         className="servicos-gif"
       />
 
-      <h1 className="titulo">Serviços</h1>
+      <h1 className="titulo">Escolha seu serviço</h1>
 
-      <button
-        className="botao botao-audio"
-        onClick={() => criarPagamento(1.99, "áudio")}
-      >
-        Áudio 30s — R$ 1,99
-      </button>
+      {/* Opções de áudio e vídeo */}
+      <div style={{ margin: "20px 0" }}>
 
-      <button
-        className="botao botao-video"
-        onClick={() => criarPagamento(4.99, "vídeo")}
-      >
-        Vídeo 30s — R$ 4,99
-      </button>
+        <button
+          className="botao botao-audio"
+          style={{ margin: "10px", padding: "15px 30px", fontSize: "1.2rem" }}
+          onClick={() => criarPagamento(1.99, "áudio")}
+        >
+          Áudio 30s — R$ 1,99
+        </button>
+
+        <button
+          className="botao botao-video"
+          style={{ margin: "10px", padding: "15px 30px", fontSize: "1.2rem" }}
+          onClick={() => criarPagamento(4.99, "vídeo")}
+        >
+          Vídeo 30s — R$ 4,99
+        </button>
+      </div>
+
+      {/* Escolha de método de pagamento */}
+      <div style={{ margin: "30px 0", color: "white", fontSize: "1.1rem" }}>
+        <p>Como você quer pagar?</p>
+
+        <label style={{ margin: "0 15px", cursor: "pointer" }}>
+          <input
+            type="radio"
+            name="metodo"
+            value="pix"
+            checked={metodo === 'pix'}
+            onChange={(e) => setMetodo(e.target.value)}
+          />{' '}
+          PIX (mais rápido)
+        </label>
+
+        <label style={{ margin: "0 15px", cursor: "pointer" }}>
+          <input
+            type="radio"
+            name="metodo"
+            value="cartao"
+            checked={metodo === 'cartao'}
+            onChange={(e) => setMetodo(e.target.value)}
+          />{' '}
+          Cartão de Crédito
+        </label>
+      </div>
 
       <button
         className="botao voltar"
