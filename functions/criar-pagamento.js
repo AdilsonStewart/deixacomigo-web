@@ -6,14 +6,10 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const { valor, tipo, metodo = "pix" } = body;
 
-    if (!valor || !tipo) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: "Faltou valor ou tipo" }) };
-    }
-
     const valorCorrigido = Number(Number(valor).toFixed(2));
     const isBarato = valorCorrigido === 4.99;
 
-    // Cliente fixo pra teste
+    // Cliente fixo
     const customerPayload = {
       name: "Cliente Teste",
       cpfCnpj: "24971563792",
@@ -22,6 +18,8 @@ exports.handler = async (event) => {
       mobilePhone: "11999999999"
     };
 
+    // Criar ou reutilizar cliente
+    let customerId;
     const customerRes = await fetch("https://api.asaas.com/v3/customers", {
       method: "POST",
       headers: {
@@ -32,9 +30,14 @@ exports.handler = async (event) => {
     });
 
     const customerData = await customerRes.json();
+    customerId = customerData.id || customerData.object?.id;
+
+    if (!customerId) {
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: "Falha ao criar cliente" }) };
+    }
 
     const payload = {
-      customer: customerData.id,
+      customer: customerId,
       value: valorCorrigido,
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
       description: tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa",
@@ -60,6 +63,7 @@ exports.handler = async (event) => {
     const data = await res.json();
 
     if (!res.ok) {
+      console.log("Erro Asaas:", data);
       return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
     }
 
@@ -72,6 +76,7 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
+    console.log("Erro geral:", err);
     return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
