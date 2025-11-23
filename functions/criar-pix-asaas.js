@@ -1,48 +1,100 @@
-// functions/criar-pix-asaas.js
-const axios = require('axios');
+const axios = require("axios");
 
 exports.handler = async (event) => {
   try {
-    const { valor, tipo } = JSON.parse(event.body || '{}');
+    const { valor, tipo, nome, cpf, email } = JSON.parse(event.body || "{}");
 
-    if (!valor || !tipo) {
-      return { statusCode: 400, body: JSON.stringify({ erro: 'Valor e tipo são obrigatórios' }) };
+    if (!valor || !tipo || !nome || !cpf || !email) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          erro: "Campos obrigatórios: nome, cpf, email, valor e tipo"
+        })
+      };
     }
 
-    const response = await axios.post(
-      'https://api.asaas.com/v3/payments',
-      {
-        customer: null, // vamos criar o cliente dinamicamente ou usar um padrão depois
-        billingType: 'PIX',
-        value: Number(valor),
-        dueDate: new Date().toISOString().split('T')[0], // hoje
-        description: `Mensageiro - ${tipo}`,
-        externalReference: `deixacomigo_${Date.now()}`,
-      },
+    // ✅ 1) Buscar cliente pelo CPF
+    const search = await axios.get(
+      `https://api.asaas.com/v3/customers?cpfCnpj=${cpf}`,
       {
         headers: {
-          'access_token': process.env.ASAAS_API_KEY,
-          'Content-Type': 'application/json',
-        },
+          access_token: process.env.ASAAS_API_KEY
+        }
       }
     );
 
-    const pagamento = response.data;
+    let customerId;
+
+    if (search.data.totalCount > 0) {
+      // ✅ já existe
+      customerId = search.data.data[0].id;
+    } else {
+      // ✅ 2) criar cliente no Asaas
+      const novo = await axios.post(
+        "https://api.asaas.com/v3/customers",
+        {
+          name: nome,
+          cpfCnpj: cpf,
+          email: email
+        },
+        {
+          headers: {
+            access_token: process.env.ASAAS_API_KEY,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      customerId = novo.data.id;
+    }
+
+    // ✅ 3) Criar pagamento PIX
+    const pagamento = await axios.post(
+      "https://api.asaas.com/v3/payments",
+      {
+        customer: customerId,
+        billingType: "PIX",
+        value: Number(valor),
+        dueDate: new Date().toISOString().split("T")[0],
+        description: `Mensageiro - ${tipo}`
+      },
+      {
+        headers: {
+          access_token: process.env.ASAAS_API_KEY,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    // ✅ 4) Gerar QR Code
+    const pix = await axios.get(
+      `https://api.asaas.com/v3/payments/${pagamento.data.id}/pixQrCode`,
+      {
+        headers: {
+          access_token: process.env.ASAAS_API_KEY
+        }
+      }
+    );
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        qrCodeUrl: pagamento.pixQrCodeImage,   // imagem do QR Code
-        copiaECola: pagamento.encodedImage,    // código copia e cola
-        pagamentoId: pagamento.id,             // pra webhook depois
-      }),
+        pagamentoId: pagamento.data.id,
+        copiaECola: pix.data.payload,
+        qrCodeBase64: pix.data.encodedImage
+      })
     };
+
   } catch (error) {
-    console.error('Erro Asaas:', error.response?.data || error.message);
+    console.error("Erro Asaas:", error.response?.data || error.message);
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ erro: 'Erro ao gerar PIX Asaas', detalhes: error.message }),
+      body: JSON.stringify({
+        erro: "Erro ao processar PIX",
+        detalhes: error.response?.data || error.message
+      })
     };
   }
 };
