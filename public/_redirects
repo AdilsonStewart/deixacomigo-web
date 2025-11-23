@@ -1,4 +1,3 @@
-/*    /index.html   200
-/sucesso      /sucesso/index.html   200
-/sucesso2     /sucesso2/index.html  200
-/erro         /erro/index.html      200
+/sucesso/*    /sucesso/index.html   200
+/sucesso2/*   /sucesso2/index.html  200
+/erro/*       /erro/index.html      200
