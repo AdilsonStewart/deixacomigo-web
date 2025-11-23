@@ -9,17 +9,15 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: "Faltou valor ou tipo" }) };
     }
 
-    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
-    const isBarato = Number(valor) === 4.99;
-
-    const billingType = metodo === "cartao" ? "CREDIT_CARD" : "PIX"; // corrigido: PIX em maiúsculo
+    const valorCorrigido = Number(Number(valor).toFixed(2)); // ← FORÇA 2 casas decimais
+    const isBarato = valorCorrigido === 4.99;
 
     const payload = {
-      value: Number(valor),
+      value: valorCorrigido,
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
-      description: descricao,
+      description: tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa",
       externalReference: `surpresa-${Date.now()}`,
-      billingType: billingType,
+      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX",
       callback: {
         successUrl: isBarato 
           ? "https://deixacomigoweb.netlify.app/sucesso2"
@@ -41,7 +39,7 @@ export const handler = async (event) => {
 
     if (!res.ok) {
       console.error("Erro Asaas:", data);
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: data.message || data }) };
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: data.errors || data }) };
     }
 
     return {
@@ -53,7 +51,7 @@ export const handler = async (event) => {
     };
 
   } catch (err) {
-    console.error("Erro na função:", err);
+    console.error("Erro:", err);
     return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
