@@ -1,101 +1,38 @@
-import React, { useState } from 'react';
-import './Servicos.css';
+import React from 'react';
 
 const Servicos = () => {
-  // Estado pra guardar o método de pagamento escolhido
-  const [metodo, setMetodo] = useState('pix'); // padrão = PIX (mais rápido)
-
-  const criarPagamento = async (valor, tipo) => {
+  const pagar = async () => {
     try {
-      console.log(`Chamando pagamento: ${tipo} R$${valor} via ${metodo}`);
-
-      const response = await fetch("/.netlify/functions/criar-pagamento", {
+      const res = await fetch("/.netlify/functions/criar-pagamento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          valor, 
-          tipo, 
-          metodo // "pix" ou "cartao"
+        body: JSON.stringify({
+          valor: 5.00,
+          tipo: "áudio",
+          metodo: "pix"   // ou "cartao" se quiser testar cartão
         })
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Erro no servidor");
+      if (data.success && data.paymentLink) {
+        window.location.href = data.paymentLink;
+      } else {
+        alert("Erro: " + JSON.stringify(data));
       }
-
-      // Abre direto a página de pagamento do Asaas (PIX ou Cartão)
-      window.location.href = data.paymentLink;
-
-    } catch (error) {
-      console.error("Erro:", error);
-      alert("Ops! Algo deu errado. Tente novamente ou escolha outro método.");
+    } catch (e) {
+      alert("Erro de rede. Abre em aba anônima.");
     }
   };
 
   return (
-    <div className="servicos-container">
-      <img
-        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3dqMDloZHlsM2sxY3RrMHQ3cjluYzBpYjlwNXFqNmI2ZXF1NjUxdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/rKYYa2fMQNRfBwvtZJ/giphy.gif"
-        alt="Serviços"
-        className="servicos-gif"
-      />
-
-      <h1 className="titulo">Escolha seu serviço</h1>
-
-      {/* Opções de áudio e vídeo */}
-      <div style={{ margin: "20px 0" }}>
-
-        <button
-          className="botao botao-audio"
-          style={{ margin: "10px", padding: "15px 30px", fontSize: "1.2rem" }}
-          onClick={() => criarPagamento(1.99, "áudio")}
-        >
-          Áudio 30s — R$ 5,00
-        </button>
-
-        <button
-          className="botao botao-video"
-          style={{ margin: "10px", padding: "15px 30px", fontSize: "1.2rem" }}
-          onClick={() => criarPagamento(4.99, "vídeo")}
-        >
-          Vídeo 30s — R$ 6,00
-        </button>
-      </div>
-
-      {/* Escolha de método de pagamento */}
-      <div style={{ margin: "30px 0", color: "white", fontSize: "1.1rem" }}>
-        <p>Como você quer pagar?</p>
-
-        <label style={{ margin: "0 15px", cursor: "pointer" }}>
-          <input
-            type="radio"
-            name="metodo"
-            value="pix"
-            checked={metodo === 'pix'}
-            onChange={(e) => setMetodo(e.target.value)}
-          />{' '}
-          PIX (mais rápido)
-        </label>
-
-        <label style={{ margin: "0 15px", cursor: "pointer" }}>
-          <input
-            type="radio"
-            name="metodo"
-            value="cartao"
-            checked={metodo === 'cartao'}
-            onChange={(e) => setMetodo(e.target.value)}
-          />{' '}
-          Cartão de Crédito
-        </label>
-      </div>
-
-      <button
-        className="botao voltar"
-        onClick={() => window.history.back()}
+    <div style={{ textAlign: "center", padding: "50px" }}>
+      <h1>Teste Rápido Asaas</h1>
+      <button 
+        onClick={pagar}
+        style={{ padding: "20px 40px", fontSize: "1.5rem" }}
       >
-        Voltar
+        PAGAR R$ 5,00 COM PIX (teste)
       </button>
     </div>
   );
