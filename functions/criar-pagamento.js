@@ -3,7 +3,7 @@ export const handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { valor, tipo, metodo = "pix" } = body; // padrão PIX se não mandar
+    const { valor, tipo, metodo = "pix" } = body;
 
     if (!valor || !tipo) {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: "Faltou valor ou tipo" }) };
@@ -12,12 +12,14 @@ export const handler = async (event) => {
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
     const isBarato = Number(valor) === 4.99;
 
+    const billingType = metodo === "cartao" ? "CREDIT_CARD" : "PIX"; // corrigido: PIX em maiúsculo
+
     const payload = {
       value: Number(valor),
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
       description: descricao,
       externalReference: `surpresa-${Date.now()}`,
-      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX",
+      billingType: billingType,
       callback: {
         successUrl: isBarato 
           ? "https://deixacomigoweb.netlify.app/sucesso2"
@@ -39,7 +41,7 @@ export const handler = async (event) => {
 
     if (!res.ok) {
       console.error("Erro Asaas:", data);
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: data.message || data }) };
     }
 
     return {
