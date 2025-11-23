@@ -52,7 +52,7 @@ const Servicos = () => {
           style={{ margin: "10px", padding: "15px 30px", fontSize: "1.2rem" }}
           onClick={() => criarPagamento(1.99, "áudio")}
         >
-          Áudio 30s — R$ 1,99
+          Áudio 30s — R$ 5,00
         </button>
 
         <button
@@ -60,7 +60,7 @@ const Servicos = () => {
           style={{ margin: "10px", padding: "15px 30px", fontSize: "1.2rem" }}
           onClick={() => criarPagamento(4.99, "vídeo")}
         >
-          Vídeo 30s — R$ 4,99
+          Vídeo 30s — R$ 6,00
         </button>
       </div>
 
