@@ -3,7 +3,7 @@ import React from 'react';
 const Servicos = () => {
   const pagar = async () => {
     try {
-      const res = await fetch("/.netlify/functions/criar-pagamento", {
+      const res = await fetch("/netlify/functions/criar-pagamento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
