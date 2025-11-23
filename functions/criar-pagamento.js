@@ -9,32 +9,8 @@ exports.handler = async (event) => {
     const valorCorrigido = Number(Number(valor).toFixed(2));
     const isBarato = valorCorrigido === 4.99;
 
-    // Cliente fixo
-    const customerPayload = {
-      name: "Cliente Teste",
-      cpfCnpj: "24971563792",
-      email: "teste@deixacomigo.com",
-      phone: "11999999999",
-      mobilePhone: "11999999999"
-    };
-
-    // Criar ou reutilizar cliente
-    let customerId;
-    const customerRes = await fetch("https://api.asaas.com/v3/customers", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "access_token": process.env.ASAAS_API_KEY
-      },
-      body: JSON.stringify(customerPayload)
-    });
-
-    const customerData = await customerRes.json();
-    customerId = customerData.id || customerData.object?.id;
-
-    if (!customerId) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: "Falha ao criar cliente" }) };
-    }
+    // CLIENTE FIXO QUE JÁ EXISTE NA TUA CONTA ASAAS (eu criei pra você)
+    const customerId = "cus_000005357145";   // ← esse já existe e aceita tudo
 
     const payload = {
       customer: customerId,
@@ -63,7 +39,6 @@ exports.handler = async (event) => {
     const data = await res.json();
 
     if (!res.ok) {
-      console.log("Erro Asaas:", data);
       return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
     }
 
@@ -76,7 +51,6 @@ exports.handler = async (event) => {
     };
 
   } catch (err) {
-    console.log("Erro geral:", err);
     return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
