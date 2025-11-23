@@ -3,7 +3,8 @@ import React from 'react';
 const Servicos = () => {
   const pagar = async () => {
     try {
-      const res = await fetch("/netlify/functions/criar-pagamento", {
+      // ← CAMINHO CORRETO QUANDO USA A PASTA netlify/functions/
+      const res = await fetch("/api/criar-pagamento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -30,7 +31,7 @@ const Servicos = () => {
       <h1>Teste Rápido Asaas</h1>
       <button 
         onClick={pagar}
-        style={{ padding: "20px 40px", fontSize: "1.5rem" }}
+        style={{ padding: "20px 40px", fontSize: "1.5rem", background: "#10b981", color: "white", border: "none", borderRadius: "10px" }}
       >
         PAGAR R$ 5,00 COM PIX (teste)
       </button>
