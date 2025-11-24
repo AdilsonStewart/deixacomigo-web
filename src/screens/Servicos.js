@@ -13,20 +13,14 @@ const Servicos = () => {
     setCopiaECola(null);
 
     try {
-      console.log("Enviando requisição pro Asaas...");
-    }
-
-    try {
       const res = await fetch("/.netlify/functions/criar-pix-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor, tipo })
       });
 
-      console.log("Status da resposta:", res.status);
-
       const data = await res.json();
-      console.log("Resposta completa:", data);
+      console.log("Resposta do Asaas:", data);
 
       if (data.success && data.qrCodeUrl && data.copiaECola) {
         setQrCode(data.qrCodeUrl);
@@ -35,8 +29,8 @@ const Servicos = () => {
         alert("Erro do Asaas: " + JSON.stringify(data));
       }
     } catch (e) {
-      console.error("Erro no fetch:", e);
-      alert("Erro de rede: " + e.message);
+      console.error("Erro:", e);
+      alert("Erro de conexão: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -52,11 +46,7 @@ const Servicos = () => {
       borderRadius: "10px",
       boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
     }}>
-      <img
-        src="/coruja-rosa.gif"
-        alt="coruja"
-        style={{ width: "180px", marginBottom: "20px" }}
-      />
+      <img src="/coruja-rosa.gif" alt="coruja" style={{ width: "180px", marginBottom: "20px" }} />
 
       <h2>Escolha seu serviço</h2>
 
@@ -70,17 +60,13 @@ const Servicos = () => {
         </button>
       </div>
 
-      {loading && <p style={{ marginTop: "20px", fontWeight: "bold", color: "#0066cc" }}>
-        Gerando PIX...
-      </p>}
+      {loading && <p style={{ marginTop: "20px", fontWeight: "bold", color: "#0066cc" }}>Gerando PIX...</p>}
 
       {qrCode && (
         <div style={{ marginTop: "30px" }}>
           <h3>Pague com Pix</h3>
-          <img src={qrCode} alt="QR Code Pix" style={{ maxWidth: "280px", border: "1px solid #ccc", borderRadius: "10px" }} />
-          <p style={{ marginTop: "15px", fontSize: "14px" }}>
-            Ou copie e cole o código:
-          </p>
+          <img src={qrCode} alt="QR Code" style={{ maxWidth: "280px", borderRadius: "10px" }} />
+          <p style={{ marginTop: "15px" }}>Ou copie o código:</p>
           <textarea
             readOnly
             value={copiaECola}
@@ -90,15 +76,11 @@ const Servicos = () => {
               height: "80px",
               padding: "10px",
               fontFamily: "monospace",
-              fontSize: "13px",
               background: "#f8f8f8",
-              border: "1px solid #ccc",
               borderRadius: "8px"
             }}
           />
-          <p style={{ marginTop: "10px", fontSize: "12px", color: "#555" }}>
-            (clique no campo acima para copiar)
-          </p>
+          <small>(clique no campo para copiar)</small>
         </div>
       )}
     </div>
