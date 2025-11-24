@@ -8,13 +8,15 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [nascimento, setNascimento] = useState('');
+  const [cpf, setCpf] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [cadastroConcluido, setCadastroConcluido] = useState(false);
 
   const salvarCadastro = useCallback(async () => {
     setCarregando(true);
     try {
-      console.log('Cadastro realizado!', { nome, telefone, nascimento });
+      // AQUI depois entra o Firestore
+      console.log('Cadastro realizado!', { nome, telefone, nascimento, cpf });
 
       await new Promise((r) => setTimeout(r, 500));
 
@@ -24,21 +26,30 @@ export default function Cadastro() {
     } finally {
       setCarregando(false);
     }
-  }, [nome, telefone, nascimento]);
+  }, [nome, telefone, nascimento, cpf]);
 
   useEffect(() => {
     const nascimentoValido = /^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento);
-    const telefoneSomenteNumeros = telefone.replace(/\D/g, '');
-    const telefoneValido = telefoneSomenteNumeros.length >= 10;
 
-    if (!carregando && nome.trim() && telefoneValido && nascimentoValido) {
+    const telNum = telefone.replace(/\D/g, '');
+    const telefoneValido = telNum.length >= 10;
+
+    const cpfNum = cpf.replace(/\D/g, '');
+    const cpfValido = cpfNum.length === 11;
+
+    if (
+      !carregando &&
+      nome.trim() &&
+      telefoneValido &&
+      nascimentoValido &&
+      cpfValido
+    ) {
       salvarCadastro();
     }
-  }, [nome, telefone, nascimento, carregando, salvarCadastro]);
+  }, [nome, telefone, nascimento, cpf, carregando, salvarCadastro]);
 
   useEffect(() => {
     if (cadastroConcluido) {
-      // ✅ AGORA VAI PARA SERVIÇOS
       navigate('/servicos');
     }
   }, [cadastroConcluido, navigate]);
@@ -71,6 +82,24 @@ export default function Cadastro() {
             setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))
           }
           maxLength="11"
+        />
+
+        <input
+          className="input"
+          placeholder="CPF (000.000.000-00)"
+          value={cpf}
+          onChange={(e) => {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.slice(0, 11);
+
+            if (v.length > 3) v = v.slice(0, 3) + '.' + v.slice(3);
+            if (v.length > 7) v = v.slice(0, 7) + '.' + v.slice(7);
+            if (v.length > 11) v = v.slice(0, 11) + '-' + v.slice(11);
+
+            setCpf(v);
+          }}
+          maxLength="14"
+          inputMode="numeric"
         />
 
         <input
