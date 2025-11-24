@@ -1,4 +1,3 @@
-// functions/webhook-asaas.js
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
@@ -6,7 +5,7 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
-exports.handler = async (event) => {
+exports.handler = async function(event, context) {
   try {
     const body = JSON.parse(event.body || '{}');
 
@@ -22,7 +21,6 @@ exports.handler = async (event) => {
     const customerId = pagamento.customer;
     const pagamentoId = pagamento.id;
 
-    // Busca usuário pelo customerId
     const usersRef = db.collection('usuarios-asaas');
     const query = usersRef.where('customerId', '==', customerId).limit(1);
     const snapshot = await query.get();
