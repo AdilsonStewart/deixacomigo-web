@@ -8,7 +8,7 @@ exports.handler = async function (event) {
   const { valor, tipo, userId } = JSON.parse(event.body);
 
   // COLE AQUI A SUA CHAVE SANDBOX DO ASAAS (começa com $aact_)
-  const ASAAS_KEY = "COLE_SUA_CHAVE_SANDBOX_AQUI";
+  const ASAAS_KEY = $aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh;
 
   try {
     // 1. Cria cliente temporário
