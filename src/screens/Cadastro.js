@@ -1,124 +1,111 @@
-// src/screens/Cadastro.js
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "../firebase/firebase-client";
-import "./Cadastro.css";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import './Cadastro.css';
 
 export default function Cadastro() {
   const navigate = useNavigate();
+  const auth = getAuth();
+  const db = getFirestore();
 
-  const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [nascimento, setNascimento] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [carregando, setCarregando] = useState(false);
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [nascimento, setNascimento] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const salvarCadastro = useCallback(async () => {
-    setCarregando(true);
+  const salvarCadastro = async () => {
+    setLoading(true);
+
     try {
-      // Validações simples
-      if (!nome.trim() || !telefone || !nascimento || !cpf) {
-        alert("Preencha todos os campos corretamente.");
-        setCarregando(false);
-        return;
-      }
+      // Criar usuário no Firebase Auth
+      const senhaTemporaria = Math.random().toString(36).slice(-8); // senha temporária
+      const userCredential = await createUserWithEmailAndPassword(auth, email, senhaTemporaria);
+      const user = userCredential.user;
 
-      const userId = uuidv4(); // cria um ID único para o usuário
+      console.log("Usuário logado:", user.uid);
 
-      await setDoc(doc(db, "usuarios-asaas", userId), {
+      // Salvar dados no Firestore
+      await setDoc(doc(db, "usuarios-asaas", user.uid), {
         nome,
+        email,
         telefone,
         nascimento,
         cpf,
-        criadoEm: new Date(),
+        createdAt: new Date().toISOString()
       });
 
-      console.log("Cadastro realizado!", { nome, telefone, nascimento, cpf, userId });
+      alert("Cadastro realizado com sucesso!");
+      navigate("/servicos"); // redireciona para serviços
 
-      // Redireciona para a página de serviços, passando userId
-      navigate("/servicos", { state: { userId } });
-    } catch (err) {
-      console.error("Erro completo ao cadastrar:", err);
+    } catch (error) {
+      console.error("Erro ao cadastrar:", error);
       alert("Erro ao cadastrar. Tente novamente.");
     } finally {
-      setCarregando(false);
+      setLoading(false);
     }
-  }, [nome, telefone, nascimento, cpf, navigate]);
+  };
 
   return (
     <div className="container">
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
 
-      <img
-        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
-        alt="Cadastro animado"
-        className="cadastro-gif"
+      <input
+        className="input"
+        placeholder="Nome completo"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
       />
 
-      <div className="form-container">
-        <input
-          className="input"
-          placeholder="Nome completo"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
+      <input
+        className="input"
+        placeholder="Email"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-        <input
-          className="input"
-          placeholder="Telefone com DDD (ex: 11999999999)"
-          type="tel"
-          value={telefone}
-          onChange={(e) =>
-            setTelefone(e.target.value.replace(/\D/g, "").slice(0, 11))
-          }
-          maxLength="11"
-        />
+      <input
+        className="input"
+        placeholder="Telefone com DDD (ex: 11999999999)"
+        type="tel"
+        value={telefone}
+        onChange={(e) => setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        maxLength="11"
+      />
 
-        <input
-          className="input"
-          placeholder="Data de nascimento (dd/mm/aaaa)"
-          value={nascimento}
-          onChange={(e) => {
-            let valor = e.target.value.replace(/\D/g, "");
-            if (valor.length > 8) valor = valor.slice(0, 8);
-            if (valor.length > 2) valor = valor.slice(0, 2) + "/" + valor.slice(2);
-            if (valor.length > 5) valor = valor.slice(0, 5) + "/" + valor.slice(5);
-            setNascimento(valor);
-          }}
-          maxLength="10"
-          inputMode="numeric"
-          autoComplete="off"
-        />
+      <input
+        className="input"
+        placeholder="Data de nascimento (dd/mm/aaaa)"
+        value={nascimento}
+        onChange={(e) => {
+          let valor = e.target.value.replace(/\D/g, '');
+          if (valor.length > 8) valor = valor.slice(0, 8);
+          if (valor.length > 2) valor = valor.slice(0, 2) + '/' + valor.slice(2);
+          if (valor.length > 5) valor = valor.slice(0, 5) + '/' + valor.slice(5);
+          setNascimento(valor);
+        }}
+        maxLength="10"
+      />
 
-        <input
-          className="input"
-          placeholder="CPF (somente números)"
-          type="text"
-          value={cpf}
-          onChange={(e) =>
-            setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))
-          }
-          maxLength="11"
-        />
+      <input
+        className="input"
+        placeholder="CPF (apenas números)"
+        value={cpf}
+        onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        maxLength="11"
+      />
 
-        {carregando && (
-          <div style={{ textAlign: "center", marginTop: "8px" }}>
-            Cadastrando...
-          </div>
-        )}
-
-        <button
-          className="btn-new"
-          onClick={salvarCadastro}
-          disabled={carregando}
-          style={{ marginTop: "16px" }}
-        >
-          Finalizar Cadastro
-        </button>
-      </div>
+      <button
+        className="btn"
+        onClick={salvarCadastro}
+        disabled={loading || !nome || !email || !telefone || !nascimento || !cpf}
+      >
+        {loading ? "Cadastrando..." : "Criar Conta"}
+      </button>
     </div>
   );
 }
