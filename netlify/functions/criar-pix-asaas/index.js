@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   const { valor, tipo } = JSON.parse(event.body || "{}");
 
   // SUA CHAVE (com aspas!!)
-  const key = "$aact_SUA_CHAVE_COMPLETA_AQUI";
+  const key = $aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh;
 
   try {
     // 1. cria cliente
