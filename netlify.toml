@@ -1,9 +1,13 @@
 [build]
   publish = "build"
-  functions = "functions"
+  functions = "netlify/functions"
 
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/*"
+  to = "/index.html"
   status = 200
-  force = true
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["axios"]
+  included_files = ["netlify/functions/**"]
