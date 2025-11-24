@@ -1,10 +1,15 @@
-// functions/criar-pix-asaas.js
 const axios = require('axios');
 const admin = require('firebase-admin');
 
+// Inicializa o Firebase Admin usando a variável de ambiente
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    )
+  });
 }
+
 const db = admin.firestore();
 
 exports.handler = async (event) => {
@@ -12,17 +17,24 @@ exports.handler = async (event) => {
     const { valor, tipo, userId } = JSON.parse(event.body || '{}');
 
     if (!valor || !tipo || !userId) {
-      return { statusCode: 400, body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }) };
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }),
+      };
     }
 
     // Puxar dados do usuário no Firestore
     const userRef = db.collection('usuarios-asaas').doc(userId);
     const userSnap = await userRef.get();
-    if (!userSnap.exists()) {
-      return { statusCode: 404, body: JSON.stringify({ erro: 'Usuário não encontrado' }) };
+    if (!userSnap.exists) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ erro: 'Usuário não encontrado' }),
+      };
     }
     const userData = userSnap.data();
 
+    // Criar pagamento no Asaas
     const response = await axios.post(
       'https://www.asaas.com/api/v3/payments',
       {
@@ -54,6 +66,12 @@ exports.handler = async (event) => {
     };
   } catch (error) {
     console.error('Erro Asaas:', error.response?.data || error.message);
-    return { statusCode: 500, body: JSON.stringify({ erro: 'Erro ao gerar PIX Asaas', detalhes: error.message }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        erro: 'Erro ao gerar PIX Asaas',
+        detalhes: error.message,
+      }),
+    };
   }
 };
