@@ -15,7 +15,6 @@ export default function Cadastro() {
   const [carregando, setCarregando] = useState(false);
 
   const salvarCadastro = async () => {
-    // Validação mínima de tamanho dos campos
     if (nome.trim().length < 3 || telefone.length < 10 || cpf.length < 11 || nascimento.length < 8) {
       alert('Por favor, preencha todos os campos corretamente.');
       return;
@@ -44,13 +43,14 @@ export default function Cadastro() {
 
   return (
     <div className="container">
-      <h1>Criar Conta</h1>
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>Criar Conta</h1>
 
       <input
         placeholder="Nome completo"
         maxLength={50}
         value={nome}
         onChange={(e) => setNome(e.target.value)}
+        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '15px', width: '100%' }}
       />
 
       <input
@@ -58,6 +58,7 @@ export default function Cadastro() {
         maxLength={11}
         value={telefone}
         onChange={(e) => setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '15px', width: '100%' }}
       />
 
       <input
@@ -65,6 +66,7 @@ export default function Cadastro() {
         maxLength={11}
         value={cpf}
         onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '15px', width: '100%' }}
       />
 
       <input
@@ -72,9 +74,22 @@ export default function Cadastro() {
         maxLength={10}
         value={nascimento}
         onChange={(e) => setNascimento(e.target.value)}
+        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '20px', width: '100%' }}
       />
 
-      <button onClick={salvarCadastro} disabled={carregando}>
+      <button
+        onClick={salvarCadastro}
+        disabled={carregando}
+        style={{
+          fontSize: '1.5rem',
+          padding: '12px 30px',
+          backgroundColor: '#ff69b4',
+          color: 'white',
+          border: 'none',
+          borderRadius: '10px',
+          cursor: 'pointer',
+        }}
+      >
         {carregando ? 'Salvando...' : 'Continuar'}
       </button>
     </div>
