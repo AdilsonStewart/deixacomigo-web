@@ -7,18 +7,16 @@ exports.handler = async (event) => {
 
   const { valor, tipo, userId } = JSON.parse(event.body || "{}");
 
-  // TROQUE AQUI PELA SUA CHAVE SANDBOX (copie com botão do Asaas)
+  // TROQUE SÓ ISSO PELA SUA CHAVE SANDBOX (copie com botão do Asaas)
   const ASAAS_KEY = "$aact_COLOQUE_SUA_CHAVE_AQUI";
 
   try {
-    // Cria cliente
     const cliente = await axios.post("https://api.asaas.com/v3/customers", {
       name: "Cliente Pix",
       cpfCnpj: "249.940.550-93",
       mobilePhone: "47 99999-9999"
     }, { headers: { access_token: ASAAS_KEY } });
 
-    // Cria Pix
     const pagamento = await axios.post("https://api.asaas.com/v3/payments", {
       customer: cliente.data.id,
       billingType: "PIX",
@@ -27,7 +25,6 @@ exports.handler = async (event) => {
       description: `Lembrete ${tipo}`
     }, { headers: { access_token: ASAAS_KEY } });
 
-    // QR Code
     const qr = await axios.get(`https://api.asaas.com/v3/payments/${pagamento.data.id}/pixQrCode`, {
       headers: { access_token: ASAAS_KEY }
     });
