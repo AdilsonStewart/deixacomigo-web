@@ -1,195 +1,80 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import './VideoRecorder.css';
 
-const VideoRecordPage = () => {
+const VideoRecorder = () => {
   const navigate = useNavigate();
-  const [recording, setRecording] = useState(false);
-  const [videoURL, setVideoURL] = useState('');
-  const [time, setTime] = useState(0);
-  const [saved, setSaved] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const videoChunksRef = useRef([]);
-  const timerRef = useRef(null);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
+  const [pago, setPago] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Salvar gravação localmente
-  const saveRecording = () => {
-    const recordingData = {
-      id: 'vid_' + Date.now(),
-      duration: time,
-      timestamp: new Date().toISOString(),
-      type: 'video',
-      status: 'salvo'
+  useEffect(() => {
+    const checkPagamento = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+          alert("Você precisa estar logado.");
+          setPago(false);
+          setLoading(false);
+          return;
+        }
+
+        const db = getFirestore();
+        const userRef = doc(db, 'usuarios-asaas', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          alert("Usuário não encontrado.");
+          setPago(false);
+          setLoading(false);
+          return;
+        }
+
+        const userData = userSnap.data();
+        setPago(userData.pago === true);
+      } catch (err) {
+        console.error(err);
+        setPago(false);
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    localStorage.setItem('lastRecording', JSON.stringify(recordingData));
-    localStorage.setItem('lastRecordingId', recordingData.id);
-    setSaved(true);
-    alert('✅ Vídeo salvo com sucesso!');
-  };
 
-  // Iniciar gravação de vídeo
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
-      
-      streamRef.current = stream;
-      
-      // Mostrar preview do vídeo
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+    checkPagamento();
+  }, []);
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9,opus'
-      });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      videoChunksRef.current = [];
+  if (loading) return <p>Carregando...</p>;
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          videoChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.start();
-      setRecording(true);
-      setVideoURL('');
-      setSaved(false);
-      setTime(0);
-      
-      timerRef.current = setInterval(() => {
-        setTime(prev => prev + 1);
-      }, 1000);
-
-    } catch (error) {
-      console.error('Erro ao acessar câmera:', error);
-      alert('Erro ao acessar câmera e microfone. Verifique as permissões.');
-    }
-  };
-
-  // Parar gravação
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop();
-      
-      // Parar todas as tracks da stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      
-      setRecording(false);
-      clearInterval(timerRef.current);
-
-      // Limpar preview
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-
-      setTimeout(() => {
-        if (videoChunksRef.current.length > 0) {
-          const videoBlob = new Blob(videoChunksRef.current, { type: 'video/webm' });
-          const videoUrl = URL.createObjectURL(videoBlob);
-          setVideoURL(videoUrl);
-        }
-      }, 100);
-    }
-  };
-
-  // Nova gravação
-  const newRecording = () => {
-    setVideoURL('');
-    setTime(0);
-    setSaved(false);
-    videoChunksRef.current = [];
-  };
-
-  // Formatar tempo
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  if (!pago) {
+    return (
+      <div className="video-container">
+        <h2>💡 Para acessar a gravação, você precisa pagar primeiro.</h2>
+        <button 
+          className="btn-new"
+          onClick={() => navigate(-1)}
+        >
+          Voltar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="video-container">
       <h1 className="video-title">Gravar Vídeo</h1>
-      
-      <div className="timer">{formatTime(time)}</div>
+      <p className="phase-title">Funcionalidade em desenvolvimento...</p>
 
-      {/* Preview da Câmera */}
-      <div className="video-preview">
-        <video 
-          ref={videoRef}
-          autoPlay 
-          muted 
-          playsInline
-          className="camera-preview"
-        />
-      </div>
-
-      {/* FASE 1: GRAVAÇÃO */}
-      {!videoURL && (
-        <div className="recording-phase">
-          {!recording ? (
-            <button className="btn-record" onClick={startRecording}>
-              🎥 Gravar Vídeo
-            </button>
-          ) : (
-            <button className="btn-stop" onClick={stopRecording}>
-              ⏹️ Parar Gravação
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* FASE 2: ASSISTIR E SALVAR */}
-      {videoURL && !saved && (
-        <div className="playback-phase">
-          <div className="phase-title">Assistir Gravação</div>
-          <video 
-            ref={videoRef}
-            src={videoURL}
-            controls
-            className="video-playback"
-          />
-          <div className="video-controls">
-            <button className="btn-save" onClick={saveRecording}>
-              💾 Salvar Vídeo
-            </button>
-            <button className="btn-new" onClick={newRecording}>
-              🔄 Nova Gravação
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* FASE 3: AGENDAR (após salvar) */}
-      {saved && (
-        <div className="schedule-phase">
-          <div className="phase-title">Vídeo Salvo!</div>
-          <p className="success-message">Seu vídeo foi salvo com sucesso.</p>
-          <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
-            📅 Agendar Entrega
-          </button>
-          <button className="btn-new" onClick={newRecording}>
-            🔄 Fazer Nova Gravação
-          </button>
-        </div>
-      )}
-
-      <div className="status">
-        {recording && <p className="recording-status">🎥 Gravando vídeo...</p>}
-        {videoURL && !saved && <p className="playback-status">✅ Gravação concluída - Assista e salve</p>}
-      </div>
+      <button 
+        className="btn-new"
+        onClick={() => navigate(-1)}
+      >
+        Voltar
+      </button>
     </div>
   );
 };
 
-export default VideoRecordPage;
+export default VideoRecorder;
