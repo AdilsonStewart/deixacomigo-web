@@ -1,70 +1,61 @@
-import React, { useState } from "react";
-
-const Servicos = () => {
-  const [copiaECola, setCopiaECola] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const pagar = async (valor, tipo) => {
-    setLoading(true);
-    setCopiaECola("");
-
-    try {
-      const res = await fetch("/.netlify/functions/criar-pix-asaas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ valor, tipo })
-      });
-
-      const data = await res.json();
-      console.log("Asaas devolveu:", data);
-
-      if (data.success && data.copiaECola) {
-        setCopiaECola(data.copiaECola);
-      } else {
-        alert("Erro: " + JSON.stringify(data));
-      }
-    } catch (e) {
-      alert("Erro: " + e.message);
-    } finally {
-      setLoading(false);
-    }
+exports.handler = async (event) => {
+  const headers = { 
+    "Access-Control-Allow-Origin": "*", 
+    "Content-Type": "application/json" 
   };
 
-  // GERA QR CODE COM SERVIÇO GRÁTIS (não precisa instalar nada)
-  const qrUrl = copiaECola
-    ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(copiaECola)}`
-    : "";
+  try {
+    console.log("=== INICIANDO DEBUG ===");
+    
+    // Verifica se a variável existe
+    const ASAAS_API_KEY = process.env.ASAAS_APIKEY;
+    console.log("Variável carregada:", !!ASAAS_API_KEY);
+    console.log("Tipo da variável:", typeof ASAAS_API_KEY);
+    
+    if (ASAAS_API_KEY) {
+      console.log("Primeiros 10 chars:", ASAAS_API_KEY.substring(0, 10));
+      console.log("Últimos 10 chars:", ASAAS_API_KEY.substring(ASAAS_API_KEY.length - 10));
+    }
 
-  return (
-    <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
-      <img src="/coruja-rosa.gif" alt="coruja" style={{ width: "180px" }} />
-      <h2>Escolha seu serviço</h2>
+    // Teste SIMPLES com a API
+    if (ASAAS_API_KEY) {
+      const testResponse = await fetch("https://api.asaas.com/v3/finance/balance", {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json", 
+          "access_token": ASAAS_API_KEY 
+        }
+      });
+      
+      console.log("Status do teste:", testResponse.status);
+      const testResult = await testResponse.json();
+      console.log("Resposta do teste:", JSON.stringify(testResult));
+    }
 
-      <button onClick={() => pagar(5.0, "áudio")} disabled={loading}>
-        ÁUDIO — R$ 5,00
-      </button>
-      <br /><br />
-      <button onClick={() => pagar(8.0, "vídeo")} disabled={loading}>
-        VÍDEO — R$ 8,00
-      </button>
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        debug: {
+          variavelExiste: !!ASAAS_API_KEY,
+          tipo: typeof ASAAS_API_KEY,
+          primeirosChars: ASAAS_API_KEY ? ASAAS_API_KEY.substring(0, 10) : "n/a",
+          testeCompleto: "Ver logs do Netlify"
+        }
+      })
+    };
 
-      {loading && <p style={{ marginTop: "20px" }}>Gerando Pix...</p>}
-
-      {copiaECola && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>Pague com Pix</h3>
-          <img src={qrUrl} alt="QR Code Pix" style={{ maxWidth: "280px", borderRadius: "10px" }} />
-          <p style={{ marginTop: "15px" }}>Ou copie o código:</p>
-          <textarea
-            readOnly
-            value={copiaECola}
-            onClick={(e) => e.target.select()}
-            style={{ width: "100%", height: "100px", fontFamily: "monospace", padding: "10px" }}
-          />
-        </div>
-      )}
-    </div>
-  );
+  } catch (error) {
+    console.error("Erro no debug:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        success: false, 
+        erro: error.message,
+        stack: error.stack
+      })
+    };
+  }
 };
-
-export default Servicos;
