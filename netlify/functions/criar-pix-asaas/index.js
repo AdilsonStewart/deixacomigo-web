@@ -1,44 +1,50 @@
-const axios = require("axios");
-
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Só POST" };
-  }
+  if (event.httpMethod !== "POST") return { statusCode: 405, body: "POST only" };
 
-  const { valor, tipo, userId } = JSON.parse(event.body || "{}");
+  const { valor, tipo } = JSON.parse(event.body || "{}");
 
-  // TROQUE SÓ ISSO PELA SUA CHAVE SANDBOX (copie com botão do Asaas)
+  // COLE AQUI SUA CHAVE SANDBOX DO ASAAS (copie com o botão, sem espaço)
   const ASAAS_KEY = $aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh;
 
   try {
-    const cliente = await axios.post("https://api.asaas.com/v3/customers", {
-      name: "Cliente Pix",
-      cpfCnpj: "249.940.550-93",
-      mobilePhone: "47 99999-9999"
-    }, { headers: { access_token: ASAAS_KEY } });
+    // 1. cria cliente
+    const cliente = await fetch("https://api.asaas.com/v3/customers", {
+      method: "POST",
+      headers: { "content-type": "application/json", access_token: ASAAS_KEY },
+      body: JSON.stringify({ name: "Cliente", cpfCnpj: "24994055093", mobilePhone: "47999999999" })
+    }).then(r => r.json());
 
-    const pagamento = await axios.post("https://api.asaas.com/v3/payments", {
-      customer: cliente.data.id,
-      billingType: "PIX",
-      value: valor,
-      dueDate: new Date(Date.now() + 15*60*1000).toISOString().split("T")[0],
-      description: `Lembrete ${tipo}`
-    }, { headers: { access_token: ASAAS_KEY } });
+    // 2. cria pix
+    const pagamento = await fetch("https://api.asaas.com/v3/payments", {
+      method: "POST",
+      headers: { "content-type": "application/json", access_token: ASAAS_KEY },
+      body: JSON.stringify({
+        customer: cliente.id,
+        billingType: "PIX",
+        value: valor,
+        dueDate: new Date(Date.now() + 15*60*1000).toISOString().split("T")[0],
+        description: `Lembrete ${tipo}`
+      })
+    }).then(r => r.json());
 
-    const qr = await axios.get(`https://api.asaas.com/v3/payments/${pagamento.data.id}/pixQrCode`, {
+    // 3. pega QR Code
+    const qr = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
       headers: { access_token: ASAAS_KEY }
-    });
+    }).then(r => r.json());
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        qrCodeUrl: qr.data.qrCodeUrl,
-        copiaECola: qr.data.payload,
-        paymentId: pagamento.data.id
+        qrCodeUrl: qr.qrCodeUrl,
+        copiaECola: qr.payload,
+        paymentId: pagamento.id
       })
     };
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ success: false, erro: e.message }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ success: false, erro: e.message })
+    };
   }
 };
