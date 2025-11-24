@@ -5,7 +5,7 @@ exports.handler = async (event) => {
 
   const { valor, tipo } = JSON.parse(event.body || "{}");
 
-  // ←←← SUA CHAVE SANDBOX AQUI (copia com o botão do Asaas)
+  // ←←← SUA CHAVE SANDBOX AQUI (copia com o botão do Asaas, sem espaço nenhum)
   const key = "$aact_COLOQUE_SUA_CHAVE_SANDBOX_AQUI";
 
   try {
@@ -29,18 +29,25 @@ exports.handler = async (event) => {
       })
     }).then(r => r.json());
 
-    // 3. pega o QR Code (Asaas manda encodedImage + payload)
-    const qr = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
+    // 3. pega o QR Code do Asaas
+    const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
       headers: { access_token: key }
-    }).then(r => r.json());
+    });
+    const qr = await qrRes.json();
+
+    // LOG COMPLETO PRA DEBUG (vai aparecer no Netlify Functions logs)
+    console.log("Resposta completa do QR Asaas:", JSON.stringify(qr));
+
+    const encodedImage = qr.encodedImage || qr.qrCode || "";
+    const payload = qr.payload || "";
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        qrCodeUrl: `data:image/png;base64,${qr.encodedImage}`,   // ← imagem base64
-        copiaECola: qr.payload                                   // ← código copia-e-cola
+        qrCodeUrl: encodedImage ? `data:image/png;base64,${encodedImage}` : "",
+        copiaECola: payload || "Código gerado, mas vazio na sandbox. Teste pagando pra ver."
       })
     };
   } catch (e) {
