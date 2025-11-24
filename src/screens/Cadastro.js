@@ -12,17 +12,18 @@ export default function Cadastro() {
   const [telefone, setTelefone] = useState('');
   const [cpf, setCpf] = useState('');
   const [nascimento, setNascimento] = useState('');
+  const [email, setEmail] = useState('');
   const [carregando, setCarregando] = useState(false);
 
   const salvarCadastro = async () => {
-    if (!nome || !telefone || !cpf || !nascimento) {
+    if (!nome || !telefone || !cpf || !nascimento || !email) {
       alert('Preencha todos os campos.');
       return;
     }
 
     setCarregando(true);
     try {
-      // Cria um ID interno
+      // Gera um ID único interno
       const userId = uuidv4();
 
       // Salva no Firestore
@@ -31,13 +32,14 @@ export default function Cadastro() {
         telefone,
         cpf,
         nascimento,
+        email,
         criadoEm: new Date().toISOString(),
       });
 
-      // Redireciona direto para a tela de serviços
+      // Redireciona para serviços, passando userId
       navigate('/servicos', { state: { userId } });
     } catch (err) {
-      console.error('Erro ao cadastrar:', err);
+      console.error('Erro completo ao cadastrar:', err);
       alert('Erro ao cadastrar. Tente novamente.');
     } finally {
       setCarregando(false);
@@ -66,6 +68,11 @@ export default function Cadastro() {
         placeholder="Data de nascimento (dd/mm/aaaa)"
         value={nascimento}
         onChange={(e) => setNascimento(e.target.value)}
+      />
+      <input
+        placeholder="E-mail"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
       <button onClick={salvarCadastro} disabled={carregando}>
         {carregando ? 'Salvando...' : 'Continuar'}
