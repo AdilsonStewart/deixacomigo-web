@@ -2,30 +2,28 @@ const axios = require("axios");
 
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Método não permitido" };
+    return { statusCode: 405, body: "Método não permitido só POST" };
   }
 
   const { valor, tipo, userId } = JSON.parse(event.body);
 
-  // COLOQUE AQUI A SUA CHAVE SANDBOX DO ASAAS (a que começa com $aact_)
-  const ASAAS_KEY = "$aact_SUA_CHAVE_SANDBOX_AQUI";
-
-  ← apague isso e cole a sua chave real";
+  // COLE AQUI A SUA CHAVE SANDBOX DO ASAAS (começa com $aact_)
+  const ASAAS_KEY = "COLE_SUA_CHAVE_SANDBOX_AQUI";
 
   try {
-    // 1. Cria o cliente temporário
+    // 1. Cria cliente temporário
     const cliente = await axios.post(
       "https://api.asaas.com/v3/customers",
       {
-        name: "Cliente Teste",
+        name: "Cliente Pix",
         cpfCnpj: "00000000191",
-        email: "teste@temporario.com",
+        email: "pix@temporario.com",
         mobilePhone: "47999999999",
       },
       { headers: { access_token: ASAAS_KEY } }
     );
 
-    // 2. Cria o Pix com o cliente que acabamos de criar
+    // 2. Cria o Pix
     const pagamento = await axios.post(
       "https://api.asaas.com/v3/payments",
       {
