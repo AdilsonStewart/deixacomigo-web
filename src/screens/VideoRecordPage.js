@@ -78,3 +78,4 @@ const VideoRecorder = () => {
 };
 
 export default VideoRecorder;
+
