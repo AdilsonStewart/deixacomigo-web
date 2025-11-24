@@ -1,100 +1,90 @@
-const axios = require("axios");
+// functions/criar-pix-asaas.js
+const axios = require('axios');
+const admin = require('firebase-admin');
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = admin.firestore();
 
 exports.handler = async (event) => {
   try {
-    const { valor, tipo, nome, cpf, email } = JSON.parse(event.body || "{}");
+    const { uid, valor, tipo } = JSON.parse(event.body || '{}');
 
-    if (!valor || !tipo || !nome || !cpf || !email) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          erro: "Campos obrigatórios: nome, cpf, email, valor e tipo"
-        })
-      };
+    // validação básica
+    if (!uid || !valor || !tipo) {
+      return { statusCode: 400, body: JSON.stringify({ erro: 'UID, valor e tipo são obrigatórios' }) };
     }
 
-    // ✅ 1) Buscar cliente pelo CPF
-    const search = await axios.get(
-      `https://api.asaas.com/v3/customers?cpfCnpj=${cpf}`,
-      {
-        headers: {
-          access_token: process.env.ASAAS_API_KEY
-        }
-      }
-    );
+    // busca usuário no Firestore
+    const userRef = db.collection('usuarios-asaas').doc(uid);
+    const userSnap = await userRef.get();
 
-    let customerId;
+    if (!userSnap.exists) {
+      return { statusCode: 404, body: JSON.stringify({ erro: 'Usuário não encontrado' }) };
+    }
 
-    if (search.data.totalCount > 0) {
-      // ✅ já existe
-      customerId = search.data.data[0].id;
-    } else {
-      // ✅ 2) criar cliente no Asaas
-      const novo = await axios.post(
-        "https://api.asaas.com/v3/customers",
+    const userData = userSnap.data();
+    const { nome, cpf, telefone, nascimento, customerId } = userData;
+
+    if (!nome || !cpf || !telefone || !nascimento) {
+      return { statusCode: 400, body: JSON.stringify({ erro: 'Campos obrigatórios ausentes no Firestore' }) };
+    }
+
+    let finalCustomerId = customerId;
+
+    // criar cliente no Asaas se ainda não existir
+    if (!finalCustomerId) {
+      const clienteRes = await axios.post(
+        'https://www.asaas.com/api/v3/customers',
         {
           name: nome,
           cpfCnpj: cpf,
-          email: email
+          phone: telefone,
+          // email omitido
+          externalReference: `deixacomigo_${uid}`
         },
-        {
-          headers: {
-            access_token: process.env.ASAAS_API_KEY,
-            "Content-Type": "application/json"
-          }
-        }
+        { headers: { 'access_token': process.env.ASAAS_API_KEY, 'Content-Type': 'application/json' } }
       );
 
-      customerId = novo.data.id;
+      finalCustomerId = clienteRes.data.id;
+
+      // salva o customerId no Firestore
+      await userRef.update({ customerId: finalCustomerId });
     }
 
-    // ✅ 3) Criar pagamento PIX
-    const pagamento = await axios.post(
-      "https://api.asaas.com/v3/payments",
+    // cria pagamento PIX
+    const pagamentoRes = await axios.post(
+      'https://www.asaas.com/api/v3/payments',
       {
-        customer: customerId,
-        billingType: "PIX",
+        customer: finalCustomerId,
+        billingType: 'PIX',
         value: Number(valor),
-        dueDate: new Date().toISOString().split("T")[0],
-        description: `Mensageiro - ${tipo}`
+        dueDate: new Date().toISOString().split('T')[0],
+        description: `Mensageiro - ${tipo}`,
+        externalReference: `deixacomigo_${Date.now()}`
       },
-      {
-        headers: {
-          access_token: process.env.ASAAS_API_KEY,
-          "Content-Type": "application/json"
-        }
-      }
+      { headers: { 'access_token': process.env.ASAAS_API_KEY, 'Content-Type': 'application/json' } }
     );
 
-    // ✅ 4) Gerar QR Code
-    const pix = await axios.get(
-      `https://api.asaas.com/v3/payments/${pagamento.data.id}/pixQrCode`,
-      {
-        headers: {
-          access_token: process.env.ASAAS_API_KEY
-        }
-      }
-    );
+    const pagamento = pagamentoRes.data;
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        pagamentoId: pagamento.data.id,
-        copiaECola: pix.data.payload,
-        qrCodeBase64: pix.data.encodedImage
-      })
+        qrCodeUrl: pagamento.pixQrCodeImage,
+        copiaECola: pagamento.encodedImage,
+        pagamentoId: pagamento.id
+      }),
     };
 
   } catch (error) {
-    console.error("Erro Asaas:", error.response?.data || error.message);
-
+    console.error('Erro Asaas:', error.response?.data || error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        erro: "Erro ao processar PIX",
-        detalhes: error.response?.data || error.message
-      })
+      body: JSON.stringify({ erro: 'Erro ao gerar PIX Asaas', detalhes: error.response?.data || error.message }),
     };
   }
 };
