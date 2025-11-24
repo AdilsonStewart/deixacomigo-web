@@ -1,82 +1,48 @@
-// functions/criar-pix-asaas.js
-const axios = require('axios');
-const admin = require('firebase-admin');
+import axios from "axios";
 
-if (!admin.apps.length) {
-  // Pega a variável do Netlify e transforma em objeto
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+export const handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
 
-  // Substitui \\n por quebras de linha reais
-  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+  const { valor, tipo, userId } = JSON.parse(event.body);
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
-const db = admin.firestore();
-
-exports.handler = async (event) => {
   try {
-    const { valor, tipo, userId } = JSON.parse(event.body || '{}');
-
-    if (!valor || !tipo || !userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }),
-      };
-    }
-
-    // Busca dados do usuário no Firestore
-    const userRef = db.collection('usuarios-asaas').doc(userId);
-    const userSnap = await userRef.get();
-
-    if (!userSnap.exists) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ erro: 'Usuário não encontrado' }),
-      };
-    }
-
-    const userData = userSnap.data();
-
-    // Cria pagamento PIX no Asaas
     const response = await axios.post(
-      'https://www.asaas.com/api/v3/payments',
+      "https://api.asaas.com/v3/payments",
       {
-        customer: userData.customerId,
-        billingType: 'PIX',
-        value: Number(valor),
-        dueDate: new Date().toISOString().split('T')[0],
-        description: `Mensageiro - ${tipo}`,
-        externalReference: `deixacomigo_${Date.now()}`,
+        customer: "cus_000006049802", // cliente de teste do Asaas
+        billingType: "PIX",
+        value: valor,
+        dueDate: new Date(Date.now() + 5 * 60000).toISOString().split("T")[0], // vence em 5 min
+        description: `Lembrete ${tipo} - ${userId}`,
       },
       {
         headers: {
-          'access_token': process.env.ASAAS_API_KEY,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          access_token: "$aact_YTU5YTE0M2M2N2I4NjE3ZTYxYWM1M2ZmN2YxM2IyMGU3ZjA0ZWIwYTU4ZDk0N2QzM2QwMGRlM2Q0ZjU3MGRiZDJkOjAwMDAwMDAwMDAwMDAwODAyNTMkJGRhNzE5Y2U5LTAwYjUtNGU5Ni04M2QyLTU3ZDA5NzRhN2I3YQ==",
         },
       }
     );
 
-    const pagamento = response.data;
+    const data = response.data;
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        success: true,
-        qrCodeUrl: pagamento.pixQrCodeImage,
-        copiaECola: pagamento.encodedImage,
-        pagamentoId: pagamento.id,
-      }),
+        {
+          success: true,
+          qrCodeUrl: data.qrCodeUrl || `https://api.asaas.com/v3/payments/${data.id}/pixQrCode`,
+          copiaECola: data.encodedImage.replace("data:image/png;base64,", ""),
+          paymentId: data.id,
+        }),
     };
   } catch (error) {
-    console.error('Erro Asaas:', error.response?.data || error.message);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        erro: 'Erro ao gerar PIX Asaas',
-        detalhes: error.message,
+        success: false,
+        error: error.response?.data || error.message,
       }),
     };
   }
