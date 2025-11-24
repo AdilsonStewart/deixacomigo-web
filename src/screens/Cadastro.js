@@ -12,31 +12,27 @@ export default function Cadastro() {
   const [telefone, setTelefone] = useState('');
   const [cpf, setCpf] = useState('');
   const [nascimento, setNascimento] = useState('');
-  const [email, setEmail] = useState('');
   const [carregando, setCarregando] = useState(false);
 
   const salvarCadastro = async () => {
-    if (!nome || !telefone || !cpf || !nascimento || !email) {
-      alert('Preencha todos os campos.');
+    // Validação mínima de tamanho dos campos
+    if (nome.trim().length < 3 || telefone.length < 10 || cpf.length < 11 || nascimento.length < 8) {
+      alert('Por favor, preencha todos os campos corretamente.');
       return;
     }
 
     setCarregando(true);
     try {
-      // Gera um ID único interno
-      const userId = uuidv4();
+      const userId = uuidv4(); // ID único interno
 
-      // Salva no Firestore
       await setDoc(doc(db, 'usuarios-asaas', userId), {
-        nome,
+        nome: nome.trim(),
         telefone,
         cpf,
         nascimento,
-        email,
         criadoEm: new Date().toISOString(),
       });
 
-      // Redireciona para serviços, passando userId
       navigate('/servicos', { state: { userId } });
     } catch (err) {
       console.error('Erro completo ao cadastrar:', err);
@@ -49,31 +45,35 @@ export default function Cadastro() {
   return (
     <div className="container">
       <h1>Criar Conta</h1>
+
       <input
         placeholder="Nome completo"
+        maxLength={50}
         value={nome}
         onChange={(e) => setNome(e.target.value)}
       />
+
       <input
         placeholder="Telefone com DDD"
+        maxLength={11}
         value={telefone}
         onChange={(e) => setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))}
       />
+
       <input
         placeholder="CPF"
+        maxLength={11}
         value={cpf}
         onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
       />
+
       <input
         placeholder="Data de nascimento (dd/mm/aaaa)"
+        maxLength={10}
         value={nascimento}
         onChange={(e) => setNascimento(e.target.value)}
       />
-      <input
-        placeholder="E-mail"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+
       <button onClick={salvarCadastro} disabled={carregando}>
         {carregando ? 'Salvando...' : 'Continuar'}
       </button>
