@@ -6,18 +6,26 @@ const Servicos = () => {
   const [loading, setLoading] = useState(false);
 
   const pagar = async (valor, tipo) => {
+    console.log("BOTÃO CLICADO! Chamando pagar com", valor, tipo); // ← isso aparece no F12
+
     setLoading(true);
     setQrCode(null);
     setCopiaECola(null);
 
     try {
+      console.log("Enviando fetch pro Asaas..."); // ← isso aparece no F12
+
       const res = await fetch("/.netlify/functions/criar-pix-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor, tipo })
       });
 
+      console.log("Resposta do fetch:", res.status); // ← isso aparece no F12
+
       const data = await res.json();
+
+      console.log("Data do Asaas:", data); // ← isso aparece no F12
 
       if (data.success) {
         setQrCode(data.qrCodeUrl);
@@ -26,6 +34,7 @@ const Servicos = () => {
         alert("Erro: " + (data.erro || JSON.stringify(data)));
       }
     } catch (e) {
+      console.log("Erro no try:", e); // ← isso aparece no F12
       alert("Erro de rede: " + e.message);
     } finally {
       setLoading(false);
@@ -33,29 +42,43 @@ const Servicos = () => {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
+    <div style={{
+      maxWidth: "400px",
+      margin: "50px auto",
+      textAlign: "center",
+      padding: "20px",
+      border: "1px solid #ddd",
+      borderRadius: "10px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    }}>
+      <img
+        src="/coruja-rosa.gif"
+        alt="coruja"
+        style={{ width: "180px", marginBottom: "20px" }}
+      />
+
       <h2>Escolha seu serviço</h2>
 
-      <button onClick={() => pagar(5.0, "áudio")} disabled={loading}>
-        ÁUDIO — R$ 5,00
-      </button>
+      <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "15px" }}>
+        <button onClick={() => pagar(5.0, "áudio")} disabled={loading}>
+          ÁUDIO — R$ 5,00
+        </button>
 
-      <button onClick={() => pagar(8.0, "vídeo")} disabled={loading} style={{ marginLeft: "10px" }}>
-        VÍDEO — R$ 8,00
-      </button>
+        <button onClick={() => pagar(8.0, "vídeo")} disabled={loading}>
+          VÍDEO — R$ 8,00
+        </button>
+      </div>
 
-      {loading && <p style={{ marginTop: "30px" }}>Gerando PIX...</p>}
+      {loading && <p style={{ marginTop: "20px" }}>Gerando PIX...</p>}
 
       {qrCode && (
         <div style={{ marginTop: "30px" }}>
           <h3>Escaneie o QR Code:</h3>
-          <img src={qrCode} alt="PIX" style={{ maxWidth: "100%" }} />
+          <img src={qrCode} alt="PIX QR Code" style={{ maxWidth: "100%" }} />
           <p>
-            Ou copie:
+            Ou copie e cole:
             <br />
-            <code style={{ wordBreak: "break-all", background: "#f0f0f0", padding: "10px" }}>
-              {copiaECola}
-            </code>
+            <code style={{ wordBreak: "break-all" }}>{copiaECola}</code>
           </p>
         </div>
       )}
