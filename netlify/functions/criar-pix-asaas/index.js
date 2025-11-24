@@ -26,7 +26,7 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({ 
         name: `Cliente-${Date.now()}`,
-        cpfCnpj: "24994055093", // SEM PONTOS
+        cpfCnpj: "04616557802", // SEM PONTOS
         notificationDisabled: true
       })
     });
