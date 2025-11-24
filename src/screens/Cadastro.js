@@ -14,17 +14,13 @@ export default function Cadastro() {
   const salvarCadastro = useCallback(async () => {
     setCarregando(true);
     try {
-      // Aqui você colocaria a lógica de salvar no Firestore ou API
       console.log('Cadastro realizado!', { nome, telefone, nascimento });
 
-      // Simulando um pequeno delay
       await new Promise((r) => setTimeout(r, 500));
 
-      // Indica que o cadastro foi concluído
       setCadastroConcluido(true);
     } catch (err) {
       console.error('Erro ao cadastrar:', err);
-      // Tratar erro / notificar usuário se necessário
     } finally {
       setCarregando(false);
     }
@@ -42,7 +38,6 @@ export default function Cadastro() {
 
   useEffect(() => {
     if (cadastroConcluido) {
-      // Redireciona para a página de pagamento após o cadastro
       navigate('/pagamento');
     }
   }, [cadastroConcluido, navigate]);
@@ -52,7 +47,6 @@ export default function Cadastro() {
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
 
-      {/* GIF */}
       <img
         src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
         alt="Cadastro animado"
@@ -91,3 +85,8 @@ export default function Cadastro() {
           }}
           maxLength="10"
           inputMode="numeric"
+        />
+      </div>
+    </div>
+  );
+}
