@@ -1,97 +1,116 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid';
-import './Cadastro.css';
+import React, { useState } from "react";
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { v4 as uuidv4 } from "uuid";
+import "./Cadastro.css";
+
+// Config do Firebase
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function Cadastro() {
-  const navigate = useNavigate();
-  const db = getFirestore();
-
-  const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [nascimento, setNascimento] = useState('');
-  const [carregando, setCarregando] = useState(false);
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [nascimento, setNascimento] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sucesso, setSucesso] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   const salvarCadastro = async () => {
-    if (nome.trim().length < 3 || telefone.length < 10 || cpf.length < 11 || nascimento.length < 8) {
-      alert('Por favor, preencha todos os campos corretamente.');
+    if (!nome || !telefone || !cpf || !nascimento) {
+      alert("Preencha todos os campos.");
       return;
     }
 
-    setCarregando(true);
+    setLoading(true);
     try {
-      const userId = uuidv4(); // ID único interno
-
-      await setDoc(doc(db, 'usuarios-asaas', userId), {
-        nome: nome.trim(),
+      const id = uuidv4();
+      await setDoc(doc(db, "usuarios-asaas", id), {
+        nome,
         telefone,
         cpf,
         nascimento,
-        criadoEm: new Date().toISOString(),
+        criadoEm: serverTimestamp(),
       });
-
-      navigate('/servicos', { state: { userId } });
-    } catch (err) {
-      console.error('Erro completo ao cadastrar:', err);
-      alert('Erro ao cadastrar. Tente novamente.');
+      setUserId(id);
+      setSucesso(true);
+      console.log("Cadastro realizado!", { nome, telefone, cpf, nascimento, userId: id });
+    } catch (error) {
+      console.error("Erro completo ao cadastrar:", error);
+      alert("Erro ao cadastrar. Tente novamente.");
     } finally {
-      setCarregando(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container">
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>Criar Conta</h1>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", minHeight: "100vh", padding: "20px" }}>
+      <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>Criar Conta</h1>
+      <p style={{ fontSize: "1.2rem", marginBottom: "30px" }}>É rapidinho e sem complicação!</p>
 
-      <input
-        placeholder="Nome completo"
-        maxLength={50}
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '15px', width: '100%' }}
-      />
+      <div style={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: "400px", gap: "20px" }}>
+        <input
+          style={{ padding: "15px", fontSize: "1.2rem" }}
+          placeholder="Nome completo"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+        />
 
-      <input
-        placeholder="Telefone com DDD"
-        maxLength={11}
-        value={telefone}
-        onChange={(e) => setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))}
-        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '15px', width: '100%' }}
-      />
+        <input
+          style={{ padding: "15px", fontSize: "1.2rem" }}
+          placeholder="Telefone com DDD"
+          type="tel"
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+          maxLength={11}
+        />
 
-      <input
-        placeholder="CPF"
-        maxLength={11}
-        value={cpf}
-        onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
-        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '15px', width: '100%' }}
-      />
+        <input
+          style={{ padding: "15px", fontSize: "1.2rem" }}
+          placeholder="CPF"
+          value={cpf}
+          onChange={(e) => setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))}
+          maxLength={11}
+        />
 
-      <input
-        placeholder="Data de nascimento (dd/mm/aaaa)"
-        maxLength={10}
-        value={nascimento}
-        onChange={(e) => setNascimento(e.target.value)}
-        style={{ fontSize: '1.5rem', padding: '12px', marginBottom: '20px', width: '100%' }}
-      />
+        <input
+          style={{ padding: "15px", fontSize: "1.2rem" }}
+          placeholder="Data de nascimento (dd/mm/aaaa)"
+          value={nascimento}
+          onChange={(e) => {
+            let val = e.target.value.replace(/\D/g, "");
+            if (val.length > 8) val = val.slice(0, 8);
+            if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2);
+            if (val.length > 5) val = val.slice(0, 5) + "/" + val.slice(5);
+            setNascimento(val);
+          }}
+          maxLength={10}
+        />
 
-      <button
-        onClick={salvarCadastro}
-        disabled={carregando}
-        style={{
-          fontSize: '1.5rem',
-          padding: '12px 30px',
-          backgroundColor: '#ff69b4',
-          color: 'white',
-          border: 'none',
-          borderRadius: '10px',
-          cursor: 'pointer',
-        }}
-      >
-        {carregando ? 'Salvando...' : 'Continuar'}
-      </button>
+        <button
+          onClick={salvarCadastro}
+          disabled={loading}
+          style={{ padding: "15px", fontSize: "1.5rem", background: "#ff69b4", color: "white", border: "none", borderRadius: "10px" }}
+        >
+          {loading ? "Cadastrando..." : "Criar Conta"}
+        </button>
+      </div>
+
+      {sucesso && userId && (
+        <p style={{ marginTop: "30px", fontSize: "1.2rem", color: "green" }}>
+          Cadastro realizado! UserID: {userId}
+        </p>
+      )}
     </div>
   );
 }
