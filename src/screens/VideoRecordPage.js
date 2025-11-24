@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import './VideoRecorder.css'; // só CSS puro aqui
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import app, { db } from '../firebase/firebase-client'; // Importa db do firebase-client
+import './VideoRecorder.css'; // apenas CSS puro
 
 const VideoRecorder = () => {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const VideoRecorder = () => {
   useEffect(() => {
     const checkPagamento = async () => {
       try {
-        const auth = getAuth();
+        const auth = getAuth(app); // usando app inicializado
         const user = auth.currentUser;
 
         if (!user) {
@@ -22,7 +23,6 @@ const VideoRecorder = () => {
           return;
         }
 
-        const db = getFirestore();
         const userRef = doc(db, 'usuarios-asaas', user.uid);
         const userSnap = await getDoc(userRef);
 
@@ -78,4 +78,3 @@ const VideoRecorder = () => {
 };
 
 export default VideoRecorder;
-
