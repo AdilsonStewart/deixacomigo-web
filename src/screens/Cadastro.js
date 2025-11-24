@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAuth } from 'firebase/auth';
+import { db } from '../firebase/firebase-client';
+import { doc, setDoc } from 'firebase/firestore';
 import './Cadastro.css';
 
 export default function Cadastro() {
@@ -10,34 +13,44 @@ export default function Cadastro() {
   const [nascimento, setNascimento] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // função que executa o "cadastro" e redireciona
   const salvarCadastro = useCallback(async () => {
     setCarregando(true);
     try {
-      // Aqui você pode colocar a lógica real de salvar (API / Firestore)
-      console.log('Cadastro realizado!', { nome, telefone, nascimento });
+      const auth = getAuth();
+      const user = auth.currentUser;
 
-      // Pequeno delay opcional para melhorar UX (remova se não quiser)
-      // await new Promise((r) => setTimeout(r, 300));
+      if (!user) {
+        alert('Você precisa estar logado.');
+        setCarregando(false);
+        return;
+      }
+
+      // ⭐ Salva no Firestore usando UID como ID do documento
+      await setDoc(doc(db, 'usuarios-asaas', user.uid), {
+        nome,
+        telefone,
+        nascimento,
+        criadoEm: new Date().toISOString(),
+        pago: false
+      });
+
+      console.log('✅ Cadastro salvo no Firestore!');
 
       navigate('/servicos');
+
     } catch (err) {
-      console.error('Erro ao cadastrar:', err);
-      // tratar erro / notificar usuário se necessário
+      console.error('❌ Erro ao cadastrar:', err);
+      alert('Erro ao salvar cadastro.');
     } finally {
       setCarregando(false);
     }
   }, [nome, telefone, nascimento, navigate]);
 
-  // observa os campos e aciona o cadastro automático quando válidos
   useEffect(() => {
-    // validações simples:
     const nascimentoValido = /^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento);
-    const telefoneSomenteNumeros = telefone.replace(/\D/g, '');
-    const telefoneValido = telefoneSomenteNumeros.length >= 10; // ajuste para 11 se preferir
+    const telefoneValido = telefone.replace(/\D/g, '').length >= 10;
 
     if (!carregando && nome.trim() && telefoneValido && nascimentoValido) {
-      // chama salvarCadastro (não precisa de confirmação extra)
       salvarCadastro();
     }
   }, [nome, telefone, nascimento, carregando, salvarCadastro]);
@@ -47,7 +60,6 @@ export default function Cadastro() {
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
 
-      {/* GIF */}
       <img
         src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
         alt="Cadastro animado"
@@ -64,7 +76,7 @@ export default function Cadastro() {
 
         <input
           className="input"
-          placeholder="Telefone com DDD (ex: 11999999999)"
+          placeholder="Telefone com DDD"
           type="tel"
           value={telefone}
           onChange={(e) =>
@@ -89,19 +101,6 @@ export default function Cadastro() {
           autoComplete="off"
         />
 
-        <small
-          style={{
-            color: '#888',
-            textAlign: 'center',
-            display: 'block',
-            marginTop: '-8px',
-            marginBottom: '16px',
-          }}
-        >
-          Data de nascimento
-        </small>
-
-        {/* Mensagem de carregando (opcional) */}
         {carregando && (
           <div style={{ textAlign: 'center', marginTop: '8px' }}>
             Cadastrando...
