@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth } from 'firebase/auth';
-import { db } from '../firebase/firebase-client';
-import { doc, setDoc } from 'firebase/firestore';
 import './Cadastro.css';
 
 export default function Cadastro() {
@@ -12,54 +9,50 @@ export default function Cadastro() {
   const [telefone, setTelefone] = useState('');
   const [nascimento, setNascimento] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [cadastroConcluido, setCadastroConcluido] = useState(false);
 
   const salvarCadastro = useCallback(async () => {
     setCarregando(true);
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
+      // Aqui você colocaria a lógica de salvar no Firestore ou API
+      console.log('Cadastro realizado!', { nome, telefone, nascimento });
 
-      if (!user) {
-        alert('Você precisa estar logado.');
-        setCarregando(false);
-        return;
-      }
+      // Simulando um pequeno delay
+      await new Promise((r) => setTimeout(r, 500));
 
-      // ⭐ Salva no Firestore usando UID como ID do documento
-      await setDoc(doc(db, 'usuarios-asaas', user.uid), {
-        nome,
-        telefone,
-        nascimento,
-        criadoEm: new Date().toISOString(),
-        pago: false
-      });
-
-      console.log('✅ Cadastro salvo no Firestore!');
-
-      navigate('/servicos');
-
+      // Indica que o cadastro foi concluído
+      setCadastroConcluido(true);
     } catch (err) {
-      console.error('❌ Erro ao cadastrar:', err);
-      alert('Erro ao salvar cadastro.');
+      console.error('Erro ao cadastrar:', err);
+      // Tratar erro / notificar usuário se necessário
     } finally {
       setCarregando(false);
     }
-  }, [nome, telefone, nascimento, navigate]);
+  }, [nome, telefone, nascimento]);
 
   useEffect(() => {
     const nascimentoValido = /^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento);
-    const telefoneValido = telefone.replace(/\D/g, '').length >= 10;
+    const telefoneSomenteNumeros = telefone.replace(/\D/g, '');
+    const telefoneValido = telefoneSomenteNumeros.length >= 10;
 
     if (!carregando && nome.trim() && telefoneValido && nascimentoValido) {
       salvarCadastro();
     }
   }, [nome, telefone, nascimento, carregando, salvarCadastro]);
 
+  useEffect(() => {
+    if (cadastroConcluido) {
+      // Redireciona para a página de pagamento após o cadastro
+      navigate('/pagamento');
+    }
+  }, [cadastroConcluido, navigate]);
+
   return (
     <div className="container">
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
 
+      {/* GIF */}
       <img
         src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
         alt="Cadastro animado"
@@ -76,7 +69,7 @@ export default function Cadastro() {
 
         <input
           className="input"
-          placeholder="Telefone com DDD"
+          placeholder="Telefone com DDD (ex: 11999999999)"
           type="tel"
           value={telefone}
           onChange={(e) =>
@@ -98,15 +91,3 @@ export default function Cadastro() {
           }}
           maxLength="10"
           inputMode="numeric"
-          autoComplete="off"
-        />
-
-        {carregando && (
-          <div style={{ textAlign: 'center', marginTop: '8px' }}>
-            Cadastrando...
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
