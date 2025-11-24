@@ -12,39 +12,34 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
   const [nascimento, setNascimento] = useState('');
+  const [cpf, setCpf] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  const salvarCadastro = async () => {
+  const onClick = async () => {
     setCarregando(true);
     try {
-      // Criar usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
       const user = userCredential.user;
 
       // Salvar dados adicionais no Firestore
       await setDoc(doc(db, 'usuarios-asaas', user.uid), {
         nome,
-        cpf,
         telefone,
         nascimento,
+        cpf,
         email,
         uid: user.uid,
       });
 
-      console.log('Cadastro realizado!', user);
-      navigate('/servicos'); // Redireciona para os serviços
-    } catch (error) {
-      console.error('Erro completo ao cadastrar:', error);
+      console.log('Cadastro realizado!', { nome, telefone, nascimento, cpf, email });
+      navigate('/servicos');
+    } catch (err) {
+      console.error('Erro completo ao cadastrar:', err);
 
-      if (error.code === 'auth/email-already-in-use') {
+      if (err.code === 'auth/email-already-in-use') {
         alert('Este e-mail já está cadastrado. Tente fazer login.');
-      } else if (error.code === 'auth/invalid-email') {
-        alert('E-mail inválido.');
-      } else if (error.code === 'auth/weak-password') {
-        alert('Senha muito fraca. Use no mínimo 6 caracteres.');
       } else {
         alert('Erro ao cadastrar. Tente novamente.');
       }
@@ -58,68 +53,73 @@ export default function Cadastro() {
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
 
-      <div className="form-container">
-        <input
-          className="input"
-          placeholder="Nome completo"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
+      <input
+        className="input"
+        placeholder="Nome completo"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+      />
 
-        <input
-          className="input"
-          placeholder="E-mail"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <input
+        className="input"
+        placeholder="E-mail"
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-        <input
-          className="input"
-          placeholder="Senha (mínimo 6 caracteres)"
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
+      <input
+        className="input"
+        placeholder="Senha"
+        type="password"
+        value={senha}
+        onChange={(e) => setSenha(e.target.value)}
+      />
 
-        <input
-          className="input"
-          placeholder="CPF"
-          value={cpf}
-          onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
-          maxLength="11"
-        />
+      <input
+        className="input"
+        placeholder="Telefone com DDD"
+        type="tel"
+        value={telefone}
+        onChange={(e) => setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        maxLength="11"
+      />
 
-        <input
-          className="input"
-          placeholder="Telefone com DDD"
-          value={telefone}
-          onChange={(e) => setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))}
-          maxLength="11"
-        />
+      <input
+        className="input"
+        placeholder="Data de nascimento (dd/mm/aaaa)"
+        value={nascimento}
+        onChange={(e) => {
+          let valor = e.target.value.replace(/\D/g, '');
+          if (valor.length > 8) valor = valor.slice(0, 8);
+          if (valor.length > 2) valor = valor.slice(0, 2) + '/' + valor.slice(2);
+          if (valor.length > 5) valor = valor.slice(0, 5) + '/' + valor.slice(5);
+          setNascimento(valor);
+        }}
+        maxLength="10"
+      />
 
-        <input
-          className="input"
-          placeholder="Data de nascimento (dd/mm/aaaa)"
-          value={nascimento}
-          onChange={(e) => {
-            let valor = e.target.value.replace(/\D/g, '');
-            if (valor.length > 8) valor = valor.slice(0, 8);
-            if (valor.length > 2) valor = valor.slice(0, 2) + '/' + valor.slice(2);
-            if (valor.length > 5) valor = valor.slice(0, 5) + '/' + valor.slice(5);
-            setNascimento(valor);
-          }}
-          maxLength="10"
-        />
+      <input
+        className="input"
+        placeholder="CPF"
+        value={cpf}
+        onChange={(e) => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        maxLength="11"
+      />
 
-        <button
-          className="btn-cadastro"
-          onClick={salvarCadastro}
-          disabled={carregando}
+      <button onClick={onClick} disabled={carregando}>
+        {carregando ? 'Cadastrando...' : 'Cadastrar'}
+      </button>
+
+      <p style={{ marginTop: '15px' }}>
+        Já tem conta?{' '}
+        <span
+          style={{ color: '#ff4dd2', cursor: 'pointer', textDecoration: 'underline' }}
+          onClick={() => navigate('/login')}
         >
-          {carregando ? 'Cadastrando...' : 'Cadastrar'}
-        </button>
-      </div>
+          Faça login aqui
+        </span>
+      </p>
     </div>
   );
 }
