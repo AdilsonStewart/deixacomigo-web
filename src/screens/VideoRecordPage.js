@@ -1,11 +1,11 @@
+// src/screens/VideoRecordPage.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth } from 'firebase/auth';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import app, { db } from '../firebase/firebase-client'; // Importa db do firebase-client
-import './VideoRecorder.css'; // apenas CSS puro
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebase-client'; // usa o cliente seguro
+import './VideoRecorder.css'; // apenas CSS puro aqui
 
-const VideoRecorder = () => {
+const VideoRecordPage = () => {
   const navigate = useNavigate();
   const [pago, setPago] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,8 +13,7 @@ const VideoRecorder = () => {
   useEffect(() => {
     const checkPagamento = async () => {
       try {
-        const auth = getAuth(app); // usando app inicializado
-        const user = auth.currentUser;
+        const user = JSON.parse(localStorage.getItem('currentUser')) || null; // exemplo de auth simples
 
         if (!user) {
           alert("Você precisa estar logado.");
@@ -36,7 +35,7 @@ const VideoRecorder = () => {
         const userData = userSnap.data();
         setPago(userData.pago === true);
       } catch (err) {
-        console.error(err);
+        console.error('Erro ao verificar pagamento:', err);
         setPago(false);
       } finally {
         setLoading(false);
@@ -52,10 +51,7 @@ const VideoRecorder = () => {
     return (
       <div className="video-container">
         <h2>💡 Para acessar a gravação, você precisa pagar primeiro.</h2>
-        <button 
-          className="btn-new"
-          onClick={() => navigate(-1)}
-        >
+        <button className="btn-new" onClick={() => navigate(-1)}>
           Voltar
         </button>
       </div>
@@ -67,14 +63,11 @@ const VideoRecorder = () => {
       <h1 className="video-title">Gravar Vídeo</h1>
       <p className="phase-title">Funcionalidade em desenvolvimento...</p>
 
-      <button 
-        className="btn-new"
-        onClick={() => navigate(-1)}
-      >
+      <button className="btn-new" onClick={() => navigate(-1)}>
         Voltar
       </button>
     </div>
   );
 };
 
-export default VideoRecorder;
+export default VideoRecordPage;
