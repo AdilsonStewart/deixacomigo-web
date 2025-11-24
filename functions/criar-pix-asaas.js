@@ -1,12 +1,15 @@
+// functions/criar-pix-asaas.js
 const axios = require('axios');
 const admin = require('firebase-admin');
 
-// Inicializa o Firebase Admin usando a variável de ambiente
 if (!admin.apps.length) {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+  // Corrige quebras de linha
+  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+
   admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    )
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 
@@ -17,24 +20,20 @@ exports.handler = async (event) => {
     const { valor, tipo, userId } = JSON.parse(event.body || '{}');
 
     if (!valor || !tipo || !userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }),
-      };
+      return { statusCode: 400, body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }) };
     }
 
-    // Puxar dados do usuário no Firestore
+    // Puxa dados do usuário no Firestore
     const userRef = db.collection('usuarios-asaas').doc(userId);
     const userSnap = await userRef.get();
+
     if (!userSnap.exists) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ erro: 'Usuário não encontrado' }),
-      };
+      return { statusCode: 400, body: JSON.stringify({ erro: 'Usuário não identificado. Volte ao cadastro.' }) };
     }
+
     const userData = userSnap.data();
 
-    // Criar pagamento no Asaas
+    // Cria pagamento PIX no Asaas
     const response = await axios.post(
       'https://www.asaas.com/api/v3/payments',
       {
@@ -68,10 +67,7 @@ exports.handler = async (event) => {
     console.error('Erro Asaas:', error.response?.data || error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        erro: 'Erro ao gerar PIX Asaas',
-        detalhes: error.message,
-      }),
+      body: JSON.stringify({ erro: 'Erro ao gerar PIX Asaas', detalhes: error.message }),
     };
   }
 };
