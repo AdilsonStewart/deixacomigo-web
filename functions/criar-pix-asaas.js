@@ -3,9 +3,10 @@ const axios = require('axios');
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
+  // Pega a variável do Netlify e transforma em objeto
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-  // Corrige quebras de linha
+  // Substitui \\n por quebras de linha reais
   serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
   admin.initializeApp({
@@ -20,15 +21,21 @@ exports.handler = async (event) => {
     const { valor, tipo, userId } = JSON.parse(event.body || '{}');
 
     if (!valor || !tipo || !userId) {
-      return { statusCode: 400, body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }) };
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ erro: 'Valor, tipo e userId são obrigatórios' }),
+      };
     }
 
-    // Puxa dados do usuário no Firestore
+    // Busca dados do usuário no Firestore
     const userRef = db.collection('usuarios-asaas').doc(userId);
     const userSnap = await userRef.get();
 
     if (!userSnap.exists) {
-      return { statusCode: 400, body: JSON.stringify({ erro: 'Usuário não identificado. Volte ao cadastro.' }) };
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ erro: 'Usuário não encontrado' }),
+      };
     }
 
     const userData = userSnap.data();
@@ -37,7 +44,7 @@ exports.handler = async (event) => {
     const response = await axios.post(
       'https://www.asaas.com/api/v3/payments',
       {
-        customer: userData.customerId, // precisa ter sido criado antes
+        customer: userData.customerId,
         billingType: 'PIX',
         value: Number(valor),
         dueDate: new Date().toISOString().split('T')[0],
@@ -67,7 +74,10 @@ exports.handler = async (event) => {
     console.error('Erro Asaas:', error.response?.data || error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ erro: 'Erro ao gerar PIX Asaas', detalhes: error.message }),
+      body: JSON.stringify({
+        erro: 'Erro ao gerar PIX Asaas',
+        detalhes: error.message,
+      }),
     };
   }
 };
