@@ -1,69 +1,55 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Cadastro.css';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
+import { db } from '../firebase/firebase-client'; // seu firebase-client.js
 
 export default function Cadastro() {
   const navigate = useNavigate();
-
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [nascimento, setNascimento] = useState('');
   const [cpf, setCpf] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [cadastroConcluido, setCadastroConcluido] = useState(false);
 
   const salvarCadastro = useCallback(async () => {
     setCarregando(true);
     try {
-      // AQUI depois entra o Firestore
-      console.log('Cadastro realizado!', { nome, telefone, nascimento, cpf });
+      const userId = uuidv4(); // gera um ID único
+      const novoUsuario = {
+        nome,
+        telefone,
+        nascimento,
+        cpf,
+        criadoEm: new Date(),
+      };
 
-      await new Promise((r) => setTimeout(r, 500));
+      // Salva no Firestore
+      await setDoc(doc(db, 'usuarios-asaas', userId), novoUsuario);
 
-      setCadastroConcluido(true);
+      console.log('Cadastro realizado!', { ...novoUsuario, userId });
+
+      // Redireciona para a página de serviços, enviando userId
+      navigate('/servicos', { state: { userId } });
     } catch (err) {
       console.error('Erro ao cadastrar:', err);
+      alert('Erro ao cadastrar. Tente novamente.');
     } finally {
       setCarregando(false);
     }
-  }, [nome, telefone, nascimento, cpf]);
+  }, [nome, telefone, nascimento, cpf, navigate]);
 
-  useEffect(() => {
-    const nascimentoValido = /^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento);
-
-    const telNum = telefone.replace(/\D/g, '');
-    const telefoneValido = telNum.length >= 10;
-
-    const cpfNum = cpf.replace(/\D/g, '');
-    const cpfValido = cpfNum.length === 11;
-
-    if (
-      !carregando &&
-      nome.trim() &&
-      telefoneValido &&
-      nascimentoValido &&
-      cpfValido
-    ) {
-      salvarCadastro();
-    }
-  }, [nome, telefone, nascimento, cpf, carregando, salvarCadastro]);
-
-  useEffect(() => {
-    if (cadastroConcluido) {
-      navigate('/servicos');
-    }
-  }, [cadastroConcluido, navigate]);
+  // Validações simples
+  const podeCadastrar =
+    nome.trim() &&
+    telefone.replace(/\D/g, '').length >= 10 &&
+    /^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento) &&
+    cpf.replace(/\D/g, '').length === 11;
 
   return (
     <div className="container">
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
-
-      <img
-        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
-        alt="Cadastro animado"
-        className="cadastro-gif"
-      />
 
       <div className="form-container">
         <input
@@ -72,36 +58,14 @@ export default function Cadastro() {
           value={nome}
           onChange={(e) => setNome(e.target.value)}
         />
-
         <input
           className="input"
-          placeholder="Telefone com DDD (ex: 11999999999)"
-          type="tel"
+          placeholder="Telefone com DDD"
           value={telefone}
           onChange={(e) =>
             setTelefone(e.target.value.replace(/\D/g, '').slice(0, 11))
           }
-          maxLength="11"
         />
-
-        <input
-          className="input"
-          placeholder="CPF (000.000.000-00)"
-          value={cpf}
-          onChange={(e) => {
-            let v = e.target.value.replace(/\D/g, '');
-            if (v.length > 11) v = v.slice(0, 11);
-
-            if (v.length > 3) v = v.slice(0, 3) + '.' + v.slice(3);
-            if (v.length > 7) v = v.slice(0, 7) + '.' + v.slice(7);
-            if (v.length > 11) v = v.slice(0, 11) + '-' + v.slice(11);
-
-            setCpf(v);
-          }}
-          maxLength="14"
-          inputMode="numeric"
-        />
-
         <input
           className="input"
           placeholder="Data de nascimento (dd/mm/aaaa)"
@@ -114,8 +78,24 @@ export default function Cadastro() {
             setNascimento(valor);
           }}
           maxLength="10"
-          inputMode="numeric"
         />
+        <input
+          className="input"
+          placeholder="CPF (somente números)"
+          value={cpf}
+          onChange={(e) =>
+            setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))
+          }
+          maxLength="11"
+        />
+
+        <button
+          className="btn-new"
+          onClick={salvarCadastro}
+          disabled={!podeCadastrar || carregando}
+        >
+          {carregando ? 'Cadastrando...' : 'Continuar'}
+        </button>
       </div>
     </div>
   );
