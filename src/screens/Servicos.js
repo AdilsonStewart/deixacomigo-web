@@ -1,14 +1,13 @@
 import React, { useState } from "react";
+import QRCode from "qrcode.react"; // ← biblioteca leve que gera QR no navegador
 
 const Servicos = () => {
-  const [qrCode, setQrCode] = useState(null);
-  const [copiaECola, setCopiaECola] = useState(null);
+  const [copiaECola, setCopiaECola] = useState("");
   const [loading, setLoading] = useState(false);
 
   const pagar = async (valor, tipo) => {
     setLoading(true);
-    setQrCode(null);
-    setCopiaECola(null);
+    setCopiaECola("");
 
     try {
       const res = await fetch("/.netlify/functions/criar-pix-asaas", {
@@ -18,18 +17,13 @@ const Servicos = () => {
       });
 
       const data = await res.json();
-      console.log("Tudo que veio do Asaas:", data);
+      console.log("Asaas devolveu:", data);
 
-      // Asaas manda de jeitos diferentes, então aceita tudo
-      const imagem = data.encodedImage
-        ? `data:image/png;base64,${data.encodedImage}`
-        : data.qrCodeUrl || data.qrCode || "";
-
-      const texto = data.payload || "não veio código";
-
-      setQrCode(imagem);
-      setCopiaECola(texto);
-
+      if (data.success && data.copiaECola) {
+        setCopiaECola(data.copiaECola);
+      } else {
+        alert("Erro: " + JSON.stringify(data));
+      }
     } catch (e) {
       alert("Erro: " + e.message);
     } finally {
@@ -37,7 +31,6 @@ const Servicos = () => {
     }
   };
 
-  // resto do return igual (botões e tudo)
   return (
     <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
       <img src="/coruja-rosa.gif" alt="coruja" style={{ width: "180px" }} />
@@ -51,13 +44,22 @@ const Servicos = () => {
         VÍDEO — R$ 8,00
       </button>
 
-      {loading && <p>Gerando PIX...</p>}
+      {loading && <p>Gerando Pix...</p>}
 
-      {qrCode && (
+      {copiaECola && (
         <div style={{ marginTop: "30px" }}>
-          <img src={qrCode} alt="QR Code" style={{ maxWidth: "280px" }} />
-          <p>Copie o código:</p>
-          <textarea readOnly value={copiaECola} style={{ width: "100%", height: "80px" }} onClick={e => e.target.select()} />
+          <h3>Pague com Pix</h3>
+          
+          {/* GERA O QR CODE NO NAVEGADOR COM O CÓDIGO COPIA-E-COLA */}
+          <QRCode value={copiaECola} size={280} level="H" />
+
+          <p style={{ marginTop: "20px" }}>Ou copie o código:</p>
+          <textarea
+            readOnly
+            value={copiaECola}
+            onClick={(e) => e.target.select()}
+            style={{ width: "100%", height: "100px", fontFamily: "monospace" }}
+          />
         </div>
       )}
     </div>
