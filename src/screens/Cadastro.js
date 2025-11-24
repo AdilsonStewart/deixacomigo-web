@@ -1,11 +1,10 @@
+// src/screens/Cadastro.js
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
-import app from "../firebase/firebase-client";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase-client";
 import "./Cadastro.css";
-
-const db = getFirestore(app);
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -19,22 +18,15 @@ export default function Cadastro() {
   const salvarCadastro = useCallback(async () => {
     setCarregando(true);
     try {
-      // validação simples
-      const nascimentoValido = /^(\d{2}\/\d{2}\/\d{4})$/.test(nascimento);
-      const telefoneSomenteNumeros = telefone.replace(/\D/g, "");
-      const telefoneValido = telefoneSomenteNumeros.length >= 10;
-      const cpfSomenteNumeros = cpf.replace(/\D/g, "");
-      const cpfValido = cpfSomenteNumeros.length === 11;
-
-      if (!nome.trim() || !telefoneValido || !nascimentoValido || !cpfValido) {
+      // Validações simples
+      if (!nome.trim() || !telefone || !nascimento || !cpf) {
         alert("Preencha todos os campos corretamente.");
+        setCarregando(false);
         return;
       }
 
-      // gerar userId
-      const userId = uuidv4();
+      const userId = uuidv4(); // cria um ID único para o usuário
 
-      // salvar no Firestore
       await setDoc(doc(db, "usuarios-asaas", userId), {
         nome,
         telefone,
@@ -45,10 +37,10 @@ export default function Cadastro() {
 
       console.log("Cadastro realizado!", { nome, telefone, nascimento, cpf, userId });
 
-      // redireciona para serviços passando userId
+      // Redireciona para a página de serviços, passando userId
       navigate("/servicos", { state: { userId } });
     } catch (err) {
-      console.error("Erro ao cadastrar:", err);
+      console.error("Erro completo ao cadastrar:", err);
       alert("Erro ao cadastrar. Tente novamente.");
     } finally {
       setCarregando(false);
@@ -59,6 +51,12 @@ export default function Cadastro() {
     <div className="container">
       <h1 className="titulo">Criar Conta</h1>
       <p className="slogan">É rapidinho e sem complicação!</p>
+
+      <img
+        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHg3bWYzNGlzNHlwcXpxamptYXhoYnN5cnl6d2l1NjJ5d2s3bmtnMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7XHonPQqVy4Of0322v/giphy.gif"
+        alt="Cadastro animado"
+        className="cadastro-gif"
+      />
 
       <div className="form-container">
         <input
@@ -76,7 +74,7 @@ export default function Cadastro() {
           onChange={(e) =>
             setTelefone(e.target.value.replace(/\D/g, "").slice(0, 11))
           }
-          maxLength={11}
+          maxLength="11"
         />
 
         <input
@@ -90,22 +88,35 @@ export default function Cadastro() {
             if (valor.length > 5) valor = valor.slice(0, 5) + "/" + valor.slice(5);
             setNascimento(valor);
           }}
-          maxLength={10}
+          maxLength="10"
           inputMode="numeric"
+          autoComplete="off"
         />
 
         <input
           className="input"
           placeholder="CPF (somente números)"
+          type="text"
           value={cpf}
           onChange={(e) =>
             setCpf(e.target.value.replace(/\D/g, "").slice(0, 11))
           }
-          maxLength={11}
+          maxLength="11"
         />
 
-        <button className="btn-new" onClick={salvarCadastro} disabled={carregando}>
-          {carregando ? "Cadastrando..." : "Cadastrar"}
+        {carregando && (
+          <div style={{ textAlign: "center", marginTop: "8px" }}>
+            Cadastrando...
+          </div>
+        )}
+
+        <button
+          className="btn-new"
+          onClick={salvarCadastro}
+          disabled={carregando}
+          style={{ marginTop: "16px" }}
+        >
+          Finalizar Cadastro
         </button>
       </div>
     </div>
