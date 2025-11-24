@@ -7,42 +7,50 @@ exports.handler = async function (event) {
 
   const { valor, tipo, userId } = JSON.parse(event.body);
 
+  // COLOQUE AQUI A SUA CHAVE SANDBOX DO ASAAS (a que começa com $aact_)
+  const ASAAS_KEY = "$aact_SUA_CHAVE_SANDBOX_AQUI";
+
+  ← apague isso e cole a sua chave real";
+
   try {
-    const response = await axios.post(
+    // 1. Cria o cliente temporário
+    const cliente = await axios.post(
+      "https://api.asaas.com/v3/customers",
+      {
+        name: "Cliente Teste",
+        cpfCnpj: "00000000191",
+        email: "teste@temporario.com",
+        mobilePhone: "47999999999",
+      },
+      { headers: { access_token: ASAAS_KEY } }
+    );
+
+    // 2. Cria o Pix com o cliente que acabamos de criar
+    const pagamento = await axios.post(
       "https://api.asaas.com/v3/payments",
       {
-        customer: "cus_000006049802",
+        customer: cliente.data.id,
         billingType: "PIX",
         value: valor,
         dueDate: new Date(Date.now() + 10 * 60 * 1000).toISOString().split("T")[0],
         description: `Lembrete ${tipo} - ${userId}`,
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          access_token: "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh",
-        },
-      }
+      { headers: { access_token: ASAAS_KEY } }
     );
 
-    const data = response.data;
-
-    const qrResponse = await axios.get(
-      `https://api.asaas.com/v3/payments/${data.id}/pixQrCode`,
-      {
-        headers: {
-          access_token: "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh"
-        }
-      }
+    // 3. Pega o QR Code
+    const qr = await axios.get(
+      `https://api.asaas.com/v3/payments/${pagamento.data.id}/pixQrCode`,
+      { headers: { access_token: ASAAS_KEY } }
     );
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        qrCodeUrl: qrResponse.data.qrCodeUrl,
-        copiaECola: qrResponse.data.payload,
-        paymentId: data.id,
+        qrCodeUrl: qr.data.qrCodeUrl,
+        copiaECola: qr.data.payload,
+        paymentId: pagamento.data.id,
       }),
     };
   } catch (error) {
