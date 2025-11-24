@@ -20,7 +20,7 @@ exports.handler = async function (event) {
       {
         headers: {
           "Content-Type": "application/json",
-          access_token: "$aact_YTU5YTE0M2M2N2I4NjE3ZTYxYWM1M2ZmN2YxM2IyMGU3ZjA0ZWIwYTU4ZDk0N2QzM2QwMGRlM2Q0ZjU3MGRiZDJkOjAwMDAwMDAwMDAwMDAwODAyNTMkJGRhNzE5Y2U5LTAwYjUtNGU5Ni04M2QyLTU3ZDA5NzRhN2I3YQ==",
+          access_token: "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh",
         },
       }
     );
@@ -31,7 +31,7 @@ exports.handler = async function (event) {
       `https://api.asaas.com/v3/payments/${data.id}/pixQrCode`,
       {
         headers: {
-          access_token: "$aact_YTU5YTE0M2M2N2I4NjE3ZTYxYWM1M2ZmN2YxM2IyMGU3ZjA0ZWIwYTU4ZDk0N2QzM2QwMGRlM2Q0ZjU3MGRiZDJkOjAwMDAwMDAwMDAwMDAwODAyNTMkJGRhNzE5Y2U5LTAwYjUtNGU5Ni04M2QyLTU3ZDA5NzRhN2I3YQ=="
+          access_token: "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh"
         }
       }
     );
