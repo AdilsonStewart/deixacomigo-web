@@ -1,29 +1,36 @@
 export const handler = async (event) => {
+  console.log("🔔 WEBHOOK CHAMADO!");
+
   try {
     const body = JSON.parse(event.body || "{}");
+    console.log("📦 Dados recebidos:", JSON.stringify(body, null, 2));
 
-    // só aceitamos confirmação de pagamento
-    if (body.event !== "PAYMENT_CONFIRMED") {
-      return { statusCode: 200, body: "ignorado" };
+    // Verifica se é uma confirmação de pagamento
+    if (body.event === "PAYMENT_CONFIRMED") {
+      const payment = body.payment;
+      console.log("✅ PAGAMENTO CONFIRMADO!");
+      console.log("💰 Valor:", payment.value);
+      console.log("🎯 ID:", payment.id);
+      
+      // Aqui vamos decidir para onde mandar o usuário
+      if (payment.value === 5.00) {
+        console.log("🎧 Cliente comprou ÁUDIO - deve ir para /sucesso");
+      } else if (payment.value === 8.00) {
+        console.log("🎥 Cliente comprou VÍDEO - deve ir para /sucesso2");
+      }
     }
 
-    const cobrancaId = body.payment?.id;
-
-    console.log("✅ PAGAMENTO CONFIRMADO:", cobrancaId);
-
-    // --- AQUI VAMOS LIBERAR O CLIENTE DEPOIS ---
-    // ex: salvar no Firestore: pago = true
-
+    // SEMPRE responde 200 para a Asaas
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true })
+      body: JSON.stringify({ success: true, message: "Webhook recebido" })
     };
 
-  } catch (err) {
-    console.log("❌ ERRO WEBHOOK:", err.message);
+  } catch (error) {
+    console.log("❌ ERRO no webhook:", error);
     return {
-      statusCode: 400,
-      body: JSON.stringify({ error: err.message })
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
