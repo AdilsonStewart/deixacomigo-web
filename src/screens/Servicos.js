@@ -1,43 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
+import { getAuth } from "firebase/auth";
 
 const Servicos = () => {
-  // --- BOTÃO DE 5,00 ---
-  const pagarAudio = async () => {
-    const res = await fetch("/api/criar-pix-asaas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        valor: 5.00,
-        tipo: "áudio",
-        metodo: "pix"
-      })
-    });
+  const [qrCode, setQrCode] = useState(null);
+  const [copiaECola, setCopiaECola] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    const data = await res.json();
-    if (data.success && data.paymentLink) {
-      window.location.href = data.paymentLink;
-    } else {
-      alert("Erro: " + JSON.stringify(data));
-    }
-  };
+  const pagar = async (valor, tipo) => {
+    setLoading(true);
+    setQrCode(null);
+    setCopiaECola(null);
 
-  // --- BOTÃO DE 8,00 ---
-  const pagarVideo = async () => {
-    const res = await fetch("/api/criar-pix-asaas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        valor: 8.00,
-        tipo: "vídeo",
-        metodo: "pix"
-      })
-    });
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
 
-    const data = await res.json();
-    if (data.success && data.paymentLink) {
-      window.location.href = data.paymentLink;
-    } else {
-      alert("Erro: " + JSON.stringify(data));
+      if (!user) {
+        alert("Você precisa estar logado para pagar.");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/criar-pix-asaas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          valor,
+          tipo,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setQrCode(data.qrCodeUrl);
+        setCopiaECola(data.copiaECola);
+      } else {
+        alert("Erro: " + JSON.stringify(data));
+      }
+    } catch (e) {
+      alert("Erro de rede: " + e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,39 +56,52 @@ const Servicos = () => {
 
       <h2>Escolha seu serviço</h2>
 
-      <button
-        onClick={pagarAudio}
-        style={{
-          padding: "20px 40px",
-          fontSize: "1.5rem",
-          background: "#ff4dd2",
-          color: "white",
-          border: "none",
-          borderRadius: "10px",
-          marginTop: "30px",
-          display: "block",
-          margin: "30px auto"
-        }}
-      >
-        ÁUDIO — R$ 5,00
-      </button>
+      <div style={{ marginTop: "30px" }}>
+        <button
+          onClick={() => pagar(5.0, "áudio")}
+          style={{
+            padding: "20px 40px",
+            fontSize: "1.5rem",
+            background: "#ff4dd2",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+            marginRight: "20px",
+          }}
+          disabled={loading}
+        >
+          ÁUDIO — R$ 5,00
+        </button>
 
-      <button
-        onClick={pagarVideo}
-        style={{
-          padding: "20px 40px",
-          fontSize: "1.5rem",
-          background: "#ff8c00",
-          color: "white",
-          border: "none",
-          borderRadius: "10px",
-          marginTop: "20px",
-          display: "block",
-          margin: "20px auto"
-        }}
-      >
-        VÍDEO — R$ 8,00
-      </button>
+        <button
+          onClick={() => pagar(8.0, "vídeo")}
+          style={{
+            padding: "20px 40px",
+            fontSize: "1.5rem",
+            background: "#ff69b4",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+          }}
+          disabled={loading}
+        >
+          VÍDEO — R$ 8,00
+        </button>
+      </div>
+
+      {loading && <p style={{ marginTop: "20px" }}>Gerando PIX...</p>}
+
+      {qrCode && (
+        <div style={{ marginTop: "30px" }}>
+          <h3>Escaneie o QR Code com seu app de pagamentos:</h3>
+          <img src={qrCode} alt="PIX QR Code" style={{ marginTop: "10px" }} />
+          <p style={{ marginTop: "10px" }}>
+            Ou copie e cole este código:
+            <br />
+            <code>{copiaECola}</code>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
