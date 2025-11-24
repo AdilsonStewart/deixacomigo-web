@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
 const Servicos = () => {
-  const [copiaECola, setCopiaECola] = useState("");
   const [loading, setLoading] = useState(false);
 
   const testarFunction = async () => {
@@ -22,11 +21,6 @@ const Servicos = () => {
     }
   };
 
-  // GERA QR CODE COM SERVIÇO GRÁTIS (não precisa instalar nada)
-  const qrUrl = copiaECola
-    ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(copiaECola)}`
-    : "";
-
   return (
     <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
       <img src="/coruja-rosa.gif" alt="coruja" style={{ width: "180px" }} />
@@ -37,19 +31,7 @@ const Servicos = () => {
       </button>
       <br /><br />
 
-      {copiaECola && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>Pague com Pix</h3>
-          <img src={qrUrl} alt="QR Code Pix" style={{ maxWidth: "280px", borderRadius: "10px" }} />
-          <p style={{ marginTop: "15px" }}>Ou copie o código:</p>
-          <textarea
-            readOnly
-            value={copiaECola}
-            onClick={(e) => e.target.select()}
-            style={{ width: "100%", height: "100px", fontFamily: "monospace", padding: "10px" }}
-          />
-        </div>
-      )}
+      <p>Clique no botão para testar a Asaas</p>
     </div>
   );
 };
