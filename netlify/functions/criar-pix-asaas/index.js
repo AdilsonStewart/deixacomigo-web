@@ -1,42 +1,61 @@
 exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "POST only" };
+  }
+
   const { valor, tipo } = JSON.parse(event.body || "{}");
 
-  // COLE AQUI SUA CHAVE SANDBOX (botão copiar do Asaas)
-  const key = $aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh;
+  // TROQUE SÓ ISSO PELA SUA CHAVE SANDBOX (copie com o botão do Asaas)
+  const key = "$aact_COLOQUE_SUA_CHAVE_SANDBOX_AQUI";
 
   try {
-    const c = await fetch("https://api.asaas.com/v3/customers", {
+    // Cria cliente
+    const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
       method: "POST",
-      headers: { "content-type": "application/json", access_token: key },
-      body: JSON.stringify({ name: "Pix", cpfCnpj: "24994055093", mobilePhone: "47999999999" })
-    }).then(r => r.json());
-
-    const p = await fetch("https://api.asaas.com/v3/payments", {
-      method: "POST",
-      headers: { "content-type": "application/json", access_token: key },
+      headers: { "Content-Type": "application/json", access_token: key },
       body: JSON.stringify({
-        customer: c.id,
+        name: "Cliente Pix",
+        cpfCnpj: "24994055093",
+        mobilePhone: "47999999999"
+      })
+    });
+    const cliente = await clienteRes.json();
+
+    // Cria Pix
+    const pagamentoRes = await fetch("https://api.asaas.com/v3/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", access_token: key },
+      body: JSON.stringify({
+        customer: cliente.id,
         billingType: "PIX",
         value: valor,
-        dueDate: new Date(Date.now() + 10*60*1000).toISOString().split("T")[0],
-        description: tipo
+        dueDate: new Date(Date.now() + 15 * 60 * 1000).toISOString().split("T")[0],
+        description: `Lembrete ${tipo}`
       })
-    }).then(r => r.json());
+    });
+    const pagamento = await pagamentoRes.json();
 
-    const qr = await fetch(`https://api.asaas.com/v3/payments/${p.id}/pixQrCode`, {
+    // Pega QR Code
+    const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
       headers: { access_token: key }
-    }).then(r => r.json());
+    });
+    const qr = await qrRes.json();
 
     return {
       statusCode: 200,
+      headers: { "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify({
         success: true,
         qrCodeUrl: qr.qrCodeUrl,
         copiaECola: qr.payload,
-        paymentId: p.id
+        paymentId: pagamento.id
       })
     };
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ success: false, erro: e.message }) };
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ success: false, erro: e.message })
+    };
   }
 };
