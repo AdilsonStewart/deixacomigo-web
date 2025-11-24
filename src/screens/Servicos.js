@@ -11,7 +11,7 @@ const Servicos = () => {
     setCopiaECola(null);
 
     try {
-      const res = await fetch("/api/criar-pix-asaas", {
+      const res = await fetch("/.netlify/functions/criar-pix-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
