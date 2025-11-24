@@ -38,7 +38,8 @@ export default function Cadastro() {
 
   useEffect(() => {
     if (cadastroConcluido) {
-      navigate('/pagamento');
+      // ✅ AGORA VAI PARA SERVIÇOS
+      navigate('/servicos');
     }
   }, [cadastroConcluido, navigate]);
 
