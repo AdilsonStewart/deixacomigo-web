@@ -11,12 +11,22 @@ const Servicos = () => {
     setCopiaECola(null);
 
     try {
+      // Pegando o userId do localStorage (salvo no cadastro)
+      const userId = localStorage.getItem("userId");
+
+      if (!userId) {
+        alert("Erro: usuário não identificado. Volte ao cadastro.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/.netlify/functions/criar-pix-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           valor,
-          tipo
+          tipo,
+          userId, // ✅ agora enviamos o ID correto
         }),
       });
 
@@ -46,11 +56,34 @@ const Servicos = () => {
       <h2>Escolha seu serviço</h2>
 
       <div style={{ marginTop: "30px" }}>
-        <button onClick={() => pagar(5.0, "áudio")} disabled={loading}>
+        <button
+          onClick={() => pagar(5.0, "áudio")}
+          style={{
+            padding: "20px 40px",
+            fontSize: "1.5rem",
+            background: "#ff4dd2",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+            marginRight: "20px",
+          }}
+          disabled={loading}
+        >
           ÁUDIO — R$ 5,00
         </button>
 
-        <button onClick={() => pagar(8.0, "vídeo")} disabled={loading}>
+        <button
+          onClick={() => pagar(8.0, "vídeo")}
+          style={{
+            padding: "20px 40px",
+            fontSize: "1.5rem",
+            background: "#ff69b4",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+          }}
+          disabled={loading}
+        >
           VÍDEO — R$ 8,00
         </button>
       </div>
@@ -59,10 +92,10 @@ const Servicos = () => {
 
       {qrCode && (
         <div style={{ marginTop: "30px" }}>
-          <h3>Escaneie o QR Code:</h3>
-          <img src={qrCode} alt="PIX QR Code" />
-          <p>
-            Ou copie e cole:
+          <h3>Escaneie o QR Code com seu app de pagamentos:</h3>
+          <img src={qrCode} alt="PIX QR Code" style={{ marginTop: "10px" }} />
+          <p style={{ marginTop: "10px" }}>
+            Ou copie e cole este código:
             <br />
             <code>{copiaECola}</code>
           </p>
