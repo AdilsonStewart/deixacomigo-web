@@ -5,18 +5,18 @@ exports.handler = async (event) => {
 
   const { valor, tipo } = JSON.parse(event.body || "{}");
 
-  // ←←← SUA CHAVE SANDBOX AQUI (copia com o botão do Asaas, sem espaço nenhum)
-  const key = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjgzNzYzNWUxLWI4MzItNDMyYi04YTU1LTVkN2UxYmI4MWYzODo6JGFhY2hfNzU2M2JhY2QtMDgyMS00ZWE2LWEzZDYtNmUwYWE1MjU0ODlh";
+  // SUA CHAVE (com aspas!!)
+  const key = "$aact_SUA_CHAVE_COMPLETA_AQUI";
 
   try {
     // 1. cria cliente
     const cliente = await fetch("https://api.asaas.com/v3/customers", {
       method: "POST",
       headers: { "content-type": "application/json", access_token: key },
-      body: JSON.stringify({ name: "Cliente", cpfCnpj: "24994055093", mobilePhone: "47999999999" })
+      body: JSON.stringify({ name: "Teste", cpfCnpj: "24994055093", mobilePhone: "47999999999" })
     }).then(r => r.json());
 
-    // 2. cria pagamento PIX
+    // 2. cria pagamento e já pega o QR Code direto
     const pagamento = await fetch("https://api.asaas.com/v3/payments", {
       method: "POST",
       headers: { "content-type": "application/json", access_token: key },
@@ -29,25 +29,16 @@ exports.handler = async (event) => {
       })
     }).then(r => r.json());
 
-    // 3. pega o QR Code do Asaas
-    const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
-      headers: { access_token: key }
-    });
-    const qr = await qrRes.json();
-
-    // LOG COMPLETO PRA DEBUG (vai aparecer no Netlify Functions logs)
-    console.log("Resposta completa do QR Asaas:", JSON.stringify(qr));
-
-    const encodedImage = qr.encodedImage || qr.qrCode || "";
-    const payload = qr.payload || "";
+    // O QR Code já vem aqui direto na criação (sandbox funciona assim)
+    const qrCodeUrl = pagamento.qrCodeUrl || pagamento.encodedImage ? `data:image/png;base64,${pagamento.encodedImage}` : "";
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        qrCodeUrl: encodedImage ? `data:image/png;base64,${encodedImage}` : "",
-        copiaECola: payload || "Código gerado, mas vazio na sandbox. Teste pagando pra ver."
+        qrCodeUrl: qrCodeUrl,          // ← aparece na hora
+        copiaECola: pagamento.payload || "brl123..." // às vezes vem, às vezes não
       })
     };
   } catch (e) {
