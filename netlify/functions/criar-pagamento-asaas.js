@@ -4,12 +4,10 @@ exports.handler = async (event) => {
     "Content-Type": "application/json" 
   };
 
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: "Método não permitido" }) };
-  }
-
   try {
     const { valor, tipo, metodo } = JSON.parse(event.body || "{}");
+    
+    console.log("🔍 DEBUG: Iniciando pagamento", { valor, tipo, metodo });
     
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
     
@@ -32,6 +30,7 @@ exports.handler = async (event) => {
     });
 
     const cliente = await clienteResponse.json();
+    console.log("🔍 DEBUG: Cliente criado", cliente);
     
     if (cliente.errors) {
       throw new Error(`Erro ao criar cliente: ${JSON.stringify(cliente.errors)}`);
@@ -46,22 +45,27 @@ exports.handler = async (event) => {
       billingType = "CREDIT_CARD";
     }
 
+    const pagamentoBody = {
+      customer: cliente.id,
+      billingType: billingType,
+      value: valor,
+      dueDate: dataVencimento.toISOString().split('T')[0],
+      description: `Serviço ${tipo}`
+    };
+
+    console.log("🔍 DEBUG: Criando pagamento", pagamentoBody);
+
     const pagamentoResponse = await fetch("https://api.asaas.com/v3/payments", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json", 
         "access_token": ASAAS_API_KEY 
       },
-      body: JSON.stringify({
-        customer: cliente.id,
-        billingType: billingType,
-        value: valor,
-        dueDate: dataVencimento.toISOString().split('T')[0],
-        description: `Serviço ${tipo}`
-      })
+      body: JSON.stringify(pagamentoBody)
     });
 
     const pagamento = await pagamentoResponse.json();
+    console.log("🔍 DEBUG: Pagamento criado", pagamento);
     
     if (pagamento.errors) {
       throw new Error(`Erro no pagamento: ${JSON.stringify(pagamento.errors)}`);
@@ -88,9 +92,12 @@ exports.handler = async (event) => {
       responseData.qrCodeUrl = pixData.encodedImage ? `data:image/png;base64,${pixData.encodedImage}` : null;
     
     } else if (metodo === 'cartao') {
-      // ✅ PARA CARTAO: Retornamos a URL do checkout
-      responseData.checkoutUrl = `https://www.asaas.com/payment/${pagamento.id}`;
+      // ✅ PARA CARTAO: A URL correta é esta:
+      responseData.checkoutUrl = `https://www.asaas.com/c/${pagamento.id}`;
+      console.log("🔍 DEBUG: URL do checkout", responseData.checkoutUrl);
     }
+
+    console.log("🔍 DEBUG: Resposta final", responseData);
 
     return {
       statusCode: 200,
@@ -99,6 +106,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
+    console.log("❌ ERRO:", error);
     return {
       statusCode: 500,
       headers,
