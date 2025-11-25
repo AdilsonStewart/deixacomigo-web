@@ -1,46 +1,40 @@
-// Importar Firebase - caminho CORRETO
-import { db } from '../../../src/firebase/config.js';
-import { doc, setDoc } from 'firebase/firestore';
+// webhook-asaas.js - VERSÃO CORRETA PARA SERVIDOR
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+
+// Inicializar Firebase Admin
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+initializeApp({
+  credential: cert(serviceAccount)
+});
+const db = getFirestore();
 
 export const handler = async (event) => {
   console.log("🔔 WEBHOOK CHAMADO!");
 
   try {
     const body = JSON.parse(event.body || "{}");
-    console.log("📦 Dados recebidos:", JSON.stringify(body, null, 2));
 
-    // Verifica se é uma confirmação de pagamento
     if (body.event === "PAYMENT_CONFIRMED") {
       const payment = body.payment;
-      console.log("✅ PAGAMENTO CONFIRMADO!");
-      console.log("💰 Valor:", payment.value);
-      console.log("🎯 ID:", payment.id);
       
-      // Determina o tipo baseado no valor
       let tipo = '';
-      if (payment.value === 5.00) {
-        tipo = 'áudio';
-        console.log("🎧 Cliente comprou ÁUDIO");
-      } else if (payment.value === 8.00) {
-        tipo = 'vídeo';
-        console.log("🎥 Cliente comprou VÍDEO");
-      }
+      if (payment.value === 5.00) tipo = 'áudio';
+      else if (payment.value === 8.00) tipo = 'vídeo';
 
-      // ✅ SALVA NO FIREBASE
+      // ✅ SALVA NO FIREBASE USANDO ADMIN SDK
       if (tipo) {
-        await setDoc(doc(db, 'pagamentos', payment.id), {
+        await db.collection('pagamentos').doc(payment.id).set({
           id: payment.id,
           valor: payment.value,
           tipo: tipo,
           status: 'pago',
-          data: new Date().toISOString(),
-          cliente: payment.customer || 'Não informado'
+          data: new Date().toISOString()
         });
         console.log("💾 Salvo no Firebase:", payment.id);
       }
     }
 
-    // SEMPRE responde 200 para a Asaas
     return {
       statusCode: 200,
       body: JSON.stringify({ success: true, message: "Webhook recebido" })
