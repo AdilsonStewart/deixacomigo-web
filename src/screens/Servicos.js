@@ -49,11 +49,10 @@ const Servicos = () => {
       return;
     }
 
-    alert(`🔍 Verificando pagamento...\nID: ${paymentId}\nServiço: ${tipoServico}`);
-    
-    // SIMULA verificação (vamos implementar Firebase depois)
-    const pagamentoConfirmado = confirm(
-      "💰 SIMULAÇÃO:\nO pagamento foi confirmado?\n\n" +
+    // ✅ CORREÇÃO: usar window.confirm em vez de confirm direto
+    const pagamentoConfirmado = window.confirm(
+      `🔍 Verificando pagamento...\n\nID: ${paymentId}\nServiço: ${tipoServico}\n\n` +
+      "💰 SIMULAÇÃO: O pagamento foi confirmado?\n\n" +
       "Em produção, isso verificará automaticamente no Firebase.\n\n" +
       "Clique em OK para ir para a página de sucesso!"
     );
