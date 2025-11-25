@@ -7,78 +7,61 @@ exports.handler = async (event) => {
   try {
     const { valor, tipo, metodo } = JSON.parse(event.body || "{}");
     
-    console.log("🔍 DEBUG: Iniciando pagamento", { valor, tipo, metodo });
-    
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
     
     if (!ASAAS_API_KEY) {
       throw new Error("Chave da API não configurada");
     }
 
-    // 1. Criar cliente
-    const clienteResponse = await fetch("https://api.asaas.com/v3/customers", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json", 
-        "access_token": ASAAS_API_KEY 
-      },
-      body: JSON.stringify({ 
-        name: `Cliente-${Date.now()}`,
-        cpfCnpj: "04616557802",
-        notificationDisabled: true
-      })
-    });
-
-    const cliente = await clienteResponse.json();
-    console.log("🔍 DEBUG: Cliente criado", cliente);
-    
-    if (cliente.errors) {
-      throw new Error(`Erro ao criar cliente: ${JSON.stringify(cliente.errors)}`);
-    }
-
-    // 2. Criar pagamento
-    const dataVencimento = new Date();
-    dataVencimento.setMinutes(dataVencimento.getMinutes() + 30);
-
-    let billingType = "PIX";
-    if (metodo === 'cartao') {
-      billingType = "CREDIT_CARD";
-    }
-
-    const pagamentoBody = {
-      customer: cliente.id,
-      billingType: billingType,
-      value: valor,
-      dueDate: dataVencimento.toISOString().split('T')[0],
-      description: `Serviço ${tipo}`
-    };
-
-    console.log("🔍 DEBUG: Criando pagamento", pagamentoBody);
-
-    const pagamentoResponse = await fetch("https://api.asaas.com/v3/payments", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json", 
-        "access_token": ASAAS_API_KEY 
-      },
-      body: JSON.stringify(pagamentoBody)
-    });
-
-    const pagamento = await pagamentoResponse.json();
-    console.log("🔍 DEBUG: Pagamento criado", pagamento);
-    
-    if (pagamento.errors) {
-      throw new Error(`Erro no pagamento: ${JSON.stringify(pagamento.errors)}`);
-    }
-
-    // 3. Preparar resposta
-    let responseData = {
-      success: true,
-      id: pagamento.id
-    };
-
     if (metodo === 'pix') {
-      // Buscar QR Code para PIX
+      // ✅ PIX: Usamos a API normal (já funciona)
+      
+      // 1. Criar cliente
+      const clienteResponse = await fetch("https://api.asaas.com/v3/customers", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "access_token": ASAAS_API_KEY 
+        },
+        body: JSON.stringify({ 
+          name: `Cliente-${Date.now()}`,
+          cpfCnpj: "04616557802",
+          notificationDisabled: true
+        })
+      });
+
+      const cliente = await clienteResponse.json();
+      
+      if (cliente.errors) {
+        throw new Error(`Erro ao criar cliente: ${JSON.stringify(cliente.errors)}`);
+      }
+
+      // 2. Criar pagamento PIX
+      const dataVencimento = new Date();
+      dataVencimento.setMinutes(dataVencimento.getMinutes() + 30);
+
+      const pagamentoResponse = await fetch("https://api.asaas.com/v3/payments", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "access_token": ASAAS_API_KEY 
+        },
+        body: JSON.stringify({
+          customer: cliente.id,
+          billingType: "PIX",
+          value: valor,
+          dueDate: dataVencimento.toISOString().split('T')[0],
+          description: `Serviço ${tipo}`
+        })
+      });
+
+      const pagamento = await pagamentoResponse.json();
+      
+      if (pagamento.errors) {
+        throw new Error(`Erro no pagamento: ${JSON.stringify(pagamento.errors)}`);
+      }
+
+      // 3. Buscar QR Code
       const pixResponse = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
         method: "GET",
         headers: { 
@@ -88,25 +71,55 @@ exports.handler = async (event) => {
       });
 
       const pixData = await pixResponse.json();
-      responseData.copiaECola = pixData.payload;
-      responseData.qrCodeUrl = pixData.encodedImage ? `data:image/png;base64,${pixData.encodedImage}` : null;
-    
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          copiaECola: pixData.payload,
+          qrCodeUrl: pixData.encodedImage ? `data:image/png;base64,${pixData.encodedImage}` : null,
+          id: pagamento.id
+        })
+      };
+
     } else if (metodo === 'cartao') {
-      // ✅ PARA CARTAO: A URL correta é esta:
-      responseData.checkoutUrl = `https://www.asaas.com/c/${pagamento.id}`;
-      console.log("🔍 DEBUG: URL do checkout", responseData.checkoutUrl);
+      // ✅ CARTÃO: Criamos um LINK DE PAGAMENTO
+      
+      const linkResponse = await fetch("https://api.asaas.com/v3/paymentLinks", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "access_token": ASAAS_API_KEY 
+        },
+        body: JSON.stringify({
+          name: `Serviço ${tipo}`,
+          description: `Pagamento para serviço de ${tipo}`,
+          value: valor,
+          billingType: ["CREDIT_CARD", "PIX"], // Aceita cartão e PIX
+          dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 dia
+          maxInstallmentCount: 1 // À vista
+        })
+      });
+
+      const linkData = await linkResponse.json();
+      
+      if (linkData.errors) {
+        throw new Error(`Erro no link: ${JSON.stringify(linkData.errors)}`);
+      }
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          checkoutUrl: linkData.url, // ✅ URL REAL do checkout
+          id: linkData.id
+        })
+      };
     }
 
-    console.log("🔍 DEBUG: Resposta final", responseData);
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(responseData)
-    };
-
   } catch (error) {
-    console.log("❌ ERRO:", error);
     return {
       statusCode: 500,
       headers,
