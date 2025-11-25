@@ -5,6 +5,7 @@ import './Sucesso.css';
 export default function Sucesso() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('verificando');
+  const [redirecionando, setRedirecionando] = useState(false);
 
   const verificarPagamento = useCallback(async () => {
     try {
@@ -28,8 +29,9 @@ export default function Sucesso() {
       
       if (data.success && data.status === "approved") {
         setStatus('aprovado');
-        // ✅ PAGAMENTO CONFIRMADO - REDIRECIONA
+        // ✅ SEMPRE REDIRECIONA APÓS 3 SEGUNDOS
         setTimeout(() => {
+          setRedirecionando(true);
           if (tipoServico === 'áudio') {
             navigate('/audiorecorder');
           } else if (tipoServico === 'vídeo') {
@@ -49,6 +51,41 @@ export default function Sucesso() {
   useEffect(() => {
     verificarPagamento();
   }, [verificarPagamento]);
+
+  // ✅ APROVADO - SEMPRE MOSTRA POR 3s E REDIRECIONA
+  if (status === 'aprovado') {
+    return (
+      <div className="container sucesso-container">
+        <div className="sucesso-card">
+          <div className="sucesso-icon">✅</div>
+          <h1 className="sucesso-titulo">Pagamento Aprovado!</h1>
+          <p className="sucesso-mensagem">
+            Seu pagamento foi confirmado com sucesso!
+          </p>
+          <p className="sucesso-detalhes">
+            Agora você pode gravar seu áudio.
+          </p>
+          <p className="sucesso-redirecionamento">
+            {redirecionando ? "Redirecionando..." : "Redirecionando para gravação em 3 segundos..."}
+          </p>
+          
+          <button 
+            className="botao botao-sucesso"
+            onClick={() => navigate('/audiorecorder')}
+          >
+            🎤 Fazer Gravação Agora
+          </button>
+
+          <button 
+            className="botao-voltar"
+            onClick={() => navigate('/')}
+          >
+            Voltar para Início
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ⏳ VERIFICANDO
   if (status === 'verificando') {
@@ -114,37 +151,4 @@ export default function Sucesso() {
       </div>
     );
   }
-
-  // ✅ APROVADO
-  return (
-    <div className="container sucesso-container">
-      <div className="sucesso-card">
-        <div className="sucesso-icon">✅</div>
-        <h1 className="sucesso-titulo">Pagamento Aprovado!</h1>
-        <p className="sucesso-mensagem">
-          Seu pagamento foi confirmado com sucesso!
-        </p>
-        <p className="sucesso-detalhes">
-          Agora você pode gravar seu áudio.
-        </p>
-        <p className="sucesso-redirecionamento">
-          Redirecionando para gravação em 3 segundos...
-        </p>
-        
-        <button 
-          className="botao botao-sucesso"
-          onClick={() => navigate('/audiorecorder')}
-        >
-          🎤 Fazer Gravação Agora
-        </button>
-
-        <button 
-          className="botao-voltar"
-          onClick={() => navigate('/')}
-        >
-          Voltar para Início
-        </button>
-      </div>
-    </div>
-  );
 }
