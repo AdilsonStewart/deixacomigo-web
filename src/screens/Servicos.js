@@ -11,7 +11,6 @@ const Servicos = () => {
     setMetodoSelecionado(metodo);
 
     try {
-      // ✅ DECIDE QUAL FUNCTION CHAMAR
       const functionName = metodo === 'pix' 
         ? "/.netlify/functions/criar-pix-asaas" 
         : "/.netlify/functions/criar-cartao-asaas";
@@ -30,7 +29,6 @@ const Servicos = () => {
           navigator.clipboard.writeText(data.copiaECola);
           alert("PIX copiado! Cole no seu app bancário.");
         } else if (metodo === 'cartao' && data.checkoutUrl) {
-          // ✅ CARTÃO: Abre o checkout
           window.open(data.checkoutUrl, '_blank');
           alert("Redirecionando para pagamento com cartão!");
         }
@@ -50,6 +48,52 @@ const Servicos = () => {
     }
   };
 
+  // 🔥 NOVA FUNÇÃO: VERIFICA PAGAMENTO DIRETO NA ASAAS
+  const verificarPagamentoReal = async () => {
+    const paymentId = localStorage.getItem('ultimoPagamento');
+    const tipoServico = localStorage.getItem('tipoServico');
+    
+    if (!paymentId) {
+      alert("❌ Nenhum pagamento recente encontrado.");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Consulta direto na API da Asaas
+      const response = await fetch("/.netlify/functions/verificar-pagamento-asaas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        if (data.status === "RECEIVED" || data.status === "CONFIRMED") {
+          alert(`✅ PAGAMENTO CONFIRMADO!\n\nValor: R$ ${data.value}\nStatus: ${data.status}\n\nRedirecionando...`);
+          
+          // Redireciona para a página correta
+          if (tipoServico === 'áudio') {
+            window.location.href = "/sucesso";
+          } else if (tipoServico === 'vídeo') {
+            window.location.href = "/sucesso2";
+          }
+        } else {
+          alert(`⏳ Pagamento ainda não confirmado\nStatus: ${data.status}\n\nTente novamente em alguns segundos.`);
+        }
+      } else {
+        alert("❌ Erro ao verificar pagamento: " + data.erro);
+      }
+    } catch (error) {
+      alert("❌ Erro: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função antiga de simulação (mantida para compatibilidade)
   const verificarPagamento = async () => {
     const paymentId = localStorage.getItem('ultimoPagamento');
     const tipoServico = localStorage.getItem('tipoServico');
@@ -81,7 +125,6 @@ const Servicos = () => {
 
   return (
     <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
-      {/* CORUJINHA ROSA - AGORA COM SEU GIF! */}
       <img 
         src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2ptcWV6bGhpdTF4cWJhd25yanZvNGVpb25vcGhiaGY1d2Qya3NraiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/MYzuiycbNu0J9lKrcz/giphy.gif" 
         alt="coruja fofinha" 
@@ -207,7 +250,27 @@ const Servicos = () => {
         • <strong>Cartão:</strong> Confirmação instantânea
       </div>
 
-      {/* BOTÃO VERIFICAR PAGAMENTO */}
+      {/* 🔥 NOVO BOTÃO - VERIFICAÇÃO REAL */}
+      <button 
+        onClick={verificarPagamentoReal}
+        disabled={loading}
+        style={{
+          backgroundColor: '#28a745',
+          color: 'white',
+          padding: '12px 24px',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '16px',
+          cursor: 'pointer',
+          marginTop: '10px',
+          fontWeight: 'bold',
+          marginRight: '10px'
+        }}
+      >
+        {loading ? "🔍 VERIFICANDO..." : "✅ VERIFICAR PAGAMENTO REAL"}
+      </button>
+
+      {/* BOTÃO ANTIGO (SIMULAÇÃO) */}
       <button 
         onClick={verificarPagamento}
         style={{
@@ -222,7 +285,7 @@ const Servicos = () => {
           fontWeight: 'bold'
         }}
       >
-        🔄 Verificar Pagamento
+        🔄 Verificar (Simulação)
       </button>
 
       {/* ÁREA DO PIX */}
