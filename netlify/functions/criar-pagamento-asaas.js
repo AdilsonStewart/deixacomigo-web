@@ -84,7 +84,7 @@ exports.handler = async (event) => {
       };
 
     } else if (metodo === 'cartao') {
-      // ✅ CARTÃO: Criamos um LINK DE PAGAMENTO
+      // ✅ CARTÃO: Criamos um LINK DE PAGAMENTO CORRETO
       
       const linkResponse = await fetch("https://api.asaas.com/v3/paymentLinks", {
         method: "POST",
@@ -96,9 +96,9 @@ exports.handler = async (event) => {
           name: `Serviço ${tipo}`,
           description: `Pagamento para serviço de ${tipo}`,
           value: valor,
-          billingType: ["CREDIT_CARD", "PIX"], // Aceita cartão e PIX
-          dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 dia
-          maxInstallmentCount: 1 // À vista
+          billingTypes: ["CREDIT_CARD", "PIX"], // ✅ CORRETO: billingTypes (plural)
+          dueDateLimitDays: 1, // ✅ Vence em 1 dia
+          chargeType: "DETACHED" // ✅ Tipo de cobrança
         })
       });
 
