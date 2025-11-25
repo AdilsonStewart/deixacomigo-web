@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 
 const Servicos = () => {
-  const [copiaECola, setCopiaECola] = useState("");
   const [loading, setLoading] = useState(false);
   const [metodoSelecionado, setMetodoSelecionado] = useState(null);
 
   const pagar = async (valor, tipo, metodo) => {
     setLoading(true);
-    setCopiaECola("");
     setMetodoSelecionado(metodo);
 
     try {
