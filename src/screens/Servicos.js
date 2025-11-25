@@ -9,7 +9,8 @@ const Servicos = () => {
     setMetodoSelecionado(metodo);
 
     try {
-      const res = await fetch("/.netlify/functions/criar-pagamento", {
+      // ✅ MUDADO PARA PICPAY
+      const res = await fetch("/.netlify/functions/criar-pagamento-picpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor, tipo, metodo })
@@ -19,7 +20,7 @@ const Servicos = () => {
       
       if (data.success && data.paymentLink) {
         window.open(data.paymentLink, '_blank');
-        alert("Redirecionando para pagamento...");
+        alert("Redirecionando para pagamento no PicPay...");
         
         localStorage.setItem('ultimoPagamento', data.id);
         localStorage.setItem('tipoServico', tipo);
