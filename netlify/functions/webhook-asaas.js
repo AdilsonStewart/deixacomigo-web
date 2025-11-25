@@ -1,6 +1,8 @@
 export const handler = async (event) => {
-  console.log("🔔 WEBHOOK INICIADO - Headers:", event.headers);
-  console.log("🔔 WEBHOOK Body:", event.body);
+  console.log("🔔 WEBHOOK CHAMADO PELA ASAAS!");
+  console.log("📦 Método HTTP:", event.httpMethod);
+  console.log("📦 Headers:", JSON.stringify(event.headers, null, 2));
+  console.log("📦 Body completo:", event.body);
 
   const headers = {
     "Access-Control-Allow-Origin": "*",
@@ -8,26 +10,45 @@ export const handler = async (event) => {
   };
 
   try {
-    const body = JSON.parse(event.body || "{}");
+    // A Asaas pode estar enviando de formas diferentes
+    let body;
     
-    console.log("📦 WEBHOOK Dados recebidos:", JSON.stringify(body, null, 2));
+    if (event.body) {
+      try {
+        body = JSON.parse(event.body);
+      } catch (e) {
+        // Talvez esteja em outro formato
+        body = event.body;
+        console.log("⚠️ Body não é JSON, string direta:", body);
+      }
+    }
 
-    // Log TODOS os eventos para debug
-    console.log("🎯 Evento recebido:", body.event);
-    console.log("💰 Payment ID:", body.payment?.id);
-    console.log("💵 Valor:", body.payment?.value);
+    console.log("🎯 Body processado:", JSON.stringify(body, null, 2));
 
-    // Só processa confirmações de pagamento
-    if (body.event === "PAYMENT_CONFIRMED" || body.event === "PAYMENT_RECEIVED") {
+    // Log TUDO para debug
+    console.log("🔍 EVENTO COMPLETO:", {
+      httpMethod: event.httpMethod,
+      headers: event.headers,
+      body: body
+    });
+
+    // Verifica se é um evento de pagamento
+    if (body && (body.event === "PAYMENT_CONFIRMED" || body.event === "PAYMENT_RECEIVED")) {
       const payment = body.payment;
       
-      console.log("✅ PAGAMENTO CONFIRMADO VIA WEBHOOK!");
-      console.log("🎯 ID:", payment.id);
+      console.log("✅✅✅ PAGAMENTO CONFIRMADO VIA WEBHOOK!");
+      console.log("🎯 ID do Pagamento:", payment.id);
       console.log("💵 Valor:", payment.value);
       console.log("📝 Descrição:", payment.description);
+      console.log("🔄 Status:", payment.status);
 
-      // AQUI VAMOS SALVAR NO FIREBASE DEPOIS
-      console.log("🎁 Serviço liberado para:", payment.id);
+      // AQUI VOCÊ PODE SALVAR NO FIREBASE!
+      console.log("🎁 SERVICO LIBERADO PARA O CLIENTE!");
+
+    } else if (body && body.event) {
+      console.log("📨 Outro evento recebido:", body.event);
+    } else {
+      console.log("❓ Evento desconhecido ou sem dados");
     }
 
     // SEMPRE responde 200 para a Asaas
@@ -36,8 +57,8 @@ export const handler = async (event) => {
       headers,
       body: JSON.stringify({ 
         success: true, 
-        message: "Webhook processado",
-        event: body.event 
+        message: "Webhook recebido com sucesso",
+        event: body?.event || "unknown"
       })
     };
 
