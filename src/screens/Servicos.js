@@ -130,7 +130,7 @@ const Servicos = () => {
         padding: '20px',
         borderRadius: '10px',
         margin: '20px 0',
-        border: '2px solid '#e9ecef'
+        border: '2px solid #e9ecef'
       }}>
         <h3 style={{ color: '#007bff', marginBottom: '15px' }}>🎥 VÍDEO — R$ 8,00</h3>
         
