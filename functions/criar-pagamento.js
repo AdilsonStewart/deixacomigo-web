@@ -50,12 +50,10 @@ export const handler = async (event) => {
           excluded_payment_types: metodo === "pix" ? [{ id: "credit_card" }, { id: "debit_card" }] : [{ id: "pix" }]
         },
         back_urls: {
-          success: valor === 5.00 
-            ? "https://deixacomigoweb.netlify.app/sucesso"
-            : "https://deixacomigoweb.netlify.app/sucesso2",
-          failure: "https://deixacomigoweb.netlify.app/",
-          pending: "https://deixacomigoweb.netlify.app/"
-        },
+  success: "https://deixacomigoweb.netlify.app/aguardando-confirmacao",
+  failure: "https://deixacomigoweb.netlify.app/aguardando-confirmacao", 
+  pending: "https://deixacomigoweb.netlify.app/aguardando-confirmacao"
+},
         auto_return: "approved"
       })
     });
