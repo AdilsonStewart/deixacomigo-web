@@ -3,32 +3,39 @@ import React, { useState } from "react";
 const Servicos = () => {
   const [copiaECola, setCopiaECola] = useState("");
   const [loading, setLoading] = useState(false);
+  const [metodoSelecionado, setMetodoSelecionado] = useState(null); // 'pix' ou 'cartao'
 
-  const pagar = async (valor, tipo) => {
+  const pagar = async (valor, tipo, metodo) => {
     setLoading(true);
     setCopiaECola("");
+    setMetodoSelecionado(metodo);
 
     try {
-      const res = await fetch("/.netlify/functions/criar-pix-asaas", {
+      const res = await fetch("/.netlify/functions/criar-pagamento-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ valor, tipo })
+        body: JSON.stringify({ valor, tipo, metodo })
       });
 
       const data = await res.json();
       
-      if (data.success && data.copiaECola) {
-        setCopiaECola(data.copiaECola);
-        // COPIA AUTOMATICAMENTE para a área de transferência
-        navigator.clipboard.writeText(data.copiaECola);
+      if (data.success) {
+        if (metodo === 'pix' && data.copiaECola) {
+          setCopiaECola(data.copiaECola);
+          navigator.clipboard.writeText(data.copiaECola);
+          alert("PIX copiado! Cole no seu app bancário.");
+        } else if (metodo === 'cartao' && data.checkoutUrl) {
+          // Redireciona para checkout do cartão
+          window.open(data.checkoutUrl, '_blank');
+          alert("Redirecionando para pagamento com cartão!");
+        }
         
-        // ✅ SALVA O ID DO PAGAMENTO PARA VERIFICAÇÃO FUTURA
+        // Salva para verificação futura
         if (data.id) {
           localStorage.setItem('ultimoPagamento', data.id);
           localStorage.setItem('tipoServico', tipo);
+          localStorage.setItem('metodoPagamento', metodo);
         }
-        
-        alert("PIX copiado! Cole no seu app bancário.");
       } else {
         alert("Erro: " + data.erro);
       }
@@ -43,17 +50,16 @@ const Servicos = () => {
   const verificarPagamento = async () => {
     const paymentId = localStorage.getItem('ultimoPagamento');
     const tipoServico = localStorage.getItem('tipoServico');
+    const metodo = localStorage.getItem('metodoPagamento');
     
     if (!paymentId) {
-      alert("❌ Nenhum pagamento recente encontrado.\nGere um PIX primeiro!");
+      alert("❌ Nenhum pagamento recente encontrado.");
       return;
     }
 
-    // ✅ CORREÇÃO: usar window.confirm em vez de confirm direto
     const pagamentoConfirmado = window.confirm(
-      `🔍 Verificando pagamento...\n\nID: ${paymentId}\nServiço: ${tipoServico}\n\n` +
+      `🔍 Verificando pagamento...\n\nID: ${paymentId}\nServiço: ${tipoServico}\nMétodo: ${metodo}\n\n` +
       "💰 SIMULAÇÃO: O pagamento foi confirmado?\n\n" +
-      "Em produção, isso verificará automaticamente no Firebase.\n\n" +
       "Clique em OK para ir para a página de sucesso!"
     );
     
@@ -72,59 +78,111 @@ const Servicos = () => {
     : "";
 
   return (
-    <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
+    <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
       <img src="/coruja-rosa.gif" alt="coruja" style={{ width: "180px" }} />
       <h2>Escolha seu serviço</h2>
 
-      {/* BOTÃO ÁUDIO - VERDE */}
-      <button 
-        onClick={() => pagar(5.0, "áudio")} 
-        disabled={loading}
-        style={{
-          backgroundColor: '#28a745',
-          color: 'white',
-          padding: '15px 30px',
-          border: 'none',
-          borderRadius: '10px',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          margin: '10px',
-          width: '200px',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s'
-        }}
-        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-      >
-        {loading ? "🎧 GERANDO PIX..." : "🎧 ÁUDIO — R$ 5,00"}
-      </button>
+      {/* SERVIÇO ÁUDIO */}
+      <div style={{
+        backgroundColor: '#f8f9fa',
+        padding: '20px',
+        borderRadius: '10px',
+        margin: '20px 0',
+        border: '2px solid #e9ecef'
+      }}>
+        <h3 style={{ color: '#28a745', marginBottom: '15px' }}>🎧 ÁUDIO — R$ 5,00</h3>
+        
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          {/* BOTÃO PIX */}
+          <button 
+            onClick={() => pagar(5.0, "áudio", "pix")} 
+            disabled={loading}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              padding: '12px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            {loading && metodoSelecionado === 'pix' ? "🔄" : "💰"} PIX
+          </button>
 
-      <br />
+          {/* BOTÃO CARTÃO */}
+          <button 
+            onClick={() => pagar(5.0, "áudio", "cartao")} 
+            disabled={loading}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '12px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            {loading && metodoSelecionado === 'cartao' ? "🔄" : "💳"} Cartão
+          </button>
+        </div>
+      </div>
 
-      {/* BOTÃO VÍDEO - AZUL */}
-      <button 
-        onClick={() => pagar(8.0, "vídeo")} 
-        disabled={loading}
-        style={{
-          backgroundColor: '#007bff',
-          color: 'white',
-          padding: '15px 30px',
-          border: 'none',
-          borderRadius: '10px',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          margin: '10px',
-          width: '200px',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s'
-        }}
-        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-      >
-        {loading ? "🎥 GERANDO PIX..." : "🎥 VÍDEO — R$ 8,00"}
-      </button>
+      {/* SERVIÇO VÍDEO */}
+      <div style={{
+        backgroundColor: '#f8f9fa',
+        padding: '20px',
+        borderRadius: '10px',
+        margin: '20px 0',
+        border: '2px solid #e9ecef'
+      }}>
+        <h3 style={{ color: '#007bff', marginBottom: '15px' }}>🎥 VÍDEO — R$ 8,00</h3>
+        
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          {/* BOTÃO PIX */}
+          <button 
+            onClick={() => pagar(8.0, "vídeo", "pix")} 
+            disabled={loading}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              padding: '12px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            {loading && metodoSelecionado === 'pix' ? "🔄" : "💰"} PIX
+          </button>
+
+          {/* BOTÃO CARTÃO */}
+          <button 
+            onClick={() => pagar(8.0, "vídeo", "cartao")} 
+            disabled={loading}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '12px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              flex: 1
+            }}
+          >
+            {loading && metodoSelecionado === 'cartao' ? "🔄" : "💳"} Cartão
+          </button>
+        </div>
+      </div>
 
       {/* MENSAGEM SOBRE DEMORA DO PIX */}
       <div style={{
@@ -135,7 +193,9 @@ const Servicos = () => {
         borderRadius: '5px',
         color: '#856404'
       }}>
-        <strong>⏱️ Atenção:</strong> Pagamentos em PIX podem demorar alguns minutos para serem confirmados, diferente de cartões que são instantâneos.
+        <strong>💡 Informações:</strong><br/>
+        • <strong>PIX:</strong> Pode demorar alguns minutos para confirmar<br/>
+        • <strong>Cartão:</strong> Confirmação instantânea
       </div>
 
       {/* BOTÃO VERIFICAR PAGAMENTO */}
@@ -153,9 +213,10 @@ const Servicos = () => {
           fontWeight: 'bold'
         }}
       >
-        🔄 Verificar Se Já Paguei
+        🔄 Verificar Pagamento
       </button>
 
+      {/* ÁREA DO PIX (só aparece se for PIX) */}
       {copiaECola && (
         <div style={{ marginTop: "30px" }}>
           <h3>✅ PIX GERADO!</h3>
