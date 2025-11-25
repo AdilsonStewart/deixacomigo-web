@@ -1,5 +1,5 @@
-// Importar Firebase (ajuste o caminho conforme sua estrutura)
-import { db } from '../../firebase/config.js'; // 👈 ATENÇÃO: ajuste este caminho!
+// Importar Firebase - caminho CORRETO
+import { db } from '../../../src/firebase/config.js';
 import { doc, setDoc } from 'firebase/firestore';
 
 export const handler = async (event) => {
