@@ -11,11 +11,7 @@ const Servicos = () => {
     setMetodoSelecionado(metodo);
 
     try {
-      const functionName = metodo === 'pix' 
-        ? "/.netlify/functions/criar-pix-asaas" 
-        : "/.netlify/functions/criar-cartao-asaas";
-
-      const res = await fetch(functionName, {
+      const res = await fetch("/.netlify/functions/criar-pagamento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor, tipo, metodo })
@@ -23,23 +19,18 @@ const Servicos = () => {
 
       const data = await res.json();
       
-      if (data.success) {
-        if (metodo === 'pix' && data.copiaECola) {
-          setCopiaECola(data.copiaECola);
-          navigator.clipboard.writeText(data.copiaECola);
-          alert("PIX copiado! Cole no seu app bancário.");
-        } else if (metodo === 'cartao' && data.checkoutUrl) {
-          window.open(data.checkoutUrl, '_blank');
-          alert("Redirecionando para pagamento com cartão!");
-        }
+      if (data.success && data.paymentLink) {
+        // ✅ ABRE A PÁGINA DE PAGAMENTO DA ASAAS
+        window.open(data.paymentLink, '_blank');
+        alert("Redirecionando para pagamento...");
         
-        if (data.id) {
-          localStorage.setItem('ultimoPagamento', data.id);
-          localStorage.setItem('tipoServico', tipo);
-          localStorage.setItem('metodoPagamento', metodo);
-        }
+        // Salva para verificação futura
+        localStorage.setItem('ultimoPagamento', data.id);
+        localStorage.setItem('tipoServico', tipo);
+        localStorage.setItem('metodoPagamento', metodo);
+        
       } else {
-        alert("Erro: " + data.erro);
+        alert("Erro: " + (data.error || "Desconhecido"));
       }
     } catch (e) {
       alert("Erro: " + e.message);
@@ -48,52 +39,6 @@ const Servicos = () => {
     }
   };
 
-  // 🔥 NOVA FUNÇÃO: VERIFICA PAGAMENTO DIRETO NA ASAAS
-  const verificarPagamentoReal = async () => {
-    const paymentId = localStorage.getItem('ultimoPagamento');
-    const tipoServico = localStorage.getItem('tipoServico');
-    
-    if (!paymentId) {
-      alert("❌ Nenhum pagamento recente encontrado.");
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      // Consulta direto na API da Asaas
-      const response = await fetch("/.netlify/functions/verificar-pagamento-asaas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentId })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        if (data.status === "RECEIVED" || data.status === "CONFIRMED") {
-          alert(`✅ PAGAMENTO CONFIRMADO!\n\nValor: R$ ${data.value}\nStatus: ${data.status}\n\nRedirecionando...`);
-          
-          // Redireciona para a página correta
-          if (tipoServico === 'áudio') {
-            window.location.href = "/sucesso";
-          } else if (tipoServico === 'vídeo') {
-            window.location.href = "/sucesso2";
-          }
-        } else {
-          alert(`⏳ Pagamento ainda não confirmado\nStatus: ${data.status}\n\nTente novamente em alguns segundos.`);
-        }
-      } else {
-        alert("❌ Erro ao verificar pagamento: " + data.erro);
-      }
-    } catch (error) {
-      alert("❌ Erro: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Função antiga de simulação (mantida para compatibilidade)
   const verificarPagamento = async () => {
     const paymentId = localStorage.getItem('ultimoPagamento');
     const tipoServico = localStorage.getItem('tipoServico');
@@ -118,10 +63,6 @@ const Servicos = () => {
       }
     }
   };
-
-  const qrUrl = copiaECola
-    ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(copiaECola)}`
-    : "";
 
   return (
     <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
@@ -250,27 +191,7 @@ const Servicos = () => {
         • <strong>Cartão:</strong> Confirmação instantânea
       </div>
 
-      {/* 🔥 NOVO BOTÃO - VERIFICAÇÃO REAL */}
-      <button 
-        onClick={verificarPagamentoReal}
-        disabled={loading}
-        style={{
-          backgroundColor: '#28a745',
-          color: 'white',
-          padding: '12px 24px',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          marginTop: '10px',
-          fontWeight: 'bold',
-          marginRight: '10px'
-        }}
-      >
-        {loading ? "🔍 VERIFICANDO..." : "✅ VERIFICAR PAGAMENTO REAL"}
-      </button>
-
-      {/* BOTÃO ANTIGO (SIMULAÇÃO) */}
+      {/* BOTÃO VERIFICAR PAGAMENTO */}
       <button 
         onClick={verificarPagamento}
         style={{
@@ -285,37 +206,8 @@ const Servicos = () => {
           fontWeight: 'bold'
         }}
       >
-        🔄 Verificar (Simulação)
+        🔄 Verificar Pagamento
       </button>
-
-      {/* ÁREA DO PIX */}
-      {copiaECola && (
-        <div style={{ marginTop: "30px" }}>
-          <h3>✅ PIX GERADO!</h3>
-          <p>Já copiamos o código para você!</p>
-          <img src={qrUrl} alt="QR Code Pix" style={{ maxWidth: "280px", borderRadius: "10px" }} />
-          <p style={{ marginTop: "15px" }}>Ou use este código:</p>
-          <textarea
-            readOnly
-            value={copiaECola}
-            onClick={(e) => {
-              e.target.select();
-              navigator.clipboard.writeText(copiaECola);
-              alert("Copiado novamente!");
-            }}
-            style={{ 
-              width: "100%", 
-              height: "100px", 
-              fontFamily: "monospace", 
-              padding: "10px",
-              fontSize: "12px"
-            }}
-          />
-          <p style={{ fontSize: "12px", color: "green" }}>
-            ✅ Código copiado automaticamente! Cole no seu banco.
-          </p>
-        </div>
-      )}
     </div>
   );
 };
