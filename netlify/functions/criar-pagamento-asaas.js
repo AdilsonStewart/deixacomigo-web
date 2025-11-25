@@ -37,7 +37,7 @@ exports.handler = async (event) => {
       throw new Error(`Erro ao criar cliente: ${JSON.stringify(cliente.errors)}`);
     }
 
-    // 2. Criar pagamento baseado no método
+    // 2. Criar pagamento
     const dataVencimento = new Date();
     dataVencimento.setMinutes(dataVencimento.getMinutes() + 30);
 
@@ -57,29 +57,7 @@ exports.handler = async (event) => {
         billingType: billingType,
         value: valor,
         dueDate: dataVencimento.toISOString().split('T')[0],
-        description: `Serviço ${tipo}`,
-        
-        // ⚡ CONFIGURAÇÕES ESPECÍFICAS PARA CARTAO
-        ...(metodo === 'cartao' && {
-          creditCard: {
-            holderName: "Cliente Teste",
-            number: "4111111111111111", // Cartão de teste
-            expiryMonth: "12",
-            expiryYear: "2030",
-            ccv: "123"
-          },
-          creditCardHolderInfo: {
-            name: "Cliente Teste",
-            email: "cliente@teste.com",
-            cpfCnpj: "04616557802",
-            postalCode: "80000100",
-            addressNumber: "123",
-            addressComplement: "",
-            phone: "4199999999",
-            mobilePhone: "4199999999"
-          },
-          remoteIp: "127.0.0.1" // IP do cliente
-        })
+        description: `Serviço ${tipo}`
       })
     });
 
@@ -110,14 +88,8 @@ exports.handler = async (event) => {
       responseData.qrCodeUrl = pixData.encodedImage ? `data:image/png;base64,${pixData.encodedImage}` : null;
     
     } else if (metodo === 'cartao') {
-      // Para cartão, retornamos o status
-      responseData.status = pagamento.status;
-      responseData.message = "Pagamento com cartão processado!";
-      
-      // Se foi aprovado, já podemos redirecionar
-      if (pagamento.status === "RECEIVED" || pagamento.status === "CONFIRMED") {
-        responseData.pagamentoAprovado = true;
-      }
+      // ✅ PARA CARTAO: Retornamos a URL do checkout
+      responseData.checkoutUrl = `https://www.asaas.com/payment/${pagamento.id}`;
     }
 
     return {
