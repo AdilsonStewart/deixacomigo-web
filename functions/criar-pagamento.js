@@ -1,42 +1,44 @@
-// netlify/functions/criar-pagamento.js
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return { statusCode: 405 };
+export const handler = async (event) => {
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": "application/json"
+  };
+
+  if (event.httpMethod !== "POST") {
+    return { 
+      statusCode: 405, 
+      headers,
+      body: JSON.stringify({ error: "Método não permitido" }) 
+    };
+  }
 
   try {
     const body = JSON.parse(event.body || "{}");
     const { valor, tipo, metodo = "pix" } = body;
 
-    const valorCorrigido = Number(Number(valor).toFixed(2));
-
-    // 1) CRIA UM CLIENTE NOVO
-    const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "access_token": process.env.ASAAS_API_KEY
-      },
-      body: JSON.stringify({
-        name: `Cliente ${Date.now()}`,
-        cpfCnpj: "12345678909",
-        email: `cliente${Date.now()}@teste.com`
-      })
-    });
-
-    const clienteData = await clienteRes.json();
-
-    if (!clienteRes.ok) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: clienteData }) };
+    if (!valor || !tipo) {
+      return { 
+        statusCode: 400, 
+        headers,
+        body: JSON.stringify({ success: false, error: "Faltou valor ou tipo" }) 
+      };
     }
 
-    const customerId = clienteData.id;
+    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
+    const isBarato = Number(valor) === 4.99;
 
-    // 2) CRIA O PAGAMENTO
     const payload = {
-      customer: customerId,
-      value: valorCorrigido,
+      value: Number(valor),
       dueDate: new Date(Date.now() + 24*60*60*1000).toISOString().split("T")[0],
-      description: tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa",
-      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX"
+      description: descricao,
+      externalReference: `surpresa-${Date.now()}`,
+      billingType: metodo === "cartao" ? "CREDIT_CARD" : "PIX",
+      callback: {
+        successUrl: isBarato 
+          ? "https://deixacomigoweb.netlify.app/sucesso2"
+          : "https://deixacomigoweb.netlify.app/sucesso",
+        autoRedirect: true
+      }
     };
 
     const res = await fetch("https://api.asaas.com/v3/payments", {
@@ -51,18 +53,30 @@ exports.handler = async (event) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: data }) };
+      console.error("Erro Asaas:", data);
+      return { 
+        statusCode: 400, 
+        headers,
+        body: JSON.stringify({ success: false, error: data }) 
+      };
     }
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({
         success: true,
-        paymentLink: data.invoiceUrl
+        paymentLink: `https://pay.asaas.com/${data.id}`,
+        id: data.id
       })
     };
 
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+    console.error("Erro na função:", err);
+    return { 
+      statusCode: 500, 
+      headers,
+      body: JSON.stringify({ success: false, error: err.message }) 
+    };
   }
 };
