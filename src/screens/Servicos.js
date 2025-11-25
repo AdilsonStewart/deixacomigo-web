@@ -30,14 +30,10 @@ const Servicos = () => {
           navigator.clipboard.writeText(data.copiaECola);
           alert("PIX copiado! Cole no seu app bancário.");
         } else if (metodo === 'cartao') {
-          // ✅ CARTÃO: Verifica se foi aprovado na hora
-          if (data.pagamentoAprovado) {
-            // Pagamento aprovado - redireciona direto
-            if (tipo === 'áudio') {
-              window.location.href = "/sucesso";
-            } else if (tipo === 'vídeo') {
-              window.location.href = "/sucesso2";
-            }
+          // ✅ CARTÃO: Se tem URL de checkout, abre
+          if (data.checkoutUrl) {
+            window.open(data.checkoutUrl, '_blank');
+            alert("Redirecionando para pagamento com cartão!");
           } else {
             alert("✅ Pagamento com cartão processado! Aguarde a confirmação.");
           }
