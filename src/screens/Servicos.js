@@ -11,7 +11,12 @@ const Servicos = () => {
     setMetodoSelecionado(metodo);
 
     try {
-      const res = await fetch("/.netlify/functions/criar-pagamento-asaas", {
+      // ✅ DECIDE QUAL FUNCTION CHAMAR
+      const functionName = metodo === 'pix' 
+        ? "/.netlify/functions/criar-pix-asaas" 
+        : "/.netlify/functions/criar-pagamento-asaas";
+
+      const res = await fetch(functionName, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ valor, tipo, metodo })
@@ -24,9 +29,18 @@ const Servicos = () => {
           setCopiaECola(data.copiaECola);
           navigator.clipboard.writeText(data.copiaECola);
           alert("PIX copiado! Cole no seu app bancário.");
-        } else if (metodo === 'cartao' && data.checkoutUrl) {
-          window.open(data.checkoutUrl, '_blank');
-          alert("Redirecionando para pagamento com cartão!");
+        } else if (metodo === 'cartao') {
+          // ✅ CARTÃO: Verifica se foi aprovado na hora
+          if (data.pagamentoAprovado) {
+            // Pagamento aprovado - redireciona direto
+            if (tipo === 'áudio') {
+              window.location.href = "/sucesso";
+            } else if (tipo === 'vídeo') {
+              window.location.href = "/sucesso2";
+            }
+          } else {
+            alert("✅ Pagamento com cartão processado! Aguarde a confirmação.");
+          }
         }
         
         if (data.id) {
