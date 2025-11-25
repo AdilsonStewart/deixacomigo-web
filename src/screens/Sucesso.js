@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Sucesso.css';
 
@@ -6,11 +6,7 @@ export default function Sucesso() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('verificando');
 
-  useEffect(() => {
-    verificarPagamento();
-  }, []);
-
-  const verificarPagamento = async () => {
+  const verificarPagamento = useCallback(async () => {
     try {
       // ✅ VERIFICA SE HÁ PAGAMENTO SALVO
       const paymentId = localStorage.getItem('ultimoPagamento');
@@ -48,7 +44,11 @@ export default function Sucesso() {
       console.error("Erro ao verificar pagamento:", error);
       setStatus('erro');
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    verificarPagamento();
+  }, [verificarPagamento]);
 
   // ⏳ VERIFICANDO
   if (status === 'verificando') {
