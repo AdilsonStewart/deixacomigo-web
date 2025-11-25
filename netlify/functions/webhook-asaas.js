@@ -1,3 +1,7 @@
+// Importar Firebase (ajuste o caminho conforme sua estrutura)
+import { db } from '../../firebase/config.js'; // 👈 ATENÇÃO: ajuste este caminho!
+import { doc, setDoc } from 'firebase/firestore';
+
 export const handler = async (event) => {
   console.log("🔔 WEBHOOK CHAMADO!");
 
@@ -12,11 +16,27 @@ export const handler = async (event) => {
       console.log("💰 Valor:", payment.value);
       console.log("🎯 ID:", payment.id);
       
-      // Aqui vamos decidir para onde mandar o usuário
+      // Determina o tipo baseado no valor
+      let tipo = '';
       if (payment.value === 5.00) {
-        console.log("🎧 Cliente comprou ÁUDIO - deve ir para /sucesso");
+        tipo = 'áudio';
+        console.log("🎧 Cliente comprou ÁUDIO");
       } else if (payment.value === 8.00) {
-        console.log("🎥 Cliente comprou VÍDEO - deve ir para /sucesso2");
+        tipo = 'vídeo';
+        console.log("🎥 Cliente comprou VÍDEO");
+      }
+
+      // ✅ SALVA NO FIREBASE
+      if (tipo) {
+        await setDoc(doc(db, 'pagamentos', payment.id), {
+          id: payment.id,
+          valor: payment.value,
+          tipo: tipo,
+          status: 'pago',
+          data: new Date().toISOString(),
+          cliente: payment.customer || 'Não informado'
+        });
+        console.log("💾 Salvo no Firebase:", payment.id);
       }
     }
 
