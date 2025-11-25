@@ -18,7 +18,7 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { valor, tipo, metodo = "pix" } = body;
+    const { valor, tipo } = body;
 
     if (!valor || !tipo) {
       return {
@@ -28,51 +28,46 @@ exports.handler = async (event) => {
       };
     }
 
-    console.log("✅ Dados recebidos:", { valor, tipo, metodo });
+    console.log("✅ Dados recebidos:", { valor, tipo });
 
-    // ✅ PICPAY - Criar pedido de pagamento
+    // ✅ LINK DE PAGAMENTO PICPAY - Formato correto
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
     
-    const auth = Buffer.from(`${process.env.PICPAY_TOKEN}:${process.env.PICPAY_SECRET}`).toString('base64');
+    const PICPAY_TOKEN = process.env.PICPAY_TOKEN;
+    const PICPAY_SECRET = process.env.PICPAY_SECRET;
 
-    const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
-      referenceId: `surpresa-${Date.now()}`,
-      callbackUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      value: Number(valor),
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
-      buyer: {
-        firstName: "Cliente",
-        lastName: "Teste",
-        document: "04616557802",
-        email: "cliente@teste.com",
-        phone: "+5511999999999"
-      }
+    // Autenticação Basic para Link de Pagamento
+    const auth = Buffer.from(`${PICPAY_TOKEN}:${PICPAY_SECRET}`).toString('base64');
+
+    const response = await axios.post('https://app.picpay.com/payment-links', {
+      amount: Number(valor),
+      description: descricao,
+      return_url: "https://deixacomigoweb.netlify.app/sucesso",
+      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
+      max_orders: 1
     }, {
       headers: {
         'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-        'x-picpay-token': process.env.PICPAY_TOKEN
+        'Content-Type': 'application/json'
       }
     });
 
     const data = response.data;
 
-    console.log("✅ Pagamento criado com sucesso:", data.referenceId);
+    console.log("✅ Link de pagamento criado com sucesso:", data.id);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentLink: data.paymentUrl, // ✅ URL do checkout PicPay
-        qrCode: data.qrcode, // ✅ QR Code base64 (se tiver)
-        id: data.referenceId
+        paymentLink: data.payment_url, // ✅ URL do Link de Pagamento
+        id: data.id
       })
     };
 
   } catch (error) {
-    console.error("❌ Erro PicPay:", error.response?.data || error.message);
+    console.error("❌ Erro PicPay Link:", error.response?.data || error.message);
     return {
       statusCode: 500,
       headers,
