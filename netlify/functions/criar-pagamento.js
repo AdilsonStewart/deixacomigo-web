@@ -56,7 +56,7 @@ export const handler = async (event) => {
           failure: "https://deixacomigoweb.netlify.app/",
           pending: "https://deixacomigoweb.netlify.app/"
         },
-        auto_return: "approved"
+        auto_return: "all"
       })
     });
 
