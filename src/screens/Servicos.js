@@ -3,7 +3,7 @@ import React, { useState } from "react";
 const Servicos = () => {
   const [copiaECola, setCopiaECola] = useState("");
   const [loading, setLoading] = useState(false);
-  const [metodoSelecionado, setMetodoSelecionado] = useState(null); // 'pix' ou 'cartao'
+  const [metodoSelecionado, setMetodoSelecionado] = useState(null);
 
   const pagar = async (valor, tipo, metodo) => {
     setLoading(true);
@@ -25,12 +25,10 @@ const Servicos = () => {
           navigator.clipboard.writeText(data.copiaECola);
           alert("PIX copiado! Cole no seu app bancário.");
         } else if (metodo === 'cartao' && data.checkoutUrl) {
-          // Redireciona para checkout do cartão
           window.open(data.checkoutUrl, '_blank');
           alert("Redirecionando para pagamento com cartão!");
         }
         
-        // Salva para verificação futura
         if (data.id) {
           localStorage.setItem('ultimoPagamento', data.id);
           localStorage.setItem('tipoServico', tipo);
@@ -46,7 +44,6 @@ const Servicos = () => {
     }
   };
 
-  // 🔄 FUNÇÃO PARA VERIFICAR PAGAMENTO
   const verificarPagamento = async () => {
     const paymentId = localStorage.getItem('ultimoPagamento');
     const tipoServico = localStorage.getItem('tipoServico');
@@ -72,15 +69,25 @@ const Servicos = () => {
     }
   };
 
-  // GERA QR CODE
   const qrUrl = copiaECola
     ? `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(copiaECola)}`
     : "";
 
   return (
     <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
-      <img src="/coruja-rosa.gif" alt="coruja" style={{ width: "180px" }} />
-      <h2>Escolha seu serviço</h2>
+      {/* CORUJINHA ROSA - AGORA COM SEU GIF! */}
+      <img 
+        src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2ptcWV6bGhpdTF4cWJhd25yanZvNGVpb25vcGhiaGY1d2Qya3NraiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/MYzuiycbNu0J9lKrcz/giphy.gif" 
+        alt="coruja fofinha" 
+        style={{ 
+          width: "180px", 
+          borderRadius: "50%",
+          border: "3px solid #ff69b4",
+          boxShadow: "0 4px 8px rgba(0,0,0,0.2)"
+        }} 
+      />
+      
+      <h2 style={{ marginTop: '20px', color: '#333' }}>Escolha seu serviço</h2>
 
       {/* SERVIÇO ÁUDIO */}
       <div style={{
@@ -93,7 +100,6 @@ const Servicos = () => {
         <h3 style={{ color: '#28a745', marginBottom: '15px' }}>🎧 ÁUDIO — R$ 5,00</h3>
         
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          {/* BOTÃO PIX */}
           <button 
             onClick={() => pagar(5.0, "áudio", "pix")} 
             disabled={loading}
@@ -112,7 +118,6 @@ const Servicos = () => {
             {loading && metodoSelecionado === 'pix' ? "🔄" : "💰"} PIX
           </button>
 
-          {/* BOTÃO CARTÃO */}
           <button 
             onClick={() => pagar(5.0, "áudio", "cartao")} 
             disabled={loading}
@@ -144,7 +149,6 @@ const Servicos = () => {
         <h3 style={{ color: '#007bff', marginBottom: '15px' }}>🎥 VÍDEO — R$ 8,00</h3>
         
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          {/* BOTÃO PIX */}
           <button 
             onClick={() => pagar(8.0, "vídeo", "pix")} 
             disabled={loading}
@@ -163,7 +167,6 @@ const Servicos = () => {
             {loading && metodoSelecionado === 'pix' ? "🔄" : "💰"} PIX
           </button>
 
-          {/* BOTÃO CARTÃO */}
           <button 
             onClick={() => pagar(8.0, "vídeo", "cartao")} 
             disabled={loading}
@@ -184,7 +187,7 @@ const Servicos = () => {
         </div>
       </div>
 
-      {/* MENSAGEM SOBRE DEMORA DO PIX */}
+      {/* MENSAGEM INFORMATIVA */}
       <div style={{
         margin: '20px 0', 
         padding: '15px',
@@ -216,7 +219,7 @@ const Servicos = () => {
         🔄 Verificar Pagamento
       </button>
 
-      {/* ÁREA DO PIX (só aparece se for PIX) */}
+      {/* ÁREA DO PIX */}
       {copiaECola && (
         <div style={{ marginTop: "30px" }}>
           <h3>✅ PIX GERADO!</h3>
