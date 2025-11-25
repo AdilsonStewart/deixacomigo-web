@@ -18,11 +18,9 @@ const Servicos = () => {
       const data = await res.json();
       
       if (data.success && data.paymentLink) {
-        // ✅ ABRE A PÁGINA DE PAGAMENTO DA ASAAS
         window.open(data.paymentLink, '_blank');
         alert("Redirecionando para pagamento...");
         
-        // Salva para verificação futura
         localStorage.setItem('ultimoPagamento', data.id);
         localStorage.setItem('tipoServico', tipo);
         localStorage.setItem('metodoPagamento', metodo);
@@ -85,11 +83,11 @@ const Servicos = () => {
         margin: '20px 0',
         border: '2px solid #e9ecef'
       }}>
-        <h3 style={{ color: '#28a745', marginBottom: '15px' }}>🎧 ÁUDIO — R$ 5,00</h3>
+        <h3 style={{ color: '#28a745', marginBottom: '15px' }}>🎧 ÁUDIO — R$ 1,99</h3>
         
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button 
-            onClick={() => pagar(5.0, "áudio", "pix")} 
+            onClick={() => pagar(1.99, "áudio", "pix")} 
             disabled={loading}
             style={{
               backgroundColor: '#28a745',
@@ -107,7 +105,7 @@ const Servicos = () => {
           </button>
 
           <button 
-            onClick={() => pagar(5.0, "áudio", "cartao")} 
+            onClick={() => pagar(1.99, "áudio", "cartao")} 
             disabled={loading}
             style={{
               backgroundColor: '#007bff',
@@ -132,7 +130,7 @@ const Servicos = () => {
         padding: '20px',
         borderRadius: '10px',
         margin: '20px 0',
-        border: '2px solid #e9ecef'
+        border: '2px solid '#e9ecef'
       }}>
         <h3 style={{ color: '#007bff', marginBottom: '15px' }}>🎥 VÍDEO — R$ 8,00</h3>
         
@@ -175,39 +173,6 @@ const Servicos = () => {
         </div>
       </div>
 
-      {/* MENSAGEM INFORMATIVA */}
       <div style={{
         margin: '20px 0', 
         padding: '15px',
-        backgroundColor: '#fff3cd',
-        border: '1px solid #ffeaa7',
-        borderRadius: '5px',
-        color: '#856404'
-      }}>
-        <strong>💡 Informações:</strong><br/>
-        • <strong>PIX:</strong> Pode demorar alguns minutos para confirmar<br/>
-        • <strong>Cartão:</strong> Confirmação instantânea
-      </div>
-
-      {/* BOTÃO VERIFICAR PAGAMENTO */}
-      <button 
-        onClick={verificarPagamento}
-        style={{
-          backgroundColor: '#6c757d',
-          color: 'white',
-          padding: '12px 24px',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          marginTop: '10px',
-          fontWeight: 'bold'
-        }}
-      >
-        🔄 Verificar Pagamento
-      </button>
-    </div>
-  );
-};
-
-export default Servicos;
