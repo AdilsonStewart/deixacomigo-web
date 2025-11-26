@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 TESTE FINAL - Verificando o problema real");
+  console.log("🔔 TESTE COM TOKEN ANTIGO + API CORRETA");
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -20,75 +20,66 @@ exports.handler = async (event) => {
       };
     }
 
-    const CLIENT_ID = process.env.PICPAY_CLIENT_ID;
-    const CLIENT_SECRET = process.env.PICPAY_CLIENT_SECRET;
+    // ✅ TENTA O TOKEN ANTIGO (que era para Gateway)
+    const PICPAY_TOKEN = process.env.PICPAY_TOKEN; // O token antigo
+    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔍 ANALISANDO CREDENCIAIS:", {
-      clientId: CLIENT_ID ? `${CLIENT_ID.substring(0, 10)}...` : "NULL",
-      clientSecret: CLIENT_SECRET ? `${CLIENT_SECRET.substring(0, 10)}...` : "NULL"
+    console.log("🔄 Testando token antigo na API Gateway...");
+
+    const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
+      referenceId: `test-${Date.now()}`,
+      callbackUrl: "https://deixacomigoweb.netlify.app/sucesso",
+      returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
+      value: Number(valor),
+      description: descricao,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      buyer: {
+        firstName: "Cliente",
+        lastName: "Teste",
+        document: "123.456.789-09",
+        email: "cliente@teste.com",
+        phone: "+55-11-99999-9999"
+      }
+    }, {
+      headers: {
+        'x-picpay-token': PICPAY_TOKEN, // Token do Gateway
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
     });
 
-    // ✅ TESTE: Talvez as credenciais Sandbox usem AUTENTICAÇÃO DIFERENTE
-    const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-
-    console.log("🔄 Testando com autenticação alternativa...");
-
-    // Tentativa com autenticação Bearer (às vezes Sandbox usa isso)
-    try {
-      const response = await axios.post('https://api.picpay.com/payment-links', {
-        amount: Number(valor),
-        description: "Teste Sandbox",
-        return_url: "https://deixacomigoweb.netlify.app/sucesso",
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        max_orders: 1
-      }, {
-        headers: {
-          'Authorization': `Bearer ${CLIENT_ID}`, // ✅ Tenta Bearer token
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000
-      });
-
-      console.log("✅ FUNCIONOU com Bearer token!");
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          paymentLink: response.data.payment_url,
-          message: "Funcionou com Bearer token!"
-        })
-      };
-
-    } catch (bearerError) {
-      console.log("❌ Bearer também falhou:", bearerError.response?.status);
-      
-      // ÚLTIMA TENTATIVA: Verificar se precisa ativar algo no PicPay
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: false,
-          error: "Credenciais Sandbox não estão funcionando",
-          solution: "Volte no PicPay e procure por:",
-          steps: [
-            "1. 'Ativar Sandbox' ou 'Habilitar teste'",
-            "2. 'Aprovar credenciais de teste'", 
-            "3. Botão 'Iniciar ambiente de desenvolvimento'",
-            "4. Ou contate o suporte do PicPay sobre Sandbox"
-          ]
-        })
-      };
-    }
+    console.log("✅ FUNCIONOU com token antigo!");
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        paymentUrl: response.data.paymentUrl,
+        qrcode: response.data.qrcode,
+        message: "Funcionou com token do Gateway!"
+      })
+    };
 
   } catch (error) {
-    console.error("Erro geral:", error.message);
+    console.error("❌ Também falhou:", {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+
+    // ✅ SE NADA FUNCIONAR, VAMOS USAR UMA ABORDAGEM TOTALMENTE DIFERENTE
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.message
+        error: "TODAS TENTATIVAS FALHARAM",
+        ultima_sugestao: "Vamos usar uma solução SEM PicPay? Posso ajudar com:",
+        opcoes: [
+          "1. WhatsApp para pedidos + Pagamento manual",
+          "2. Outro gateway de pagamento", 
+          "3. Sistema de agendamento sem pagamento online"
+        ]
       })
     };
   }
