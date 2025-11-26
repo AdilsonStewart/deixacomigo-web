@@ -1,16 +1,59 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Obrigado pelo pagamento!</title>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial; text-align: center; padding: 50px; background: #10b981; color: white; }
-    h1 { font-size: 3rem; }
-  </style>
-</head>
-<body>
-  <h1>OBRIGADO! 😍</h1>
-  <p>Seu pagamento foi aprovado com sucesso!</p>
-  <p>Sua mensagem sera encaminhada de acordo com sua solicitação, grave e depois faça o agendamento.</p>
-</body>
-</html>
+// src/screens/Sucesso.js
+
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+export default function Sucesso() {
+  const navigate = useNavigate();
+
+  const irParaGravarAudio = () => {
+    navigate('/AudioRecordPage'); // ou o caminho exato que você usa no seu route
+  };
+
+  return (
+    <div style={{
+      fontFamily: 'Arial, sans-serif',
+      textAlign: 'center',
+      padding: '50px',
+      backgroundColor: '#10b981',
+      color: 'white',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>
+        OBRIGADO! 😍
+      </h1>
+      
+      <p style={{ fontSize: '1.4rem', marginBottom: '10px' }}>
+        Seu pagamento foi aprovado com sucesso!
+      </p>
+      
+      <p style={{ fontSize: '1.2rem', marginBottom: '40px' }}>
+        Agora é só gravar sua mensagem e fazer o agendamento.
+      </p>
+
+      <button
+        onClick={irParaGravarAudio}
+        style={{
+          backgroundColor: 'white',
+          color: '#10b981',
+          fontSize: '1.3rem',
+          fontWeight: 'bold',
+          padding: '15px 40px',
+          border: 'none',
+          borderRadius: '50px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s'
+        }}
+        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+      >
+        🎤 Prosseguir para gravar o áudio
+      </button>
+    </div>
+  );
+}
