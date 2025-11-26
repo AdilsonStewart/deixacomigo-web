@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 INVESTIGAÇÃO PICPAY - Passo a Passo");
+  console.log("🔔 BUSCA DA URL CORRETA DO PICPAY SANDBOX");
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -22,80 +22,96 @@ exports.handler = async (event) => {
 
     const CLIENT_ID = process.env.PICPAY_CLIENT_ID;
     const CLIENT_SECRET = process.env.PICPAY_CLIENT_SECRET;
-
-    console.log("🔑 Credenciais:", {
-      clientId: CLIENT_ID ? "EXISTE" : "FALTA",
-      clientSecret: CLIENT_SECRET ? "EXISTE" : "FALTA"
-    });
-
-    // ✅ TENTATIVA 1: API com autenticação Basic (mais comum)
     const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Tentando com headers completos...");
+    // ✅ LISTA COMPLETA DE URLs POSSÍVEIS PARA SANDBOX
+    const urlTests = [
+      // Padrões comuns de Sandbox
+      { url: 'https://sandbox-api.picpay.com/payment-links', name: 'sandbox-api' },
+      { url: 'https://api.sandbox.picpay.com/payment-links', name: 'api.sandbox' },
+      { url: 'https://sandbox.picpay.com/api/payment-links', name: 'sandbox + api path' },
+      { url: 'https://staging-api.picpay.com/payment-links', name: 'staging-api' },
+      { url: 'https://api.staging.picpay.com/payment-links', name: 'api.staging' },
+      { url: 'https://developers.picpay.com/payment-links', name: 'developers' },
+      { url: 'https://api-dev.picpay.com/payment-links', name: 'api-dev' },
+      
+      // URLs de produção (às vezes Sandbox usa as mesmas com credenciais diferentes)
+      { url: 'https://api.picpay.com/payment-links', name: 'api production' },
+      { url: 'https://app.picpay.com/api/payment-links', name: 'app + api path' },
+      { url: 'https://picpay.com/api/payment-links', name: 'domain + api path' },
+      
+      // Tentativas com paths diferentes
+      { url: 'https://api.picpay.com/v1/payment-links', name: 'api + v1' },
+      { url: 'https://api.picpay.com/v2/payment-links', name: 'api + v2' },
+      { url: 'https://api.picpay.com/payment_links', name: 'with underscore' },
+      { url: 'https://api.picpay.com/payment/links', name: 'payment/links' },
+    ];
 
-    const response = await axios.post('https://api.picpay.com/payment-links', {
-      amount: Number(valor),
-      description: descricao,
-      return_url: "https://deixacomigoweb.netlify.app/sucesso",
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 dia
-      max_orders: 1
-    }, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'DeixaComigo/1.0'
-      },
-      timeout: 15000
-    });
+    console.log(`🎯 Testando ${urlTests.length} URLs possíveis...`);
 
-    console.log("🎉 SUCESSO! Resposta:", response.data);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        paymentLink: response.data.payment_url,
-        id: response.data.id
-      })
-    };
+    for (const test of urlTests) {
+      console.log(`🔍 Tentando: ${test.name} (${test.url})`);
+      
+      try {
+        const response = await axios.post(test.url, {
+          amount: Number(valor),
+          description: descricao,
+          return_url: "https://deixacomigoweb.netlify.app/sucesso",
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          max_orders: 1
+        }, {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          timeout: 3000
+        });
+
+        // ✅ SE CHEGOU AQUI, ENCONTRAMOS A URL CORRETA!
+        console.log(`🎉 🎉 🎉 URL ENCONTRADA: ${test.url} 🎉 🎉 🎉`);
+        console.log("Resposta:", response.data);
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            paymentLink: response.data.payment_url || response.data.url,
+            id: response.data.id,
+            discoveredUrl: test.url,
+            message: "URL CORRETA ENCONTRADA! Sistema funcionando!"
+          })
+        };
+
+      } catch (error) {
+        const status = error.response?.status;
+        console.log(`❌ ${test.name}: ${status || error.code}`);
+        
+        // Se for um erro diferente de 404, pode ser que a URL exista mas há outro problema
+        if (status && status !== 404) {
+          console.log(`⚠️  ${test.name} retornou ${status} - URL pode existir!`);
+        }
+      }
+    }
+
+    // ❌ SE NENHUMA FUNCIONOU
+    throw new Error(`Nenhuma das ${urlTests.length} URLs funcionou. O Sandbox do PicPay pode estar com problemas.`);
 
   } catch (error) {
-    console.error("💥 ERRO DETALHADO:", {
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
-
-    // ✅ SE DER ERRO, VAMOS TENTAR CONTATAR O SUPORTE DO PICPAY
-    const mensagemSuporte = `
-Problema: Credenciais Sandbox do Link de Pagamento API não funcionam.
-Client ID: ${process.env.PICPAY_CLIENT_ID}
-Erro: ${error.response?.data?.message || error.message}
-Status: ${error.response?.status}
-
-Já tentei:
-- URL: https://api.picpay.com/payment-links
-- Autenticação Basic
-- Headers completos
-- Diferentes formatos de payload
-
-Minha conta está ativa e recebendo pagamentos via links manuais.
-`;
-
+    console.error("💥 Falha total:", error.message);
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: "Falha na API PicPay",
-        nextSteps: [
-          "1. Contate o suporte do PicPay com esta mensagem:",
-          mensagemSuporte,
-          "2. Peça para ativarem sua API Sandbox",
-          "3. Ou pegue a URL correta do Sandbox"
+        error: error.message,
+        ultimaAlternativa: [
+          "1. Contatar suporte PicPay com as credenciais Sandbox",
+          "2. Usar API de produção (se disponível)",
+          "3. Implementar sistema híbrido temporário"
         ]
       })
     };
