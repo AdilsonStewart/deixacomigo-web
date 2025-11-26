@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🚀 SISTEMA PICPAY PRODUÇÃO - BOTÕES FUNCIONANDO");
+  console.log("🎯 PICPAY EXCLUSIVO - SEM COMPROMISSOS");
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -22,23 +22,23 @@ exports.handler = async (event) => {
 
     console.log("✅ Dados recebidos:", { valor, tipo });
 
-    // ✅ CREDENCIAIS DE PRODUÇÃO - CORRIGIDO
+    // ✅ CREDENCIAIS DE PRODUÇÃO PICPAY
     const CLIENT_ID = "32b9b1cb-79f4-44a0-80b3-070d837667c6";
     const CLIENT_SECRET = process.env.PICPAY_PRODUCTION_SECRET;
 
-    console.log("🔑 Verificando credenciais...", {
-      hasClientId: !!CLIENT_ID,
-      hasClientSecret: !!CLIENT_SECRET
+    console.log("🔑 Status das credenciais:", {
+      clientId: CLIENT_ID ? "CONFIGURADO" : "FALTANDO",
+      clientSecret: CLIENT_SECRET ? "CONFIGURADO" : "FALTANDO"
     });
 
     if (!CLIENT_SECRET) {
-      throw new Error("Client Secret de produção não configurado no Netlify");
+      throw new Error("❌ Configure PICPAY_PRODUCTION_SECRET no Netlify!");
     }
 
     const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Criando link de pagamento REAL...");
+    console.log("🔄 Chamando API PicPay...");
 
     const response = await axios.post('https://api.picpay.com/payment-links', {
       amount: Number(valor),
@@ -55,7 +55,7 @@ exports.handler = async (event) => {
       timeout: 10000
     });
 
-    console.log("🎉 LINK DE PAGAMENTO REAL CRIADO:", response.data);
+    console.log("🎉 SUCESSO! Resposta:", response.data);
 
     return {
       statusCode: 200,
@@ -64,34 +64,25 @@ exports.handler = async (event) => {
         success: true,
         paymentLink: response.data.payment_url,
         id: response.data.id,
-        message: "Pagamento criado com sucesso!",
-        environment: "PRODUÇÃO"
+        message: "Link de pagamento criado com sucesso!"
       })
     };
 
   } catch (error) {
-    console.error("❌ Erro produção:", {
+    console.error("💥 ERRO PICPAY:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data
     });
 
-    // ✅ FALLBACK CORRIGIDO - AGORA FUNCIONA SEMPRE
-    const body = JSON.parse(event.body || "{}");
-    const { valor, tipo } = body;
-    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo" : "Mensagem em Áudio";
-    
-    const fallbackMessage = `Olá! Quero uma ${descricao} Surpresa por R$ ${valor}`;
-    const whatsappLink = `https://wa.me/5511999999999?text=${encodeURIComponent(fallbackMessage)}`;
-
+    // ❌ AGORA SEM FALLBACK - APENAS ERRO DIRETO
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
-        success: true,
-        paymentLink: whatsappLink,
-        message: "Sistema automático em ajuste. Entre em contato pelo WhatsApp!",
-        fallback: true
+        success: false,
+        error: "Falha no PicPay: " + (error.response?.data?.message || error.message),
+        solution: "Configure PICPAY_PRODUCTION_SECRET no Netlify com o Client Secret real"
       })
     };
   }
