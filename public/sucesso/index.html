@@ -1,4 +1,4 @@
-// src/screens/Sucesso.js
+// src/screens/Sucesso.js   (crie esse arquivo dentro da pasta screens)
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,15 +6,15 @@ import { useNavigate } from 'react-router-dom';
 export default function Sucesso() {
   const navigate = useNavigate();
 
-  const irParaGravarAudio = () => {
-    navigate('/AudioRecordPage'); // ou o caminho exato que você usa no seu route
+  const irParaGravar = () => {
+    navigate('/audio'); // ou o caminho exato que você usa na rota (veja abaixo)
   };
 
   return (
     <div style={{
       fontFamily: 'Arial, sans-serif',
       textAlign: 'center',
-      padding: '50px',
+      padding: '50px 20px',
       backgroundColor: '#10b981',
       color: 'white',
       minHeight: '100vh',
@@ -24,35 +24,37 @@ export default function Sucesso() {
       alignItems: 'center'
     }}>
       <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>
-        OBRIGADO! 😍
+        OBRIGADO!
       </h1>
       
-      <p style={{ fontSize: '1.4rem', marginBottom: '10px' }}>
+      <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>
         Seu pagamento foi aprovado com sucesso!
       </p>
       
-      <p style={{ fontSize: '1.2rem', marginBottom: '40px' }}>
-        Agora é só gravar sua mensagem e fazer o agendamento.
+27      <p style={{ fontSize: '1.3rem', maxWidth: '600px', lineHeight: '1.6' }}>
+        Agora é só gravar sua mensagem de voz que será entregue na data certa. 
+        Nunca mais esqueça aniversários e datas especiais!
       </p>
 
       <button
-        onClick={irParaGravarAudio}
+        onClick={irParaGravar}
         style={{
+          marginTop: '50px',
           backgroundColor: 'white',
           color: '#10b981',
-          fontSize: '1.3rem',
+          fontSize: '1.4rem',
           fontWeight: 'bold',
-          padding: '15px 40px',
+          padding: '18px 50px',
           border: 'none',
           borderRadius: '50px',
           cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s'
+          boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease'
         }}
-        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
-        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+        onMouseOver={e => e.target.style.transform = 'scale(1.08)'}
+        onMouseOut={e => e.target.style.transform = 'scale(1)'}
       >
-        🎤 Prosseguir para gravar o áudio
+        Prosseguir para gravar o áudio
       </button>
     </div>
   );
