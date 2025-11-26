@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 PicPay - Pix no TEF");
+  console.log("🔔 PicPay Sandbox - Link de Pagamento");
 
   if (event.httpMethod !== "POST") {
     return {
@@ -30,68 +30,51 @@ exports.handler = async (event) => {
 
     console.log("✅ Dados recebidos:", { valor, tipo });
 
-    const PICPAY_TOKEN = process.env.PICPAY_TOKEN; // ✅ Já atualizou no Netlify!
+    const CLIENT_ID = "6946f24e-b411-4a3c-8fdc-2b3c5903c0b5";
+    const CLIENT_SECRET = "yxKuRc9T87Q6MAvfgeItWQEpAXmRNzXA";
 
-    if (!PICPAY_TOKEN) {
-      throw new Error("Token PicPay não configurado");
-    }
-
+    const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Criando transação Pix no TEF...");
+    console.log("🔄 Criando Link de Pagamento...");
 
-    // ✅ API para transação Pix
-    const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
-      referenceId: `pix-${Date.now()}`,
-      callbackUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      value: Number(valor),
+    const response = await axios.post('https://api.picpay.com/payment-links', {
+      amount: Number(valor),
       description: descricao,
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-      buyer: {
-        firstName: "Cliente",
-        lastName: "Site",
-        document: "123.456.789-09",
-        email: "cliente@site.com",
-        phone: "+55-11-99999-9999"
-      }
+      return_url: "https://deixacomigoweb.netlify.app/sucesso",
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      max_orders: 1
     }, {
       headers: {
-        'x-picpay-token': PICPAY_TOKEN,
+        'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json'
       },
       timeout: 10000
     });
 
     const data = response.data;
-    console.log("✅ Transação Pix criada:", data);
+    console.log("✅ Link criado:", data);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentUrl: data.paymentUrl,
-        qrcode: data.qrcode,
-        referenceId: data.referenceId,
-        message: "Pagamento Pix criado com sucesso!"
+        paymentLink: data.payment_url,
+        id: data.id,
+        message: "Link de pagamento criado!"
       })
     };
 
   } catch (error) {
-    console.error("❌ Erro Pix no TEF:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-
+    console.error("❌ Erro:", error.response?.data || error.message);
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.response?.data?.message || error.message,
-        details: error.response?.data
+        error: error.response?.data?.message || error.message
       })
     };
   }
