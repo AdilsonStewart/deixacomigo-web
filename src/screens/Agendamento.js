@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import './Agendamento.css';
 
-// Firebase config (já vindo do Netlify env)
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -32,15 +26,10 @@ const Agendamento = () => {
 
   const linkMensagem = localStorage.getItem('lastRecordingUrl');
 
-  if (!linkMensagem) {
-    alert('Ops! Não encontramos a gravação. Volte e grave novamente.');
-    navigate(-1);
-    return null;
-  }
-
   const handleSchedule = async () => {
+    // Validações básicas
     if (!nome || !telefone || !selectedDate || !selectedTime) {
-      alert('Por favor, preencha todos os campos obrigatórios!');
+      alert('Por favor, preencha todos os campos!');
       return;
     }
 
@@ -51,49 +40,50 @@ const Agendamento = () => {
     }
     const telefoneFull = `+55${digits}`;
 
+    // Verifica se é pelo menos 24h no futuro
     const hoje = new Date();
     const dataEscolhida = new Date(selectedDate);
-    const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000 + 5 * 60 * 1000);
+    const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
 
     if (dataEscolhida < minimo24h) {
-      alert('A corujinha precisa de no mínimo 24 horas de antecedência para garantir a entrega! 🦉❤️');
+      alert('A corujinha precisa de no mínimo 24 horas! 🦉');
       return;
     }
 
     setLoading(true);
 
     try {
+      // ✅ SALVA NO FIRESTORE - ESTRUTURA SIMPLES
       await addDoc(collection(db, 'agendamentos'), {
         linkMensagem,
-        nomeDestinatario: nome.trim(),
-        telefoneDestinatario: telefoneFull,
-        dataEnvio: selectedDate,
-        horarioPreferido: selectedTime,
-        enviado: false,
-        criadoEm: serverTimestamp(),
+        nome: nome.trim(),
+        telefone: telefoneFull,
+        data: selectedDate,        // Ex: "2024-01-15"
+        horario: selectedTime,     // Ex: "08:00-10:00"
+        status: 'agendado',
+        criadoEm: serverTimestamp()
       });
 
-      // ✅ ÚNICA ALTERAÇÃO — salva para a tela de saída
-      localStorage.setItem(
-        'lastAgendamento',
-        JSON.stringify({
-          status: 'Pendente',
-          nome,
-          dataEntrega: selectedDate,
-          horario: selectedTime,
-        })
-      );
+      // ✅ SALVA NO LOCALSTORAGE também
+      localStorage.setItem('lastAgendamento', JSON.stringify({
+        nome: nome.trim(),
+        data: selectedDate,
+        horario: selectedTime,
+        status: 'Agendado'
+      }));
 
-      alert('✅ Agendamento salvo com sucesso!\nA corujinha entrega no horário escolhido! 🦉🎉');
+      alert('✅ Agendado! A corujinha vai entregar sua mensagem! 🦉');
       navigate('/saida');
+      
     } catch (error) {
-      console.error('Erro ao salvar agendamento:', error);
-      alert('Ocorreu um erro ao salvar. Tenta de novo ou me chama que eu te ajudo ❤️');
+      console.error('Erro:', error);
+      alert('❌ Ops! Tenta de novo ou me chama! ❤️');
     } finally {
       setLoading(false);
     }
   };
 
+  // (Mantém as funções formatPhone, handlePhoneChange, getMinDate, getMaxDate)
   const formatPhone = (value) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 10) {
@@ -122,11 +112,7 @@ const Agendamento = () => {
   return (
     <div className="agendamento-container">
       <h1 className="agendamento-title">📅 Agendar Entrega</h1>
-      <p className="agendamento-subtitle">
-        A corujinha entrega sua surpresa no dia e horário escolhidos!
-      </p>
-
-      {/* NOME */}
+      
       <div className="form-group">
         <label>👤 Nome de quem vai receber *</label>
         <input
@@ -138,7 +124,6 @@ const Agendamento = () => {
         />
       </div>
 
-      {/* TELEFONE */}
       <div className="form-group">
         <label>📞 Celular com DDD *</label>
         <input
@@ -149,12 +134,8 @@ const Agendamento = () => {
           maxLength="15"
           required
         />
-        <small className="field-hint">
-          Vamos enviar o link da surpresa por SMS
-        </small>
       </div>
 
-      {/* DATA */}
       <div className="form-group">
         <label>📆 Data da entrega *</label>
         <input
@@ -165,10 +146,8 @@ const Agendamento = () => {
           max={getMaxDate()}
           required
         />
-        <small>Mínimo 24h de antecedência</small>
       </div>
 
-      {/* HORÁRIO */}
       <div className="form-group">
         <label>⏰ Horário de preferência *</label>
         <select
@@ -177,32 +156,21 @@ const Agendamento = () => {
           required
         >
           <option value="">Selecione o horário</option>
-          <option value="08:00-10:00">🕗 08:00 - 10:00 (Manhã)</option>
-          <option value="10:00-12:00">🕙 10:00 - 12:00 (Manhã)</option>
-          <option value="14:00-16:00">🕑 14:00 - 16:00 (Tarde)</option>
-          <option value="16:00-18:00">🕓 16:00 - 18:00 (Tarde)</option>
-          <option value="18:00-20:00">🕕 18:00 - 20:00 (Noite)</option>
+          <option value="08:00-10:00">🕗 08:00 - 10:00</option>
+          <option value="10:00-12:00">🕙 10:00 - 12:00</option>
+          <option value="14:00-16:00">🕑 14:00 - 16:00</option>
+          <option value="16:00-18:00">🕓 16:00 - 18:00</option>
+          <option value="18:00-20:00">🕕 18:00 - 20:00</option>
         </select>
       </div>
 
-      {/* INFO */}
-      <div className="agendamento-info">
-        <h3>ℹ️ Importante</h3>
-        <ul>
-          <li>• Entregas de segunda a sábado</li>
-          <li>• Mínimo 24h de antecedência</li>
-          <li>• A corujinha entrega automaticamente no horário escolhido</li>
-        </ul>
-      </div>
-
-      {/* BOTÕES */}
       <div className="agendamento-buttons">
         <button
           className="btn-confirm"
           onClick={handleSchedule}
           disabled={loading}
         >
-          {loading ? '🦉 Salvando no ninho...' : '✅ Confirmar Agendamento'}
+          {loading ? '🦉 Salvando...' : '✅ Confirmar Agendamento'}
         </button>
         <button className="btn-back" onClick={() => navigate(-1)}>
           ↩️ Voltar
