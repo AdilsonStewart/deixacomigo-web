@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 Mercado Pago - Criando pagamento");
+  console.log("🔔 PicPay - Pix no TEF");
 
   if (event.httpMethod !== "POST") {
     return {
@@ -30,60 +30,56 @@ exports.handler = async (event) => {
 
     console.log("✅ Dados recebidos:", { valor, tipo });
 
-    const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
+    const PICPAY_TOKEN = process.env.PICPAY_TOKEN; // ✅ Já atualizou no Netlify!
 
-    if (!ACCESS_TOKEN) {
-      throw new Error("Access Token do Mercado Pago não configurado");
+    if (!PICPAY_TOKEN) {
+      throw new Error("Token PicPay não configurado");
     }
 
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Criando preferência no Mercado Pago...");
+    console.log("🔄 Criando transação Pix no TEF...");
 
-    const response = await axios.post('https://api.mercadopago.com/checkout/preferences', {
-      items: [
-        {
-          title: descricao,
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: Number(valor)
-        }
-      ],
-      back_urls: {
-        success: "https://deixacomigoweb.netlify.app/sucesso",
-        failure: "https://deixacomigoweb.netlify.app/",
-        pending: "https://deixacomigoweb.netlify.app/"
-      },
-      auto_return: "approved",
-      statement_descriptor: "DeixaComigo",
-      expires: true,
-      expiration_date_from: new Date().toISOString(),
-      expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
+    // ✅ API para transação Pix
+    const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
+      referenceId: `pix-${Date.now()}`,
+      callbackUrl: "https://deixacomigoweb.netlify.app/sucesso",
+      returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
+      value: Number(valor),
+      description: descricao,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      buyer: {
+        firstName: "Cliente",
+        lastName: "Site",
+        document: "123.456.789-09",
+        email: "cliente@site.com",
+        phone: "+55-11-99999-9999"
+      }
     }, {
       headers: {
-        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+        'x-picpay-token': PICPAY_TOKEN,
         'Content-Type': 'application/json'
       },
       timeout: 10000
     });
 
     const data = response.data;
-    console.log("✅ Mercado Pago - Preferência criada:", data.id);
+    console.log("✅ Transação Pix criada:", data);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentUrl: data.init_point, // URL de pagamento
-        sandbox_init_point: data.sandbox_init_point, // URL de teste
-        id: data.id,
-        message: "Pagamento criado com sucesso!"
+        paymentUrl: data.paymentUrl,
+        qrcode: data.qrcode,
+        referenceId: data.referenceId,
+        message: "Pagamento Pix criado com sucesso!"
       })
     };
 
   } catch (error) {
-    console.error("❌ Erro Mercado Pago:", {
+    console.error("❌ Erro Pix no TEF:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data
