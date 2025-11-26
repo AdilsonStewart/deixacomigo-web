@@ -20,56 +20,39 @@
 
 .sucesso2-container h1 {
   font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.usuario-cumprimento {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 25px;
+  border-radius: 15px;
+  margin: 20px 0;
+  max-width: 500px;
+  width: 100%;
+  backdrop-filter: blur(10px);
+}
+
+.usuario-cumprimento h3 {
+  font-size: 1.5rem;
   margin-bottom: 15px;
-  font-weight: bold;
   color: #10b981;
 }
 
-.sucesso-mensagem {
-  font-size: 1.3rem;
-  margin-bottom: 20px;
-  line-height: 1.5;
-  max-width: 500px;
-}
-
-.contagem-regressiva {
+.btn-continuar {
+  padding: 15px 30px;
   font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 30px;
-  color: #fbbf24;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 10px 20px;
-  border-radius: 10px;
-}
-
-/* ✅ BOTÃO CONTINUAR GRANDE E ATRAENTE */
-.botao-continuar {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: #10b981;
   color: white;
   border: none;
-  padding: 18px 40px;
-  border-radius: 50px;
-  font-size: 1.3rem;
-  font-weight: bold;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-  margin-bottom: 20px;
-}
-
-.botao-continuar:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
-  background: linear-gradient(135deg, #059669, #047857);
-}
-
-.botao-continuar:active {
-  transform: translateY(0);
-}
-
-.instrucoes {
+  font-weight: bold;
   margin-top: 20px;
-  font-size: 1rem;
-  opacity: 0.8;
-  max-width: 400px;
+}
+
+.btn-continuar:hover {
+  background: #059669;
+  transform: translateY(-2px);
 }
