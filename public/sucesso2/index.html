@@ -7,21 +7,25 @@ const Sucesso2 = () => {
   return (
     <div style={{
       fontFamily: 'Arial',
-      textAlign: 'center',
+      textAlign: 'center', 
       padding: '50px',
       background: '#10b981',
       color: 'white',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
     }}>
-      <h1 style={{ fontSize: '3rem' }}>OBRIGADO PELA OPÇÃO! 😍</h1>
+      <h1 style={{ fontSize: '3rem' }}>OBRIGADO! 😍</h1>
       <p>Seu pagamento foi aprovado com sucesso!</p>
-      <p>Seu <strong>vídeo</strong> será encaminhado de acordo com sua solicitação.</p>
+      <p>Seu vídeo será encaminhado de acordo com sua solicitação.</p>
       
       <button
         onClick={() => navigate('/video-record')}
         style={{
           background: 'white',
-          color: '#10b981',
+          color: '#10b981', 
           border: 'none',
           padding: '15px 30px',
           fontSize: '1.1rem',
