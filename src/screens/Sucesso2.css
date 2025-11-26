@@ -22,28 +22,54 @@
   font-size: 2.5rem;
   margin-bottom: 15px;
   font-weight: bold;
+  color: #10b981;
 }
 
-.sucesso2-container p {
+.sucesso-mensagem {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+.contagem-regressiva {
   font-size: 1.2rem;
-  margin-bottom: 25px;
-  opacity: 0.9;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #fbbf24;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 20px;
+  border-radius: 10px;
 }
 
-.botao-ir-agora {
-  background: rgba(255, 255, 255, 0.2);
+/* ✅ BOTÃO CONTINUAR GRANDE E ATRAENTE */
+.botao-continuar {
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
-  border: 2px solid white;
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-size: 1rem;
+  border: none;
+  padding: 18px 40px;
+  border-radius: 50px;
+  font-size: 1.3rem;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  margin-bottom: 20px;
 }
 
-.botao-ir-agora:hover {
-  background: white;
-  color: #667eea;
-  transform: translateY(-2px);
+.botao-continuar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.botao-continuar:active {
+  transform: translateY(0);
+}
+
+.instrucoes {
+  margin-top: 20px;
+  font-size: 1rem;
+  opacity: 0.8;
+  max-width: 400px;
 }
