@@ -6,7 +6,15 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🎯 PICPAY EXCLUSIVO - SEM COMPROMISSOS");
+  console.log("🔔 Cora - Criando cobrança PIX");
+
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ success: false, error: "Método não permitido" })
+    };
+  }
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -22,67 +30,82 @@ exports.handler = async (event) => {
 
     console.log("✅ Dados recebidos:", { valor, tipo });
 
-    // ✅ CREDENCIAIS DE PRODUÇÃO PICPAY
-    const CLIENT_ID = "32b9b1cb-79f4-44a0-80b3-070d837667c6";
-    const CLIENT_SECRET = process.env.PICPAY_PRODUCTION_SECRET;
+    // Obter as credenciais da Cora do ambiente
+    const CORA_CLIENT_ID = process.env.CORA_CLIENT_ID;
+    const CORA_CLIENT_SECRET = process.env.CORA_CLIENT_SECRET;
+    const CORA_ACCESS_TOKEN = process.env.CORA_ACCESS_TOKEN; // Se já tiver um token
 
-    console.log("🔑 Status das credenciais:", {
-      clientId: CLIENT_ID ? "CONFIGURADO" : "FALTANDO",
-      clientSecret: CLIENT_SECRET ? "CONFIGURADO" : "FALTANDO"
-    });
-
-    if (!CLIENT_SECRET) {
-      throw new Error("❌ Configure PICPAY_PRODUCTION_SECRET no Netlify!");
+    // Se não tivermos um access token, precisamos obter um
+    let accessToken = CORA_ACCESS_TOKEN;
+    if (!accessToken && CORA_CLIENT_ID && CORA_CLIENT_SECRET) {
+      // Obter access token da Cora
+      const tokenResponse = await axios.post('https://api.cora.com.br/oauth/token', {
+        grant_type: 'client_credentials',
+        client_id: CORA_CLIENT_ID,
+        client_secret: CORA_CLIENT_SECRET
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      accessToken = tokenResponse.data.access_token;
     }
 
-    const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
+    if (!accessToken) {
+      throw new Error("Não foi possível obter o access token da Cora. Verifique as credenciais.");
+    }
+
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Chamando API PicPay...");
+    console.log("🔄 Criando cobrança PIX na Cora...");
 
-    const response = await axios.post('https://api.picpay.com/payment-links', {
-      amount: Number(valor),
+    // Criar a cobrança PIX
+    const response = await axios.post('https://api.cora.com.br/v1/charges', {
+      amount: Number(valor) * 100, // Em centavos
       description: descricao,
-      return_url: "https://deixacomigoweb.netlify.app/sucesso",
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      max_orders: 1
+      payment_method: 'pix',
+      expires_in: 1800, // 30 minutos em segundos
+      metadata: {
+        product_type: tipo,
+        site: 'deixacomigo'
+      }
     }, {
       headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
       },
       timeout: 10000
     });
 
-    console.log("🎉 SUCESSO! Resposta:", response.data);
+    const data = response.data;
+    console.log("✅ Cobrança Cora criada:", data);
 
+    // A resposta da Cora deve incluir o QR code e outros dados de pagamento
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentLink: response.data.payment_url,
-        id: response.data.id,
-        message: "Link de pagamento criado com sucesso!"
+        paymentUrl: data.payment_url, // Se a Cora fornecer uma URL de pagamento
+        qrcode: data.pix.qrcode, // Supondo que a resposta tenha um objeto pix com qrcode
+        qrcodeText: data.pix.qrcode_text, // E texto do QR code
+        id: data.id,
+        message: "Cobrança PIX criada com sucesso!"
       })
     };
 
   } catch (error) {
-    console.error("💥 ERRO PICPAY:", {
+    console.error("❌ Erro Cora:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data
     });
 
-    // ❌ AGORA SEM FALLBACK - APENAS ERRO DIRETO
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: "Falha no PicPay: " + (error.response?.data?.message || error.message),
-        solution: "Configure PICPAY_PRODUCTION_SECRET no Netlify com o Client Secret real"
+        error: error.response?.data?.message || error.message,
+        details: error.response?.data
       })
     };
   }
