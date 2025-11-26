@@ -20,12 +20,19 @@ exports.handler = async (event) => {
       };
     }
 
-    // ✅ CREDENCIAIS DE PRODUÇÃO
+    console.log("✅ Dados recebidos:", { valor, tipo });
+
+    // ✅ CREDENCIAIS DE PRODUÇÃO - CORRIGIDO
     const CLIENT_ID = "32b9b1cb-79f4-44a0-80b3-070d837667c6";
-    const CLIENT_SECRET = process.env.PICPAY_PRODUCTION_SECRET; // ⚠️ CONFIGURAR NO NETLIFY!
+    const CLIENT_SECRET = process.env.PICPAY_PRODUCTION_SECRET;
+
+    console.log("🔑 Verificando credenciais...", {
+      hasClientId: !!CLIENT_ID,
+      hasClientSecret: !!CLIENT_SECRET
+    });
 
     if (!CLIENT_SECRET) {
-      throw new Error("Client Secret de produção não configurado");
+      throw new Error("Client Secret de produção não configurado no Netlify");
     }
 
     const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
@@ -69,13 +76,20 @@ exports.handler = async (event) => {
       data: error.response?.data
     });
 
-    // ✅ FALLBACK AUTOMÁTICO - NUNCA FICA FORA DO AR
+    // ✅ FALLBACK CORRIGIDO - AGORA FUNCIONA SEMPRE
+    const body = JSON.parse(event.body || "{}");
+    const { valor, tipo } = body;
+    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo" : "Mensagem em Áudio";
+    
+    const fallbackMessage = `Olá! Quero uma ${descricao} Surpresa por R$ ${valor}`;
+    const whatsappLink = `https://wa.me/5511999999999?text=${encodeURIComponent(fallbackMessage)}`;
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentLink: `https://wa.me/5511999999999?text=Olá! Quero: ${tipo} por R$ ${valor}`,
+        paymentLink: whatsappLink,
         message: "Sistema automático em ajuste. Entre em contato pelo WhatsApp!",
         fallback: true
       })
