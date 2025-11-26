@@ -1,39 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Sucesso2.css';
 
 const Sucesso2 = () => {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(3);
 
-  console.log('🎬 Sucesso2 - Componente carregado');
-
-  // ✅ REDIRECIONAMENTO AUTOMÁTICO APÓS 3 SEGUNDOS
+  // Após 3 segundos → vai para a VideoRecorderPage
   useEffect(() => {
-    console.log('⏰ Sucesso2 - Iniciando contagem regressiva');
-    
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          console.log('🚀 Sucesso2 - Redirecionando automaticamente para /videorecorder');
-          navigate('/videorecorder');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const timer = setTimeout(() => {
+      navigate('/videorecorder');
+    }, 3000);
 
-    return () => {
-      console.log('🧹 Sucesso2 - Limpando timer');
-      clearInterval(timer);
-    };
+    return () => clearTimeout(timer);
   }, [navigate]);
-
-  const handleContinuar = () => {
-    console.log('🎯 Sucesso2 - Botão Continuar clicado');
-    navigate('/videorecorder');
-  };
 
   return (
     <div className="sucesso2-container">
@@ -43,29 +22,16 @@ const Sucesso2 = () => {
         alt="Sucesso"
       />
 
-      <h1>Pagamento Aprovado! 🎉</h1>
-      <p className="sucesso-mensagem">
-        Obrigado! Sua compra foi confirmada com sucesso.
-      </p>
+      <h1>Pagamento Aprovado!</h1>
+      <p>Redirecionando para gravação de vídeo...</p>
       
-      <p className="contagem-regressiva">
-        {countdown > 0 
-          ? `Redirecionando automaticamente em ${countdown}...` 
-          : "Redirecionando agora..."
-        }
-      </p>
-
-      {/* ✅ BOTÃO CONTINUAR GRANDE E CLARO */}
+      {/* ✅ BOTÃO CONTINUAR ADICIONADO AQUI */}
       <button 
         className="botao-continuar"
-        onClick={handleContinuar}
+        onClick={() => navigate('/videorecorder')}
       >
-        ▶️ Continuar para Gravação
+        🎥 Continuar para Gravação
       </button>
-
-      <div className="instrucoes">
-        <p>Clique em "Continuar" para iniciar a gravação do seu vídeo surpresa!</p>
-      </div>
     </div>
   );
 };
