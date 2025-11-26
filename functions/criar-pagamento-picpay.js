@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 PicPay Link de Pagamento - Documentação Oficial");
+  console.log("🔔 TESTANDO TODAS URLS POSSÍVEIS");
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -20,78 +20,73 @@ exports.handler = async (event) => {
       };
     }
 
-    console.log("✅ Dados recebidos:", { valor, tipo });
-
     const CLIENT_ID = process.env.PICPAY_CLIENT_ID;
     const CLIENT_SECRET = process.env.PICPAY_CLIENT_SECRET;
-
-    if (!CLIENT_ID || !CLIENT_SECRET) {
-      throw new Error("Credenciais não configuradas");
-    }
-
     const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Criando Link de Pagamento...");
+    // ✅ LISTA DE URLS POSSÍVEIS PARA SANDBOX
+    const urlsToTest = [
+      'https://sandbox.picpay.com/payment-links',
+      'https://api.sandbox.picpay.com/payment-links',
+      'https://sandbox-api.picpay.com/payment-links',
+      'https://staging.picpay.com/payment-links',
+      'https://api.staging.picpay.com/payment-links'
+    ];
 
-    // ✅ BASEADO NA DOCUMENTAÇÃO PICPAY
-    const response = await axios.post('https://api.picpay.com/payment-links', {
-      amount: Number(valor),
-      description: descricao,
-      return_url: "https://deixacomigoweb.netlify.app/sucesso",
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      max_orders: 1
-    }, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      timeout: 10000
-    });
+    console.log(`🔄 Testando ${urlsToTest.length} URLs...`);
 
-    const data = response.data;
-    console.log("✅ Link criado:", data);
+    for (let i = 0; i < urlsToTest.length; i++) {
+      const url = urlsToTest[i];
+      console.log(`📡 Tentando URL ${i + 1}: ${url}`);
+      
+      try {
+        const response = await axios.post(url, {
+          amount: Number(valor),
+          description: descricao,
+          return_url: "https://deixacomigoweb.netlify.app/sucesso",
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          max_orders: 1
+        }, {
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 5000
+        });
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        paymentLink: data.payment_url,
-        id: data.id,
-        message: "Link de pagamento criado com sucesso!"
-      })
-    };
+        console.log(`🎉 SUCESSO com URL: ${url}`);
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            paymentLink: response.data.payment_url,
+            id: response.data.id,
+            workingUrl: url,
+            message: "URL encontrada!"
+          })
+        };
 
-  } catch (error) {
-    console.error("❌ Erro detalhado:", {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
-
-    // Se der erro 404, a URL pode ser diferente no Sandbox
-    if (error.response?.status === 404) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          success: false,
-          error: "URL da API não encontrada. O Sandbox pode usar URL diferente.",
-          suggestion: "Verifique na documentação se há URL específica para Sandbox"
-        })
-      };
+      } catch (error) {
+        console.log(`❌ URL ${url} falhou: ${error.response?.status || error.message}`);
+        // Continua para a próxima URL
+      }
     }
 
+    // Se nenhuma URL funcionou
+    throw new Error("Nenhuma URL Sandbox funcionou. Verifique a documentação.");
+
+  } catch (error) {
+    console.error("💥 TODAS URLS FALHARAM:", error.message);
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.response?.data?.message || error.message,
-        details: error.response?.data
+        error: error.message,
+        suggestion: "NA DOCUMENTAÇÃO, procure por 'Sandbox URL' ou 'Testing environment'"
       })
     };
   }
