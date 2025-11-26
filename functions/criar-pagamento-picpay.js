@@ -6,16 +6,19 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 Function iniciada - TESTE DETALHADO");
+  console.log("🔔 PicPay Sandbox - Link de Pagamento");
+
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ success: false, error: "Método não permitido" })
+    };
+  }
 
   try {
-    // Verifica se recebeu dados
-    console.log("📦 Body recebido:", event.body);
-    
     const body = JSON.parse(event.body || "{}");
     const { valor, tipo } = body;
-
-    console.log("✅ Dados extraídos:", { valor, tipo });
 
     if (!valor || !tipo) {
       return {
@@ -25,18 +28,23 @@ exports.handler = async (event) => {
       };
     }
 
-    // Credenciais Sandbox
-    const CLIENT_ID = "6946f24e-b411-4a3c-8fdc-2b3c5903c0b5";
-    const CLIENT_SECRET = "yxKuRc9T87Q6MAvfgeItWQEpAXmRNzXA";
+    console.log("✅ Dados recebidos:", { valor, tipo });
 
-    console.log("🔑 Credenciais preparadas");
+    // ✅ AGORA CHAMANDO DAS VARIÁVEIS DE AMBIENTE
+    const CLIENT_ID = process.env.PICPAY_CLIENT_ID;
+    const CLIENT_SECRET = process.env.PICPAY_CLIENT_SECRET;
+
+    console.log("🔑 Verificando credenciais...");
+
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      throw new Error("Credenciais não configuradas no Netlify");
+    }
 
     const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Chamando API PicPay...");
+    console.log("🔄 Criando Link de Pagamento...");
 
-    // Tentativa com API
     const response = await axios.post('https://api.picpay.com/payment-links', {
       amount: Number(valor),
       description: descricao,
@@ -51,34 +59,29 @@ exports.handler = async (event) => {
       timeout: 10000
     });
 
-    console.log("✅ Resposta da API:", response.data);
+    const data = response.data;
+    console.log("✅ Link criado:", data);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentLink: response.data.payment_url,
-        id: response.data.id,
-        message: "Funcionou!"
+        paymentLink: data.payment_url,
+        id: data.id,
+        message: "Link de pagamento criado!"
       })
     };
 
   } catch (error) {
-    console.error("💥 ERRO COMPLETO:");
-    console.error("Mensagem:", error.message);
-    console.error("Status:", error.response?.status);
-    console.error("Dados:", error.response?.data);
-    console.error("URL:", error.config?.url);
-
+    console.error("❌ Erro:", error.response?.data || error.message);
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.response?.data?.message || error.message,
-        details: error.response?.data,
-        step: "Verifique as credenciais Sandbox"
+        error: error.response?.data?.message || error.message
       })
     };
   }
