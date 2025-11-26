@@ -5,48 +5,41 @@ const Sucesso2 = () => {
   const navigate = useNavigate();
 
   return (
-    <div style={{
-      fontFamily: 'Arial, sans-serif',
-      textAlign: 'center',
-      padding: '50px',
-      background: '#10b981',
-      color: 'white',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>
-        OBRIGADO! 😍
-      </h1>
-      
-      <p style={{ fontSize: '1.2rem', marginBottom: '10px' }}>
-        Seu pagamento foi aprovado com sucesso!
-      </p>
-      
-      <p style={{ fontSize: '1.1rem', marginBottom: '30px' }}>
-        Seu <strong>vídeo</strong> será encaminhado de acordo com sua solicitação.
-      </p>
-
-      <button
-        onClick={() => navigate('/video-record')}
-        style={{
-          background: 'white',
-          color: '#10b981',
-          border: 'none',
-          padding: '15px 30px',
-          fontSize: '1.1rem',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-          marginTop: '20px'
-        }}
-      >
+    <div style={styles.container}>
+      <h1>OBRIGADO! 😍</h1>
+      <p>Seu pagamento foi aprovado com sucesso!</p>
+      <p>Seu <strong>vídeo</strong> será encaminhado de acordo com sua solicitação, grave e depois faça o agendamento.</p>
+      <button style={styles.button} onClick={() => navigate('/video-record')}>
         🎥 GRAVAR VÍDEO AGORA
       </button>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    fontFamily: 'Arial, sans-serif',
+    textAlign: 'center',
+    padding: '50px',
+    background: '#10b981',
+    color: 'white',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  button: {
+    background: 'white',
+    color: '#10b981',
+    border: 'none',
+    padding: '15px 30px',
+    fontSize: '1.1rem',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    marginTop: '20px'
+  }
 };
 
 export default Sucesso2;
