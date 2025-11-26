@@ -18,12 +18,10 @@ const VideoRecordPage = () => {
   const [uploading, setUploading] = useState(false);
   const [gravacaoId, setGravacaoId] = useState(null);
 
-  // ✅ GERAR ID ÚNICO PARA GRAVAÇÃO
   const generateGravacaoId = () => {
     return `GRV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  // ✅ INICIAR CÂMERA
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -40,7 +38,6 @@ const VideoRecordPage = () => {
     }
   };
 
-  // ✅ INICIAR GRAVAÇÃO
   const startRecording = async () => {
     if (!streamRef.current) return;
 
@@ -61,12 +58,10 @@ const VideoRecordPage = () => {
         setSeconds(0);
       };
 
-      // ✅ INICIAR CONTAGEM REGRESSIVA
       setSeconds(30);
       setRecording(true);
-      mediaRecorder.start(1000); // Coleta dados a cada 1 segundo
+      mediaRecorder.start(1000);
 
-      // ✅ PARAR AUTOMATICAMENTE APÓS 30 SEGUNDOS
       setTimeout(() => {
         if (mediaRecorder.state === 'recording') {
           mediaRecorder.stop();
@@ -79,14 +74,12 @@ const VideoRecordPage = () => {
     }
   };
 
-  // ✅ PARAR GRAVAÇÃO MANUALMENTE
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
   };
 
-  // ✅ CONTADOR REGRESSIVO
   useEffect(() => {
     let interval = null;
     if (recording && seconds > 0) {
@@ -99,7 +92,6 @@ const VideoRecordPage = () => {
     return () => clearInterval(interval);
   }, [recording, seconds]);
 
-  // ✅ UPLOAD PARA FIREBASE
   const uploadVideo = async () => {
     if (!recordedVideo) return;
 
@@ -108,12 +100,10 @@ const VideoRecordPage = () => {
       const gravacaoId = generateGravacaoId();
       setGravacaoId(gravacaoId);
 
-      // ✅ SALVAR VÍDEO NO STORAGE
       const videoRefStorage = ref(storage, `videos/${gravacaoId}.mp4`);
       await uploadBytes(videoRefStorage, recordedVideo.blob);
       const videoUrl = await getDownloadURL(videoRefStorage);
 
-      // ✅ SALVAR METADADOS NO FIRESTORE
       const gravacaoData = {
         id: gravacaoId,
         videoUrl: videoUrl,
@@ -125,11 +115,13 @@ const VideoRecordPage = () => {
 
       await setDoc(doc(db, 'gravacoes', gravacaoId), gravacaoData);
 
-      // ✅ SALVAR URL NO LOCALSTORAGE PARA USAR NO AGENDAMENTO
       localStorage.setItem('lastRecordingUrl', videoUrl);
 
-      alert(`✅ Vídeo salvo com sucesso! ID: ${gravacaoId}`);
-      navigate('/agendamento', { state: { gravacaoId } });
+      alert('✅ Vídeo salvo com sucesso!');
+      
+      setTimeout(() => {
+        navigate('/agendamento');
+      }, 1500);
 
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
@@ -139,14 +131,12 @@ const VideoRecordPage = () => {
     }
   };
 
-  // ✅ NOVA GRAVAÇÃO
   const newRecording = () => {
     setRecordedVideo(null);
     setGravacaoId(null);
     startCamera();
   };
 
-  // ✅ INICIAR CÂMERA AO CARREGAR COMPONENTE
   useEffect(() => {
     startCamera();
     return () => {
@@ -160,14 +150,12 @@ const VideoRecordPage = () => {
     <div className="video-container">
       <h1 className="video-title">🎥 Gravar Vídeo Surpresa</h1>
       
-      {/* ✅ ID DA GRAVAÇÃO */}
       {gravacaoId && (
         <div className="gravacao-id">
           <strong>ID da Gravação: {gravacaoId}</strong>
         </div>
       )}
 
-      {/* ✅ CONTADOR */}
       {recording && (
         <div className="recording-timer">
           <div className="timer-circle">
@@ -177,7 +165,6 @@ const VideoRecordPage = () => {
         </div>
       )}
 
-      {/* ✅ VÍDEO AO VIVO / GRAVADO */}
       <div className="video-preview">
         {recordedVideo ? (
           <video 
@@ -195,7 +182,6 @@ const VideoRecordPage = () => {
         )}
       </div>
 
-      {/* ✅ CONTROLES */}
       <div className="video-controls">
         {!recordedVideo && !recording && (
           <button className="btn-record" onClick={startRecording}>
@@ -209,10 +195,10 @@ const VideoRecordPage = () => {
           </button>
         )}
         
-        {recordedVideo && (
+        {recordedVideo && !uploading && (
           <>
-            <button className="btn-upload" onClick={uploadVideo} disabled={uploading}>
-              {uploading ? '📤 Enviando...' : '✅ Salvar Vídeo'}
+            <button className="btn-upload" onClick={uploadVideo}>
+              ✅ Salvar e Agendar
             </button>
             <button className="btn-retry" onClick={newRecording}>
               🔄 Regravar
@@ -225,7 +211,6 @@ const VideoRecordPage = () => {
         </button>
       </div>
 
-      {/* ✅ INSTRUÇÕES */}
       <div className="video-instructions">
         <h3>📋 Instruções:</h3>
         <ol>
@@ -236,7 +221,6 @@ const VideoRecordPage = () => {
         </ol>
       </div>
 
-      {/* ✅ STATUS DO UPLOAD */}
       {uploading && (
         <div className="upload-status">
           <p>📤 Enviando vídeo para o servidor...</p>
