@@ -125,6 +125,9 @@ const VideoRecordPage = () => {
 
       await setDoc(doc(db, 'gravacoes', gravacaoId), gravacaoData);
 
+      // ✅ SALVAR URL NO LOCALSTORAGE PARA USAR NO AGENDAMENTO
+      localStorage.setItem('lastRecordingUrl', videoUrl);
+
       alert(`✅ Vídeo salvo com sucesso! ID: ${gravacaoId}`);
       navigate('/agendamento', { state: { gravacaoId } });
 
