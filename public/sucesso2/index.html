@@ -4,13 +4,50 @@
   <title>Obrigado pelo pagamento!</title>
   <meta charset="utf-8">
   <style>
-    body { font-family: Arial; text-align: center; padding: 50px; background: #10b981; color: white; }
+    body { 
+      font-family: Arial; 
+      text-align: center; 
+      padding: 50px; 
+      background: #10b981; 
+      color: white; 
+    }
     h1 { font-size: 3rem; }
+    
+    /* ✅ ESTILO DO BOTÃO ADICIONADO */
+    .botao-continuar {
+      background: white;
+      color: #10b981;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-top: 30px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    
+    .botao-continuar:hover {
+      background: #f0f0f0;
+      transform: translateY(-2px);
+    }
   </style>
 </head>
 <body>
   <h1>PAGAMENTO RECEBIDO! 🎉</h1>
   <p>Você escolheu a opção mais barata (R$ 4,99).</p>
   <p>Em breve sua mensagem de voz surpresa vai chegar no WhatsApp!</p>
+  
+  <!-- ✅ BOTÃO ADICIONADO AQUI -->
+  <button class="botao-continuar" onclick="window.location.href='/videorecorder'">
+    🎥 Continuar para Gravação
+  </button>
+
+  <script>
+    // ✅ REDIRECIONAMENTO AUTOMÁTICO APÓS 3 SEGUNDOS (OPCIONAL)
+    setTimeout(() => {
+      window.location.href = '/videorecorder';
+    }, 3000);
+  </script>
 </body>
 </html>
