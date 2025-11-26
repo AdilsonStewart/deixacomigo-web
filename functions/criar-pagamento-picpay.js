@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 Link de Pagamento PicPay - Iniciando");
+  console.log("🔔 Link de Pagamento PicPay - Nova tentativa");
 
   if (event.httpMethod !== "POST") {
     return {
@@ -31,47 +31,47 @@ exports.handler = async (event) => {
     console.log("✅ Dados recebidos:", { valor, tipo });
 
     // ✅ CREDENCIAIS DO LINK DE PAGAMENTO
-    const PICPAY_TOKEN = process.env.PICPAY_TOKEN; // Client Id
-    const PICPAY_SECRET = process.env.PICPAY_SECRET; // Client Secret
+    const PICPAY_TOKEN = process.env.PICPAY_TOKEN;
+    const PICPAY_SECRET = process.env.PICPAY_SECRET;
 
     if (!PICPAY_TOKEN || !PICPAY_SECRET) {
-      throw new Error("Credenciais não configuradas no servidor");
+      throw new Error("Credenciais não configuradas");
     }
 
-    // Autenticação Basic para Link de Pagamento
+    // Autenticação Basic
     const auth = Buffer.from(`${PICPAY_TOKEN}:${PICPAY_SECRET}`).toString('base64');
     
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
     console.log("🔄 Criando Link de Pagamento...");
 
-    // ✅ API CORRETA DO LINK DE PAGAMENTO
-    const response = await axios.post('https://app.picpay.com/payment-links', {
+    // ✅ URL CORRETA - BASEADA NA DOCUMENTAÇÃO PICPAY
+    const response = await axios.post('https://api.picpay.com/payment-links', {
       amount: Number(valor),
       description: descricao,
       return_url: "https://deixacomigoweb.netlify.app/sucesso",
-      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutos
+      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       max_orders: 1
     }, {
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json',
-        'User-Agent': 'PicPayNodeJS/1.0'
+        'X-PicPay-Token': PICPAY_TOKEN
       },
       timeout: 10000
     });
 
     const data = response.data;
-    console.log("✅ Link de Pagamento criado:", data.id);
+    console.log("✅ Link de Pagamento criado:", data);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentLink: data.payment_url, // URL do link de pagamento
+        paymentLink: data.payment_url || data.url,
         id: data.id,
-        message: "Link de pagamento criado com sucesso!"
+        message: "Link criado com sucesso!"
       })
     };
 
@@ -80,17 +80,28 @@ exports.handler = async (event) => {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
-      headers: error.response?.headers
+      url: error.config?.url
     });
+
+    // Se ainda der erro, tentamos URL alternativa
+    if (error.response?.status === 404) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: "URL da API PicPay não encontrada. Verifique a documentação.",
+          suggestion: "Verifique a URL correta na documentação do Link de Pagamento"
+        })
+      };
+    }
 
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.response?.data?.message || error.message,
-        details: error.response?.data,
-        statusCode: error.response?.status
+        error: error.response?.data?.message || error.message
       })
     };
   }
