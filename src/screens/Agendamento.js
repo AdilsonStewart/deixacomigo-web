@@ -27,44 +27,40 @@ const Agendamento = () => {
   const linkMensagem = localStorage.getItem('lastRecordingUrl');
 
   const handleSchedule = async () => {
-    // Validações básicas
     if (!nome || !telefone || !selectedDate || !selectedTime) {
-      alert('Por favor, preencha todos os campos!');
+      alert('Preencha todos os campos!');
       return;
     }
 
     const digits = telefone.replace(/\D/g, '');
     if (digits.length < 10 || digits.length > 11) {
-      alert('Por favor, insira um telefone válido com DDD');
+      alert('Telefone inválido!');
       return;
     }
     const telefoneFull = `+55${digits}`;
 
-    // Verifica se é pelo menos 24h no futuro
     const hoje = new Date();
     const dataEscolhida = new Date(selectedDate);
     const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
 
     if (dataEscolhida < minimo24h) {
-      alert('A corujinha precisa de no mínimo 24 horas! 🦉');
+      alert('Mínimo 24 horas! 🦉');
       return;
     }
 
     setLoading(true);
 
     try {
-      // ✅ SALVA NO FIRESTORE - ESTRUTURA SIMPLES
       await addDoc(collection(db, 'agendamentos'), {
         linkMensagem,
         nome: nome.trim(),
         telefone: telefoneFull,
-        data: selectedDate,        // Ex: "2024-01-15"
-        horario: selectedTime,     // Ex: "08:00-10:00"
+        data: selectedDate,
+        horario: selectedTime,
         status: 'agendado',
         criadoEm: serverTimestamp()
       });
 
-      // ✅ SALVA NO LOCALSTORAGE também
       localStorage.setItem('lastAgendamento', JSON.stringify({
         nome: nome.trim(),
         data: selectedDate,
@@ -72,18 +68,15 @@ const Agendamento = () => {
         status: 'Agendado'
       }));
 
-      alert('✅ Agendado! A corujinha vai entregar sua mensagem! 🦉');
       navigate('/saida');
       
     } catch (error) {
-      console.error('Erro:', error);
-      alert('❌ Ops! Tenta de novo ou me chama! ❤️');
+      alert('Erro! Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
-  // (Mantém as funções formatPhone, handlePhoneChange, getMinDate, getMaxDate)
   const formatPhone = (value) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 10) {
@@ -114,18 +107,18 @@ const Agendamento = () => {
       <h1 className="agendamento-title">📅 Agendar Entrega</h1>
       
       <div className="form-group">
-        <label>👤 Nome de quem vai receber *</label>
+        <label>👤 Nome *</label>
         <input
           type="text"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          placeholder="Ex: Maria Silva"
+          placeholder="Nome"
           required
         />
       </div>
 
       <div className="form-group">
-        <label>📞 Celular com DDD *</label>
+        <label>📞 Celular *</label>
         <input
           type="tel"
           value={telefone}
@@ -137,7 +130,7 @@ const Agendamento = () => {
       </div>
 
       <div className="form-group">
-        <label>📆 Data da entrega *</label>
+        <label>📆 Data *</label>
         <input
           type="date"
           value={selectedDate}
@@ -149,13 +142,13 @@ const Agendamento = () => {
       </div>
 
       <div className="form-group">
-        <label>⏰ Horário de preferência *</label>
+        <label>⏰ Horário *</label>
         <select
           value={selectedTime}
           onChange={(e) => setSelectedTime(e.target.value)}
           required
         >
-          <option value="">Selecione o horário</option>
+          <option value="">Selecione</option>
           <option value="08:00-10:00">🕗 08:00 - 10:00</option>
           <option value="10:00-12:00">🕙 10:00 - 12:00</option>
           <option value="14:00-16:00">🕑 14:00 - 16:00</option>
@@ -170,7 +163,7 @@ const Agendamento = () => {
           onClick={handleSchedule}
           disabled={loading}
         >
-          {loading ? '🦉 Salvando...' : '✅ Confirmar Agendamento'}
+          {loading ? '🦉 Salvando...' : '✅ Confirmar'}
         </button>
         <button className="btn-back" onClick={() => navigate(-1)}>
           ↩️ Voltar
