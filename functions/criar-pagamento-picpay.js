@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 PicPay SANDBOX (Teste)");
+  console.log("🔔 Mercado Pago - Criando pagamento");
 
   if (event.httpMethod !== "POST") {
     return {
@@ -30,56 +30,60 @@ exports.handler = async (event) => {
 
     console.log("✅ Dados recebidos:", { valor, tipo });
 
-    const PICPAY_TOKEN = process.env.PICPAY_TOKEN;
+    const ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN;
 
-    if (!PICPAY_TOKEN) {
-      throw new Error("Token PicPay não configurado");
+    if (!ACCESS_TOKEN) {
+      throw new Error("Access Token do Mercado Pago não configurado");
     }
 
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Criando pagamento no SANDBOX...");
+    console.log("🔄 Criando preferência no Mercado Pago...");
 
-    // ✅ API DO SANDBOX PICPAY
-    const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
-      referenceId: `teste-${Date.now()}`,
-      callbackUrl: "https://deixacomigoweb.netlify.app/.netlify/functions/webhook-pagamento",
-      returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      value: Number(valor),
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-      buyer: {
-        firstName: "Cliente",
-        lastName: "Teste",
-        document: "123.456.789-09", // CPF de teste
-        email: "cliente@teste.com",
-        phone: "+55-11-99999-9999"
-      }
+    const response = await axios.post('https://api.mercadopago.com/checkout/preferences', {
+      items: [
+        {
+          title: descricao,
+          quantity: 1,
+          currency_id: "BRL",
+          unit_price: Number(valor)
+        }
+      ],
+      back_urls: {
+        success: "https://deixacomigoweb.netlify.app/sucesso",
+        failure: "https://deixacomigoweb.netlify.app/",
+        pending: "https://deixacomigoweb.netlify.app/"
+      },
+      auto_return: "approved",
+      statement_descriptor: "DeixaComigo",
+      expires: true,
+      expiration_date_from: new Date().toISOString(),
+      expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
     }, {
       headers: {
-        'x-picpay-token': PICPAY_TOKEN,
+        'Authorization': `Bearer ${ACCESS_TOKEN}`,
         'Content-Type': 'application/json'
       },
       timeout: 10000
     });
 
     const data = response.data;
-    console.log("✅ Pagamento SANDBOX criado:", data);
+    console.log("✅ Mercado Pago - Preferência criada:", data.id);
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentUrl: data.paymentUrl,
-        qrcode: data.qrcode,
-        referenceId: data.referenceId,
-        message: "Pagamento de TESTE criado com sucesso!",
-        ambiente: "SANDBOX"
+        paymentUrl: data.init_point, // URL de pagamento
+        sandbox_init_point: data.sandbox_init_point, // URL de teste
+        id: data.id,
+        message: "Pagamento criado com sucesso!"
       })
     };
 
   } catch (error) {
-    console.error("❌ Erro Sandbox:", {
+    console.error("❌ Erro Mercado Pago:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data
@@ -91,8 +95,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: false,
         error: error.response?.data?.message || error.message,
-        details: error.response?.data,
-        info: "Estas credenciais são para AMBIENTE DE TESTE. Precisa solicitar credenciais de produção."
+        details: error.response?.data
       })
     };
   }
