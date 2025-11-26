@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 TESTANDO TODAS URLS POSSÍVEIS");
+  console.log("🔔 TESTE FINAL - Verificando o problema real");
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -22,71 +22,73 @@ exports.handler = async (event) => {
 
     const CLIENT_ID = process.env.PICPAY_CLIENT_ID;
     const CLIENT_SECRET = process.env.PICPAY_CLIENT_SECRET;
+
+    console.log("🔍 ANALISANDO CREDENCIAIS:", {
+      clientId: CLIENT_ID ? `${CLIENT_ID.substring(0, 10)}...` : "NULL",
+      clientSecret: CLIENT_SECRET ? `${CLIENT_SECRET.substring(0, 10)}...` : "NULL"
+    });
+
+    // ✅ TESTE: Talvez as credenciais Sandbox usem AUTENTICAÇÃO DIFERENTE
     const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    // ✅ LISTA DE URLS POSSÍVEIS PARA SANDBOX
-    const urlsToTest = [
-      'https://sandbox.picpay.com/payment-links',
-      'https://api.sandbox.picpay.com/payment-links',
-      'https://sandbox-api.picpay.com/payment-links',
-      'https://staging.picpay.com/payment-links',
-      'https://api.staging.picpay.com/payment-links'
-    ];
+    console.log("🔄 Testando com autenticação alternativa...");
 
-    console.log(`🔄 Testando ${urlsToTest.length} URLs...`);
+    // Tentativa com autenticação Bearer (às vezes Sandbox usa isso)
+    try {
+      const response = await axios.post('https://api.picpay.com/payment-links', {
+        amount: Number(valor),
+        description: "Teste Sandbox",
+        return_url: "https://deixacomigoweb.netlify.app/sucesso",
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        max_orders: 1
+      }, {
+        headers: {
+          'Authorization': `Bearer ${CLIENT_ID}`, // ✅ Tenta Bearer token
+          'Content-Type': 'application/json'
+        },
+        timeout: 5000
+      });
 
-    for (let i = 0; i < urlsToTest.length; i++) {
-      const url = urlsToTest[i];
-      console.log(`📡 Tentando URL ${i + 1}: ${url}`);
+      console.log("✅ FUNCIONOU com Bearer token!");
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          paymentLink: response.data.payment_url,
+          message: "Funcionou com Bearer token!"
+        })
+      };
+
+    } catch (bearerError) {
+      console.log("❌ Bearer também falhou:", bearerError.response?.status);
       
-      try {
-        const response = await axios.post(url, {
-          amount: Number(valor),
-          description: descricao,
-          return_url: "https://deixacomigoweb.netlify.app/sucesso",
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          max_orders: 1
-        }, {
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 5000
-        });
-
-        console.log(`🎉 SUCESSO com URL: ${url}`);
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            success: true,
-            paymentLink: response.data.payment_url,
-            id: response.data.id,
-            workingUrl: url,
-            message: "URL encontrada!"
-          })
-        };
-
-      } catch (error) {
-        console.log(`❌ URL ${url} falhou: ${error.response?.status || error.message}`);
-        // Continua para a próxima URL
-      }
+      // ÚLTIMA TENTATIVA: Verificar se precisa ativar algo no PicPay
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: "Credenciais Sandbox não estão funcionando",
+          solution: "Volte no PicPay e procure por:",
+          steps: [
+            "1. 'Ativar Sandbox' ou 'Habilitar teste'",
+            "2. 'Aprovar credenciais de teste'", 
+            "3. Botão 'Iniciar ambiente de desenvolvimento'",
+            "4. Ou contate o suporte do PicPay sobre Sandbox"
+          ]
+        })
+      };
     }
 
-    // Se nenhuma URL funcionou
-    throw new Error("Nenhuma URL Sandbox funcionou. Verifique a documentação.");
-
   } catch (error) {
-    console.error("💥 TODAS URLS FALHARAM:", error.message);
-    
+    console.error("Erro geral:", error.message);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: error.message,
-        suggestion: "NA DOCUMENTAÇÃO, procure por 'Sandbox URL' ou 'Testing environment'"
+        error: error.message
       })
     };
   }
