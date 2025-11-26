@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 TESTE COM TOKEN ANTIGO + API CORRETA");
+  console.log("🔔 INVESTIGAÇÃO PICPAY - Passo a Passo");
 
   try {
     const body = JSON.parse(event.body || "{}");
@@ -20,65 +20,82 @@ exports.handler = async (event) => {
       };
     }
 
-    // ✅ TENTA O TOKEN ANTIGO (que era para Gateway)
-    const PICPAY_TOKEN = process.env.PICPAY_TOKEN; // O token antigo
-    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
+    const CLIENT_ID = process.env.PICPAY_CLIENT_ID;
+    const CLIENT_SECRET = process.env.PICPAY_CLIENT_SECRET;
 
-    console.log("🔄 Testando token antigo na API Gateway...");
-
-    const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
-      referenceId: `test-${Date.now()}`,
-      callbackUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
-      value: Number(valor),
-      description: descricao,
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-      buyer: {
-        firstName: "Cliente",
-        lastName: "Teste",
-        document: "123.456.789-09",
-        email: "cliente@teste.com",
-        phone: "+55-11-99999-9999"
-      }
-    }, {
-      headers: {
-        'x-picpay-token': PICPAY_TOKEN, // Token do Gateway
-        'Content-Type': 'application/json'
-      },
-      timeout: 10000
+    console.log("🔑 Credenciais:", {
+      clientId: CLIENT_ID ? "EXISTE" : "FALTA",
+      clientSecret: CLIENT_SECRET ? "EXISTE" : "FALTA"
     });
 
-    console.log("✅ FUNCIONOU com token antigo!");
+    // ✅ TENTATIVA 1: API com autenticação Basic (mais comum)
+    const auth = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
+    const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
+
+    console.log("🔄 Tentando com headers completos...");
+
+    const response = await axios.post('https://api.picpay.com/payment-links', {
+      amount: Number(valor),
+      description: descricao,
+      return_url: "https://deixacomigoweb.netlify.app/sucesso",
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 dia
+      max_orders: 1
+    }, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'DeixaComigo/1.0'
+      },
+      timeout: 15000
+    });
+
+    console.log("🎉 SUCESSO! Resposta:", response.data);
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        paymentUrl: response.data.paymentUrl,
-        qrcode: response.data.qrcode,
-        message: "Funcionou com token do Gateway!"
+        paymentLink: response.data.payment_url,
+        id: response.data.id
       })
     };
 
   } catch (error) {
-    console.error("❌ Também falhou:", {
-      message: error.message,
+    console.error("💥 ERRO DETALHADO:", {
       status: error.response?.status,
-      data: error.response?.data
+      message: error.response?.data?.message || error.message,
+      data: error.response?.data,
+      headers: error.response?.headers
     });
 
-    // ✅ SE NADA FUNCIONAR, VAMOS USAR UMA ABORDAGEM TOTALMENTE DIFERENTE
+    // ✅ SE DER ERRO, VAMOS TENTAR CONTATAR O SUPORTE DO PICPAY
+    const mensagemSuporte = `
+Problema: Credenciais Sandbox do Link de Pagamento API não funcionam.
+Client ID: ${process.env.PICPAY_CLIENT_ID}
+Erro: ${error.response?.data?.message || error.message}
+Status: ${error.response?.status}
+
+Já tentei:
+- URL: https://api.picpay.com/payment-links
+- Autenticação Basic
+- Headers completos
+- Diferentes formatos de payload
+
+Minha conta está ativa e recebendo pagamentos via links manuais.
+`;
+
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        error: "TODAS TENTATIVAS FALHARAM",
-        ultima_sugestao: "Vamos usar uma solução SEM PicPay? Posso ajudar com:",
-        opcoes: [
-          "1. WhatsApp para pedidos + Pagamento manual",
-          "2. Outro gateway de pagamento", 
-          "3. Sistema de agendamento sem pagamento online"
+        error: "Falha na API PicPay",
+        nextSteps: [
+          "1. Contate o suporte do PicPay com esta mensagem:",
+          mensagemSuporte,
+          "2. Peça para ativarem sua API Sandbox",
+          "3. Ou pegue a URL correta do Sandbox"
         ]
       })
     };
