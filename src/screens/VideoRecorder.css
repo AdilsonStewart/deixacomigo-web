@@ -11,65 +11,54 @@
   margin-bottom: 20px;
 }
 
-.video-instructions {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 30px;
-  text-align: left;
+.gravacao-id {
+  background: #1e40af;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
 }
 
-.video-instructions h3 {
-  color: #333;
-  margin-bottom: 15px;
+.recording-timer {
+  margin-bottom: 20px;
 }
 
-.video-instructions ol {
-  padding-left: 20px;
-}
-
-.video-instructions li {
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.video-preview {
-  width: 100%;
-  height: 300px;
-  background: #000;
-  border-radius: 10px;
+.timer-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  margin-bottom: 20px;
-  border: 3px solid #ddd;
-}
-
-.video-preview-placeholder {
-  text-align: center;
-}
-
-.recording-indicator {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #ef4444;
+  font-size: 1.5rem;
   font-weight: bold;
-}
-
-.recording-dot {
-  width: 12px;
-  height: 12px;
-  background: #ef4444;
-  border-radius: 50%;
+  margin: 0 auto 10px;
   animation: pulse 1s infinite;
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.video-preview {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.live-video, .recorded-video {
+  width: 100%;
+  height: 360px;
+  background: #000;
+  object-fit: cover;
 }
 
 .video-controls {
@@ -80,13 +69,14 @@
   margin-bottom: 30px;
 }
 
-.btn-record, .btn-stop, .btn-submit, .btn-back {
+.btn-record, .btn-stop, .btn-upload, .btn-retry, .btn-back {
   padding: 12px 24px;
   border: none;
   border-radius: 8px;
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: bold;
 }
 
 .btn-record {
@@ -99,8 +89,18 @@
   color: white;
 }
 
-.btn-submit {
+.btn-upload {
   background: #10b981;
+  color: white;
+}
+
+.btn-upload:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.btn-retry {
+  background: #3b82f6;
   color: white;
 }
 
@@ -109,29 +109,52 @@
   color: white;
 }
 
-.btn-record:hover, .btn-stop:hover, .btn-submit:hover, .btn-back:hover {
+.btn-record:hover, .btn-stop:hover, .btn-upload:hover:not(:disabled), 
+.btn-retry:hover, .btn-back:hover {
   transform: translateY(-2px);
   opacity: 0.9;
 }
 
-.video-tips {
-  background: #e0f2fe;
+.video-instructions {
+  background: #f8f9fa;
   padding: 20px;
   border-radius: 10px;
+  margin-bottom: 20px;
   text-align: left;
-  margin-top: 20px;
 }
 
-.video-tips h4 {
-  color: #0369a1;
+.video-instructions h3 {
+  color: #333;
   margin-bottom: 15px;
 }
 
-.video-tips ul {
+.video-instructions ol {
   padding-left: 20px;
   color: #555;
 }
 
-.video-tips li {
+.video-instructions li {
   margin-bottom: 8px;
+}
+
+.upload-status {
+  background: #e0f2fe;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #93c5fd;
+  border-top: 3px solid #1e40af;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 10px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
