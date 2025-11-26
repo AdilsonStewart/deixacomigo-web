@@ -1,71 +1,102 @@
 // src/screens/VideoRecordPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebase-client'; // usa o cliente seguro
 import './VideoRecorder.css'; // apenas CSS puro aqui
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
-  const [pago, setPago] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [recording, setRecording] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(null);
 
-  useEffect(() => {
-    const checkPagamento = async () => {
-      try {
-        const user = JSON.parse(localStorage.getItem('currentUser')) || null; // exemplo de auth simples
+  // ✅ FUNÇÃO SIMULADA DE GRAVAÇÃO (PARA DEMONSTRAÇÃO)
+  const startRecording = () => {
+    setRecording(true);
+    // Simula uma gravação de 3 segundos
+    setTimeout(() => {
+      setRecording(false);
+      setVideoUrl("https://exemplo.com/video-gravado.mp4"); // URL simulada
+      alert("🎥 Vídeo gravado com sucesso! (Simulação)");
+    }, 3000);
+  };
 
-        if (!user) {
-          alert("Você precisa estar logado.");
-          setPago(false);
-          setLoading(false);
-          return;
-        }
+  const stopRecording = () => {
+    setRecording(false);
+  };
 
-        const userRef = doc(db, 'usuarios-asaas', user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-          alert("Usuário não encontrado.");
-          setPago(false);
-          setLoading(false);
-          return;
-        }
-
-        const userData = userSnap.data();
-        setPago(userData.pago === true);
-      } catch (err) {
-        console.error('Erro ao verificar pagamento:', err);
-        setPago(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkPagamento();
-  }, []);
-
-  if (loading) return <p>Carregando...</p>;
-
-  if (!pago) {
-    return (
-      <div className="video-container">
-        <h2>💡 Para acessar a gravação, você precisa pagar primeiro.</h2>
-        <button className="btn-new" onClick={() => navigate(-1)}>
-          Voltar
-        </button>
-      </div>
-    );
-  }
+  const handleSubmit = () => {
+    alert("✅ Vídeo enviado para processamento!");
+    navigate('/agendamento'); // Vai para agendamento após gravar
+  };
 
   return (
     <div className="video-container">
-      <h1 className="video-title">Gravar Vídeo</h1>
-      <p className="phase-title">Funcionalidade em desenvolvimento...</p>
+      <h1 className="video-title">🎥 Gravar Vídeo Surpresa</h1>
+      
+      <div className="video-instructions">
+        <h3>Como funciona:</h3>
+        <ol>
+          <li>Clique em "Iniciar Gravação"</li>
+          <li>Grave sua mensagem especial (até 2 minutos)</li>
+          <li>Clique em "Parar Gravação"</li>
+          <li>Envie e agende a entrega</li>
+        </ol>
+      </div>
 
-      <button className="btn-new" onClick={() => navigate(-1)}>
-        Voltar
-      </button>
+      {/* ✅ ÁREA DE GRAVAÇÃO SIMULADA */}
+      <div className="video-preview">
+        {recording ? (
+          <div className="recording-indicator">
+            <div className="recording-dot"></div>
+            <span>GRAVANDO... ⏺️</span>
+          </div>
+        ) : videoUrl ? (
+          <div className="video-preview-placeholder">
+            <p>✅ Vídeo Gravado!</p>
+            <p>Pronto para enviar</p>
+          </div>
+        ) : (
+          <div className="video-preview-placeholder">
+            <p>📹 Área de Gravação</p>
+            <p>Clique no botão abaixo para começar</p>
+          </div>
+        )}
+      </div>
+
+      {/* ✅ BOTÕES DE CONTROLE */}
+      <div className="video-controls">
+        {!recording && !videoUrl && (
+          <button className="btn-record" onClick={startRecording}>
+            🎬 Iniciar Gravação
+          </button>
+        )}
+        
+        {recording && (
+          <button className="btn-stop" onClick={stopRecording}>
+            ⏹️ Parar Gravação
+          </button>
+        )}
+        
+        {videoUrl && (
+          <button className="btn-submit" onClick={handleSubmit}>
+            ✅ Enviar Vídeo
+          </button>
+        )}
+        
+        <button className="btn-back" onClick={() => navigate('/')}>
+          ↩️ Voltar para Início
+        </button>
+      </div>
+
+      {/* ✅ INSTRUÇÕES EXTRAS */}
+      <div className="video-tips">
+        <h4>💡 Dicas para um vídeo perfeito:</h4>
+        <ul>
+          <li>Encontre um local bem iluminado</li>
+          <li>Fique em um ambiente silencioso</li>
+          <li>Fale com carinho e emoção</li>
+          <li>Mantenha a câmera estabilizada</li>
+        </ul>
+      </div>
     </div>
   );
 };
