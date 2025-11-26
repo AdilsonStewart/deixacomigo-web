@@ -6,7 +6,7 @@ exports.handler = async (event) => {
     "Content-Type": "application/json"
   };
 
-  console.log("🔔 Gateway PicPay - E-commerce");
+  console.log("🔔 PicPay SANDBOX (Teste)");
 
   if (event.httpMethod !== "POST") {
     return {
@@ -38,20 +38,20 @@ exports.handler = async (event) => {
 
     const descricao = tipo === "vídeo" ? "Mensagem em Vídeo Surpresa" : "Mensagem em Áudio Surpresa";
 
-    console.log("🔄 Criando pagamento via Gateway...");
+    console.log("🔄 Criando pagamento no SANDBOX...");
 
-    // ✅ API DO GATEWAY PICPAY (E-COMMERCE)
+    // ✅ API DO SANDBOX PICPAY
     const response = await axios.post('https://appws.picpay.com/ecommerce/public/payments', {
-      referenceId: `pedido-${Date.now()}`,
+      referenceId: `teste-${Date.now()}`,
       callbackUrl: "https://deixacomigoweb.netlify.app/.netlify/functions/webhook-pagamento",
       returnUrl: "https://deixacomigoweb.netlify.app/sucesso",
       value: Number(valor),
       expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       buyer: {
         firstName: "Cliente",
-        lastName: "Site",
-        document: "123.456.789-00",
-        email: "cliente@site.com",
+        lastName: "Teste",
+        document: "123.456.789-09", // CPF de teste
+        email: "cliente@teste.com",
         phone: "+55-11-99999-9999"
       }
     }, {
@@ -63,7 +63,7 @@ exports.handler = async (event) => {
     });
 
     const data = response.data;
-    console.log("✅ Pagamento Gateway criado:", data);
+    console.log("✅ Pagamento SANDBOX criado:", data);
 
     return {
       statusCode: 200,
@@ -73,12 +73,13 @@ exports.handler = async (event) => {
         paymentUrl: data.paymentUrl,
         qrcode: data.qrcode,
         referenceId: data.referenceId,
-        message: "Pagamento criado com sucesso!"
+        message: "Pagamento de TESTE criado com sucesso!",
+        ambiente: "SANDBOX"
       })
     };
 
   } catch (error) {
-    console.error("❌ Erro Gateway:", {
+    console.error("❌ Erro Sandbox:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data
@@ -90,7 +91,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: false,
         error: error.response?.data?.message || error.message,
-        details: error.response?.data
+        details: error.response?.data,
+        info: "Estas credenciais são para AMBIENTE DE TESTE. Precisa solicitar credenciais de produção."
       })
     };
   }
