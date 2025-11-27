@@ -11,10 +11,9 @@ const Saida = () => {
       if (!saved) return null;
 
       const data = JSON.parse(saved);
-
       return {
         nome: data.nome || 'Não informado',
-        dataEntrega: data.dataEntrega || data.dataEnvio || null,
+        dataEntrega: data.dataEntrega || null,
         horario: data.horario || 'Não informado',
       };
     } catch (err) {
