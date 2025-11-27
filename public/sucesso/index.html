@@ -1,61 +1,121 @@
-// src/screens/Sucesso.js   (crie esse arquivo dentro da pasta screens)
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './Sucesso.css'; // Mantenha isso se você tiver o arquivo CSS, mas vamos adicionar estilos inline para melhorar o visual
 
 export default function Sucesso() {
   const navigate = useNavigate();
+  useEffect(() => {
+    // ✅ REDIRECIONAMENTO AUTOMÁTICO APÓS 3 SEGUNDOS
+    const timer = setTimeout(() => {
+      const tipoServico = localStorage.getItem('tipoServico');
+      const destino = tipoServico === 'vídeo' ? '/videorecorder' : '/audiorecorder';
+      navigate(destino);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
-  const irParaGravar = () => {
-    navigate('/audio'); // ou o caminho exato que você usa na rota (veja abaixo)
-  };
+  const tipoServico = localStorage.getItem('tipoServico');
+  const destino = tipoServico === 'vídeo' ? '/videorecorder' : '/audiorecorder';
 
   return (
-    <div style={{
-      fontFamily: 'Arial, sans-serif',
-      textAlign: 'center',
-      padding: '50px 20px',
-      backgroundColor: '#10b981',
-      color: 'white',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>
-        OBRIGADO!
-      </h1>
-      
-      <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>
-        Seu pagamento foi aprovado com sucesso!
-      </p>
-      
-27      <p style={{ fontSize: '1.3rem', maxWidth: '600px', lineHeight: '1.6' }}>
-        Agora é só gravar sua mensagem de voz que será entregue na data certa. 
-        Nunca mais esqueça aniversários e datas especiais!
-      </p>
-
-      <button
-        onClick={irParaGravar}
+    <div 
+      className="container sucesso-container"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh', // Ocupa a tela inteira verticalmente
+        backgroundColor: '#f0f8ff', // Fundo azul claro suave
+        fontFamily: 'Arial, sans-serif', // Fonte limpa
+      }}
+    >
+      <div 
+        className="sucesso-card"
         style={{
-          marginTop: '50px',
-          backgroundColor: 'white',
-          color: '#10b981',
-          fontSize: '1.4rem',
-          fontWeight: 'bold',
-          padding: '18px 50px',
-          border: 'none',
-          borderRadius: '50px',
-          cursor: 'pointer',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
-          transition: 'all 0.3s ease'
+          backgroundColor: '#ffffff', // Fundo branco para o card
+          borderRadius: '15px', // Bordas arredondadas
+          padding: '40px', // Espaçamento interno
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Sombra suave para profundidade
+          textAlign: 'center', // Centraliza o texto
+          maxWidth: '400px', // Largura máxima para não ficar solto
+          width: '100%', // Responsivo
         }}
-        onMouseOver={e => e.target.style.transform = 'scale(1.08)'}
-        onMouseOut={e => e.target.style.transform = 'scale(1)'}
       >
-        Prosseguir para gravar o áudio
-      </button>
+        {/* ✅ OLHINHO DE CORAÇÃO FOFO - Aumentado e com cor */}
+        <div 
+          className="sucesso-icon"
+          style={{
+            fontSize: '60px', // Maior para destaque
+            marginBottom: '20px',
+          }}
+        >
+          😍
+        </div>
+        
+        <h1 
+          className="sucesso-titulo"
+          style={{
+            color: '#4CAF50', // Verde sucesso
+            fontSize: '32px', // Tamanho maior
+            marginBottom: '10px',
+          }}
+        >
+          PARABÉNS!
+        </h1>
+        
+        <p 
+          className="sucesso-mensagem"
+          style={{
+            fontSize: '18px',
+            color: '#333',
+            marginBottom: '15px',
+          }}
+        >
+          Sua compra foi aprovada com sucesso!
+        </p>
+        
+        <p 
+          className="sucesso-detalhes"
+          style={{
+            fontSize: '16px',
+            color: '#666',
+            marginBottom: '20px',
+          }}
+        >
+          Agora é hora de gravar sua mensagem especial com todo carinho!
+        </p>
+        
+        <p 
+          className="sucesso-redirecionamento"
+          style={{
+            fontSize: '14px',
+            color: '#888',
+            marginBottom: '25px',
+          }}
+        >
+          Redirecionando para gravação em 3 segundos...
+        </p>
+        
+        {/* ✅ BOTÃO COM EMOJI FOFO - Estilizado para ser mais atraente */}
+        <button
+          className="botao botao-sucesso"
+          onClick={() => navigate(destino)}
+          style={{
+            backgroundColor: '#4CAF50', // Verde botão
+            color: '#ffffff', // Texto branco
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            transition: 'background-color 0.3s', // Efeito suave ao hover
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+        >
+          🎤 Gravar Minha Mensagem Agora
+        </button>
+      </div>
     </div>
   );
 }
