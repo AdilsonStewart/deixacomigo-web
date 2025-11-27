@@ -1,59 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Saida.css';
-
-// Config Firebase (mesma do Agendamento)
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 const Saida = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [agendamento, setAgendamento] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // Obtém o ID do agendamento do estado da navegação ou do localStorage
-  const agendamentoId = location.state?.agendamentoId || localStorage.getItem('lastAgendamentoId');
+  const getAgendamentoData = () => {
+    try {
+      const saved = localStorage.getItem('lastAgendamento');
+      if (!saved) return null;
 
-  useEffect(() => {
-    const fetchAgendamento = async () => {
-      if (!agendamentoId) {
-        setLoading(false);
-        return;
-      }
+      const data = JSON.parse(saved);
+      return {
+        nome: data.nome || 'Não informado',
+        dataEntrega: data.dataEntrega || data.data || null,
+        horario: data.horario || 'Não informado',
+      };
+    } catch (err) {
+      console.error('Erro ao ler agendamento:', err);
+      return null;
+    }
+  };
 
-      try {
-        const docRef = doc(db, 'agendamentos', agendamentoId);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          setAgendamento(docSnap.data());
-        } else {
-          console.log("Agendamento não encontrado!");
-        }
-      } catch (error) {
-        console.error("Erro ao buscar agendamento:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAgendamento();
-  }, [agendamentoId]);
+  const agendamento = getAgendamentoData();
 
   const formatDate = (isoDate) => {
-    if (!isoDate) return 'Não informado';
+    if (!isoDate) return 'A ser definida';
     const [yyyy, mm, dd] = isoDate.split('-');
     return `${dd}/${mm}/${yyyy}`;
   };
@@ -63,25 +35,9 @@ const Saida = () => {
   };
 
   const handleSair = () => {
-    // Limpa o localStorage do agendamento?
-    localStorage.removeItem('lastAgendamentoId');
+    localStorage.clear();
     navigate('/');
   };
-
-  if (loading) {
-    return <div className="saida-container">Carregando...</div>;
-  }
-
-  if (!agendamento) {
-    return (
-      <div className="saida-container">
-        <div className="saida-content">
-          <h1>Agendamento não encontrado</h1>
-          <button onClick={() => navigate('/agendamento')}>Fazer Agendamento</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="saida-container">
@@ -107,17 +63,17 @@ const Saida = () => {
 
           <div className="info-item">
             <strong>Nome do destinatário:</strong>{' '}
-            {agendamento.nome || 'Não informado'}
+            {agendamento?.nome || 'Não informado'}
           </div>
 
           <div className="info-item">
             <strong>Data da entrega:</strong>{' '}
-            {formatDate(agendamento.data)}
+            {formatDate(agendamento?.dataEntrega)}
           </div>
 
           <div className="info-item">
             <strong>Horário preferencial:</strong>{' '}
-            {agendamento.horario || 'Não informado'}
+            {agendamento?.horario || 'Não informado'}
           </div>
 
           <div className="info-item">
