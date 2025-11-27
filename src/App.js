@@ -10,8 +10,8 @@ import Agendamento from './screens/Agendamento';
 import Saida from './screens/Saida';
 import VideoRecordPage from './screens/VideoRecordPage';
 import AdminDashboard from './screens/AdminDashboard';
-import Pago from './screens/pago';   // Mudei para Pago (maiúsculo)
-import Pago2 from './screens/pago2'; // Mudei para Pago2 (maiúsculo)
+import Pago from './screens/Pago';   // Mudei para Pago (maiúsculo)
+import Pago2 from './screens/Pago2'; // Mudei para Pago2 (maiúsculo)
 
 import './App.css';
 
@@ -31,8 +31,8 @@ function App() {
           <Route path="/admin/painel" element={<AdminDashboard />} />
 
           {/* ROTAS COM COMPONENTES MAIÚSCULOS */}
-          <Route path="/pago" element={<Pago />} />
-          <Route path="/pago2" element={<Pago2 />} />
+          <Route path="/Pago" element={<Pago />} />
+          <Route path="/Pago2" element={<Pago2 />} />
         </Routes>
       </div>
     </Router>
