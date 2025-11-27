@@ -69,7 +69,7 @@ const Pago2 = () => {
     }}>
       <h1 style={{ fontSize: '3rem' }}>OBRIGADO! 😍</h1>
       <p>Seu pagamento foi aprovado com sucesso!</p>
-      <p>Seu <strong>vídeo</strong> será encaminhado de acordo com sua solicitação.</p>
+      <p>Seu <strong>vídeo</strong> será encaminhado de acordo com o seu agendamento após gravação.</p>
       
       <button
         onClick={() => window.location.href = '/video-record'}
