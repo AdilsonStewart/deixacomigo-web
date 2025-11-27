@@ -10,8 +10,8 @@ import Agendamento from './screens/Agendamento';
 import Saida from './screens/Saida';
 import VideoRecordPage from './screens/VideoRecordPage';
 import AdminDashboard from './screens/AdminDashboard';
-import pago from './screens/pago';   // Para áudio - minúsculo
-import pago2 from './screens/pago2'; // Para vídeo - minúsculo
+import Pago from './screens/pago';   // Mudei para Pago (maiúsculo)
+import Pago2 from './screens/pago2'; // Mudei para Pago2 (maiúsculo)
 
 import './App.css';
 
@@ -30,9 +30,9 @@ function App() {
           <Route path="/audiorecorder" element={<AudioRecordPage />} />
           <Route path="/admin/painel" element={<AdminDashboard />} />
 
-          {/* ROTAS DE RETORNO DA CORA - APENAS PAGO E PAGO2 */}
-          <Route path="/pago" element={<pago />} />     {/* Para áudio */}
-          <Route path="/pago2" element={<pago2 />} />   {/* Para vídeo */}
+          {/* ROTAS COM COMPONENTES MAIÚSCULOS */}
+          <Route path="/pago" element={<Pago />} />
+          <Route path="/pago2" element={<Pago2 />} />
         </Routes>
       </div>
     </Router>
