@@ -1,115 +1,44 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Sucesso.css';
 
-export default function Sucesso() {
+const Pago = () => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate('/audiorecorder');
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [navigate]);
-
-  const destino = '/audiorecorder';
-
   return (
-    <div 
-      className="container sucesso-container"
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#f0f8ff',
-        fontFamily: 'Arial, sans-serif',
-      }}
-    >
-      <div 
-        className="sucesso-card"
+    <div style={{
+      fontFamily: 'Arial',
+      textAlign: 'center',
+      padding: '50px',
+      background: '#10b981',
+      color: 'white',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <h1 style={{ fontSize: '3rem' }}>OBRIGADO! 😍</h1>
+      <p>Seu pagamento foi aprovado com sucesso!</p>
+      <p>Seu <strong>áudio</strong> será encaminhado de acordo com sua solicitação.</p>
+      
+      <button
+        onClick={() => navigate('/audiorecorder')}
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '15px',
-          padding: '40px',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-          textAlign: 'center',
-          maxWidth: '400px',
-          width: '100%',
+          background: 'white',
+          color: '#10b981',
+          border: 'none',
+          padding: '15px 30px',
+          fontSize: '1.1rem',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          marginTop: '20px'
         }}
       >
-        <div 
-          className="sucesso-icon"
-          style={{
-            fontSize: '60px',
-            marginBottom: '20px',
-          }}
-        >
-          😍
-        </div>
-
-        <h1 
-          className="sucesso-titulo"
-          style={{
-            color: '#4CAF50',
-            fontSize: '32px',
-            marginBottom: '10px',
-          }}
-        >
-          PARABÉNS!
-        </h1>
-
-        <p 
-          className="sucesso-mensagem"
-          style={{
-            fontSize: '18px',
-            color: '#333',
-            marginBottom: '15px',
-          }}
-        >
-          Sua compra foi aprovada com sucesso!
-        </p>
-
-        <p 
-          className="sucesso-detalhes"
-          style={{
-            fontSize: '16px',
-            color: '#666',
-            marginBottom: '20px',
-          }}
-        >
-          Agora vamos gravar sua mensagem especial!
-        </p>
-
-        <p 
-          className="sucesso-redirecionamento"
-          style={{
-            fontSize: '14px',
-            color: '#888',
-            marginBottom: '25px',
-          }}
-        >
-          Redirecionando em 3 segundos...
-        </p>
-
-        <button
-          onClick={() => navigate(destino)}
-          style={{
-            backgroundColor: '#4CAF50',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 24px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            transition: 'background-color 0.3s',
-          }}
-          onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
-          onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
-        >
-          🎤 Gravar Minha Mensagem Agora
-        </button>
-      </div>
+        🎤 GRAVAR ÁUDIO AGORA
+      </button>
     </div>
   );
-}
+};
+
+export default Pago;
