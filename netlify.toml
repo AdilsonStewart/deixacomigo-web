@@ -1,16 +1,5 @@
 [[redirects]]
-  from = "/sucesso/*"
-  to = "/sucesso"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/sucesso"
-  to = "/sucesso"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
