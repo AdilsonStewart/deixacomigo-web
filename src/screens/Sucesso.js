@@ -1,21 +1,18 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Sucesso.css'; // Mantenha isso se você tiver o arquivo CSS, mas vamos adicionar estilos inline para melhorar o visual
+import './Sucesso.css';
 
 export default function Sucesso() {
   const navigate = useNavigate();
+
   useEffect(() => {
-    // ✅ REDIRECIONAMENTO AUTOMÁTICO APÓS 3 SEGUNDOS
     const timer = setTimeout(() => {
-      const tipoServico = localStorage.getItem('tipoServico');
-      const destino = tipoServico === 'vídeo' ? '/videorecorder' : '/audiorecorder';
-      navigate(destino);
+      navigate('/audiorecorder');
     }, 3000);
     return () => clearTimeout(timer);
   }, [navigate]);
 
-  const tipoServico = localStorage.getItem('tipoServico');
-  const destino = tipoServico === 'vídeo' ? '/videorecorder' : '/audiorecorder';
+  const destino = '/audiorecorder';
 
   return (
     <div 
@@ -24,45 +21,44 @@ export default function Sucesso() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh', // Ocupa a tela inteira verticalmente
-        backgroundColor: '#f0f8ff', // Fundo azul claro suave
-        fontFamily: 'Arial, sans-serif', // Fonte limpa
+        height: '100vh',
+        backgroundColor: '#f0f8ff',
+        fontFamily: 'Arial, sans-serif',
       }}
     >
       <div 
         className="sucesso-card"
         style={{
-          backgroundColor: '#ffffff', // Fundo branco para o card
-          borderRadius: '15px', // Bordas arredondadas
-          padding: '40px', // Espaçamento interno
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', // Sombra suave para profundidade
-          textAlign: 'center', // Centraliza o texto
-          maxWidth: '400px', // Largura máxima para não ficar solto
-          width: '100%', // Responsivo
+          backgroundColor: '#ffffff',
+          borderRadius: '15px',
+          padding: '40px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center',
+          maxWidth: '400px',
+          width: '100%',
         }}
       >
-        {/* ✅ OLHINHO DE CORAÇÃO FOFO - Aumentado e com cor */}
         <div 
           className="sucesso-icon"
           style={{
-            fontSize: '60px', // Maior para destaque
+            fontSize: '60px',
             marginBottom: '20px',
           }}
         >
           😍
         </div>
-        
+
         <h1 
           className="sucesso-titulo"
           style={{
-            color: '#4CAF50', // Verde sucesso
-            fontSize: '32px', // Tamanho maior
+            color: '#4CAF50',
+            fontSize: '32px',
             marginBottom: '10px',
           }}
         >
           PARABÉNS!
         </h1>
-        
+
         <p 
           className="sucesso-mensagem"
           style={{
@@ -73,7 +69,7 @@ export default function Sucesso() {
         >
           Sua compra foi aprovada com sucesso!
         </p>
-        
+
         <p 
           className="sucesso-detalhes"
           style={{
@@ -82,9 +78,9 @@ export default function Sucesso() {
             marginBottom: '20px',
           }}
         >
-          Agora é hora de gravar sua mensagem especial com todo carinho!
+          Agora vamos gravar sua mensagem especial!
         </p>
-        
+
         <p 
           className="sucesso-redirecionamento"
           style={{
@@ -93,22 +89,20 @@ export default function Sucesso() {
             marginBottom: '25px',
           }}
         >
-          Redirecionando para gravação em 3 segundos...
+          Redirecionando em 3 segundos...
         </p>
-        
-        {/* ✅ BOTÃO COM EMOJI FOFO - Estilizado para ser mais atraente */}
+
         <button
-          className="botao botao-sucesso"
           onClick={() => navigate(destino)}
           style={{
-            backgroundColor: '#4CAF50', // Verde botão
-            color: '#ffffff', // Texto branco
+            backgroundColor: '#4CAF50',
+            color: '#ffffff',
             border: 'none',
             borderRadius: '8px',
             padding: '12px 24px',
             fontSize: '16px',
             cursor: 'pointer',
-            transition: 'background-color 0.3s', // Efeito suave ao hover
+            transition: 'background-color 0.3s',
           }}
           onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
           onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
