@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
 // IMPORTS DAS TELAS
 import Home from './screens/Home';
 import Cadastro from './screens/Cadastro';
@@ -14,6 +13,10 @@ import VideoRecordPage from './screens/VideoRecordPage';
 import AdminDashboard from './screens/AdminDashboard';
 import Sucesso2 from './screens/Sucesso2';
 
+// NOVAS PÁGINAS DE SUCESSO
+import Pago from './screens/Pago';        // ou Pago2 se preferir
+// import Pago2 from './screens/Pago2';    // descomente essa e comente a de cima se quiser usar Pago2
+
 import './App.css';
 
 function App() {
@@ -25,21 +28,21 @@ function App() {
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/servicos" element={<Servicos />} />
           <Route path="/sucesso" element={<Sucesso />} />
+          <Route path="/sucesso2" element={<Sucesso2 />} />
           <Route path="/erro" element={<Erro />} />
           <Route path="/agendamento" element={<Agendamento />} />
           <Route path="/saida" element={<Saida />} />
 
-          {/* GRAVADOR DE VÍDEO */}
+          {/* GRAVADORES */}
           <Route path="/videorecorder" element={<VideoRecordPage />} />
-
-          {/* GRAVADOR DE ÁUDIO */}
           <Route path="/audiorecorder" element={<AudioRecordPage />} />
 
-          {/* ADM */}
+          {/* ADMIN */}
           <Route path="/admin/painel" element={<AdminDashboard />} />
 
-          {/* SUCESSO DO PAGAMENTO QUE VAI PARA VÍDEO */}
-          <Route path="/sucesso2" element={<Sucesso2 />} />
+          {/* NOVA ROTA QUE VAI FUNCIONAR 100% COM A CORA */}
+          <Route path="/pago" element={<Pago />} />
+          <Route path="/pago/" element={<Pago />} />   {/* com ou sem barra */}
         </Routes>
       </div>
     </Router>
