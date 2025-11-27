@@ -83,7 +83,7 @@ export default function Cadastro() {
     >
       {/* GIF no topo */}
       <img
-        src="/coruja.gif" // Troque pelo nome do seu GIF se for outro
+        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHFtYXcyN2xyYzFhMjF3NGw4NXpuaHppcnhuOGg3MTB2OHo3djY2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/WGBvn22mFXhRxFx0CQ/giphy.gif" // Troque pelo nome do seu GIF se for outro
         alt="Mascote animado"
         style={{ width: "180px", marginBottom: "20px" }}
       />
