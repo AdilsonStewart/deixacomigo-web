@@ -11,9 +11,11 @@ const Saida = () => {
       if (!saved) return null;
 
       const data = JSON.parse(saved);
+
+      // Usa dataEntrega, mas se não existir, tenta dataEnvio (para compatibilidade)
       return {
         nome: data.nome || 'Não informado',
-        dataEntrega: data.dataEntrega || null,
+        dataEntrega: data.dataEntrega || data.dataEnvio || null,
         horario: data.horario || 'Não informado',
       };
     } catch (err) {
