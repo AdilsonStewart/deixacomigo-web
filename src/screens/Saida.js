@@ -14,7 +14,8 @@ const Saida = () => {
 
       return {
         nome: data.nome || 'Não informado',
-        dataEnvio: data.dataEnvio || null,
+        dataEntrega: data.dataEntrega || data.dataEnvio || null,
+        horario: data.horario || 'Não informado',
       };
     } catch (err) {
       console.error('Erro ao ler agendamento:', err);
@@ -45,17 +46,13 @@ const Saida = () => {
 
         <div className="gif-container">
           <img
-            src="/ofelia.png"
+            src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExOTNoNnJiOHFwOHczb3VvbDg1bngxN3F3eG93dG01YXplbWoyMDJodiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Y258CvWqb5qyfp5JA9/giphy.gif"
             alt="Confirmação de agendamento"
             className="success-gif"
           />
         </div>
 
-        <h1 className="saida-title">Agendamento Confirmado!</h1>
-
-        <p className="saida-message">
-          Sua gravação foi agendada com sucesso! 🦉✨
-        </p>
+        <h1 className="saida-title">Agendamento Confirmado! 🦉✨</h1>
 
         <div className="saida-info">
           <h3>📋 Resumo do Agendamento:</h3>
@@ -66,17 +63,22 @@ const Saida = () => {
           </div>
 
           <div className="info-item">
-            <strong>Nome:</strong>{' '}
+            <strong>Nome do destinatário:</strong>{' '}
             {agendamento?.nome || 'Não informado'}
           </div>
 
           <div className="info-item">
             <strong>Data da entrega:</strong>{' '}
-            {formatDate(agendamento?.dataEnvio)}
+            {formatDate(agendamento?.dataEntrega)}
           </div>
 
           <div className="info-item">
-            <strong>Entrega:</strong> Via mensagem
+            <strong>Horário preferencial:</strong>{' '}
+            {agendamento?.horario || 'Não informado'}
+          </div>
+
+          <div className="info-item">
+            <strong>Entrega:</strong> Via mensagem de texto (SMS)
           </div>
         </div>
 
@@ -91,7 +93,7 @@ const Saida = () => {
         </div>
 
         <div className="saida-footer">
-          <p>Obrigado por usar nosso serviço! 💜</p>
+          <p>Obrigado por usar nosso serviço! A corujinha agradece! 💜</p>
         </div>
       </div>
     </div>
