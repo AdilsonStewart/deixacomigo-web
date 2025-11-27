@@ -10,10 +10,86 @@ import Agendamento from './screens/Agendamento';
 import Saida from './screens/Saida';
 import VideoRecordPage from './screens/VideoRecordPage';
 import AdminDashboard from './screens/AdminDashboard';
-import Pago from './screens/Pago';   // Mudei para Pago (maiúsculo)
-import Pago2 from './screens/Pago2'; // Mudei para Pago2 (maiúsculo)
 
 import './App.css';
+
+// Componente Pago DIRETO no App.js - para áudio
+const Pago = () => {
+  return (
+    <div style={{
+      fontFamily: 'Arial',
+      textAlign: 'center',
+      padding: '50px',
+      background: '#10b981',
+      color: 'white',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <h1 style={{ fontSize: '3rem' }}>OBRIGADO! 😍</h1>
+      <p>Seu pagamento foi aprovado com sucesso!</p>
+      <p>Seu <strong>áudio</strong> será encaminhado de acordo com sua solicitação.</p>
+      
+      <button
+        onClick={() => window.location.href = '/audiorecorder'}
+        style={{
+          background: 'white',
+          color: '#10b981',
+          border: 'none',
+          padding: '15px 30px',
+          fontSize: '1.1rem',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          marginTop: '20px'
+        }}
+      >
+        🎤 GRAVAR ÁUDIO AGORA
+      </button>
+    </div>
+  );
+};
+
+// Componente Pago2 DIRETO no App.js - para vídeo
+const Pago2 = () => {
+  return (
+    <div style={{
+      fontFamily: 'Arial',
+      textAlign: 'center',
+      padding: '50px',
+      background: '#10b981',
+      color: 'white',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <h1 style={{ fontSize: '3rem' }}>OBRIGADO! 😍</h1>
+      <p>Seu pagamento foi aprovado com sucesso!</p>
+      <p>Seu <strong>vídeo</strong> será encaminhado de acordo com sua solicitação.</p>
+      
+      <button
+        onClick={() => window.location.href = '/video-record'}
+        style={{
+          background: 'white',
+          color: '#10b981',
+          border: 'none',
+          padding: '15px 30px',
+          fontSize: '1.1rem',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          marginTop: '20px'
+        }}
+      >
+        🎥 GRAVAR VÍDEO AGORA
+      </button>
+    </div>
+  );
+};
 
 function App() {
   return (
@@ -30,9 +106,9 @@ function App() {
           <Route path="/audiorecorder" element={<AudioRecordPage />} />
           <Route path="/admin/painel" element={<AdminDashboard />} />
 
-          {/* ROTAS COM COMPONENTES MAIÚSCULOS */}
-          <Route path="/Pago" element={<Pago />} />
-          <Route path="/Pago2" element={<Pago2 />} />
+          {/* ROTAS DIRETAS - SEM IMPORTAÇÕES EXTERNAS */}
+          <Route path="/pago" element={<Pago />} />
+          <Route path="/pago2" element={<Pago2 />} />
         </Routes>
       </div>
     </Router>
