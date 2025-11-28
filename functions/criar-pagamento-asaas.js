@@ -42,59 +42,59 @@ exports.handler = async (event) => {
 
     const asaasHeaders = { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" };
 
-    // ===================== PIX =====================
-    if (metodo === "PIX") {
-      const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
-        method: "POST",
-        headers: asaasHeaders,
-        body: JSON.stringify({
-          name: "Adilson Stewart",
-          cpfCnpj: "04616557802",                 // seu CPF
-          email: "adilson@deixacomigo.com",
-          mobilePhone: "11988265000",             // coloca teu celular real aqui se quiser
-          notificationDisabled: true,
-        }),
-      });
-      const cliente = await clienteRes.json();
-      if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
+   // ===================== PIX =====================
+if (metodo === "PIX") {
+  const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
+    method: "POST",
+    headers: asaasHeaders,
+    body: JSON.stringify({
+      name: "Adilson Stewart",
+      cpfCnpj: "04616557802",
+      email: "adilson@deixacomigo.com",
+      mobilePhone: "11988265000",
+      notificationDisabled: true,
+    }),
+  });
+  const cliente = await clienteRes.json();
+  if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
 
-      const vencimento = new Date();
-      vencimento.setDate(vencimento.getDate() + 3);
+  const vencimento = new Date();
+  vencimento.setDate(vencimento.getDate() + 3);
 
-      const pagamentoRes = await fetch("https://api.asaas.com/v3/payments", {
-        method: "POST",
-        headers: asaasHeaders,
-        body: JSON.stringify({
-          customer: cliente.id,
-          billingType: "PIX",
-          value: valor,                           // 5.00 ou 10.00
-          dueDate: vencimento.toISOString().split("T")[0],
-          description: `DeixaComigo - ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
-          externalReference: pedidoId,
-          postalCode: "01001000",                 // garante valores a partir de 5 reais
-        }),
-      });
-      const pagamento = await pagamentoRes.json();
-      if (pagamento.errors) throw new Error(pagamento.errors[0].description);
+  const pagamentoRes = await fetch("https://api.asaas.com/v3/payments", {
+    method: "POST",
+    headers: asaasHeaders,
+    body: JSON.stringify({
+      customer: cliente.id,
+      billingType: "PIX",
+      value: valor,
+      dueDate: vencimento.toISOString().split("T")[0],
+      description: `DeixaComigo - ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
+      externalReference: pedidoId,
+      postalCode: "01001-000",   // ← AQUI, COM TRAÇO. É ESSA A MÁGICA FINAL
+    }),
+  });
+  const pagamento = await pagamentoRes.json();
+  if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
-        headers: asaasHeaders,
-      });
-      const qr = await qrRes.json();
+  const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
+    headers: asaasHeaders,
+  });
+  const qr = await qrRes.json();
 
-      await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: pagamento.id });
+  await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: pagamento.id });
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          pedidoId,
-          qrCodeBase64: qr.encodedImage,
-          copiaECola: qr.payload,
-        }),
-      };
-    }
+  return {
+    statusCode: 200,
+    headers,
+    body: JSON.stringify({
+      success: true,
+      pedidoId,
+      qrCodeBase64: qr.encodedImage,
+      copiaECola: qr.payload,
+    }),
+  };
+}
 
     // ===================== CARTÃO =====================
     if (metodo === "CREDIT_CARD") {
