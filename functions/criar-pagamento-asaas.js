@@ -66,15 +66,15 @@ if (metodo === "PIX") {
     method: "POST",
     headers: asaasHeaders,
     body: JSON.stringify({
-      customer: cliente.id,
-      billingType: "PIX",
-      value: Number(valor),                    // ← FORÇA COMO NÚMERO
-      dueDate: vencimento.toISOString().split("T")[0],
-      description: "DeixaComigo - Áudio ou Vídeo 30s",
-      externalReference: pedidoId,
-      postalCode: "01001-000",
-    }),
-  });
+  customer: cliente.id,
+  billingType: "PIX",
+  value: Number(valor),
+  dueDate: vencimento.toISOString().split("T")[0],
+  description: "DeixaComigo - Áudio ou Vídeo 30s",
+  externalReference: pedidoId,
+  postalCode: "01001-000",
+  addressNumber: "123",   // ← ESSA LINHA + TRAÇO NO CEP = QR CODE NA HORA
+}),
   const pagamento = await pagamentoRes.json();
   if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
