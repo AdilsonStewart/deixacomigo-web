@@ -1,154 +1,87 @@
 import React, { useState } from "react";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { v4 as uuidv4 } from "uuid";
-import { useNavigate } from "react-router-dom";
 import "./Cadastro.css";
-
-// Config Firebase
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from "../firebase/config";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 export default function Cadastro() {
-  const navigate = useNavigate();
-
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [nascimento, setNascimento] = useState("");
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const salvarCadastro = async () => {
-    const nomeLimpo = nome.trim();
-    const telLimpo = telefone.trim();
-    const nascLimpa = nascimento.trim();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    if (!nomeLimpo || !telLimpo || !nascLimpa) {
-      alert("Preencha todos os campos.");
+    if (!telefone) {
+      alert("Informe seu telefone");
       return;
     }
-
-    if (telLimpo.length !== 11) {
-      alert("Telefone deve ter 11 dígitos (DDD + número).");
-      return;
-    }
-
-    setLoading(true);
 
     try {
-      const id = uuidv4();
+      const ref = doc(db, "clientes", telefone);
+      const snap = await getDoc(ref);
 
-      await setDoc(doc(db, "usuarios-cora", id), {
-        id,
-        nome: nomeLimpo,
-        telefone: telLimpo,
-        nascimento: nascLimpa,
-        criadoEm: serverTimestamp(),
-      });
+      if (snap.exists()) {
+        // Atualiza dados
+        await setDoc(ref, {
+          nome: nome || snap.data().nome,
+          telefone,
+          nascimento: nascimento || snap.data().nascimento,
+          statusPagamento: snap.data().statusPagamento || "pendente",
+          criadoEm: snap.data().criadoEm || new Date(),
+        });
 
-      console.log("🔥 Cadastro salvo com sucesso:", {
-        id,
-        nome: nomeLimpo,
-        telefone: telLimpo,
-        nascimento: nascLimpa,
-      });
+      } else {
+        // Cria novo cliente
+        await setDoc(ref, {
+          nome,
+          telefone,
+          nascimento,
+          statusPagamento: "pendente",
+          criadoEm: new Date(),
+        });
+      }
 
-      navigate(`/servicos?userId=${id}`);
+      // Redireciona para os serviços
+      navigate("/servicos");
+
     } catch (error) {
-      console.error("Erro ao salvar no Firestore:", error);
-      alert("Erro ao cadastrar. Tente novamente.");
-    } finally {
-      setLoading(false);
+      console.error("Erro ao salvar cliente:", error);
+      alert("Erro ao salvar cadastro. Tente novamente.");
     }
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-        minHeight: "100vh",
-        padding: "20px",
-      }}
-    >
-      {/* GIF no topo */}
-      <img
-        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExaHFtYXcyN2xyYzFhMjF3NGw4NXpuaHppcnhuOGg3MTB2OHo3djY2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/WGBvn22mFXhRxFx0CQ/giphy.gif" // Troque pelo nome do seu GIF se for outro
-        alt="Mascote animado"
-        style={{ width: "180px", marginBottom: "20px" }}
-      />
+    <div className="cadastro-container">
+      <h1>Faça seu Cadastro</h1>
 
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "10px" }}>Criar Conta</h1>
-      <p style={{ fontSize: "1.2rem", marginBottom: "30px" }}>
-        É rapidinho e sem complicação!
-      </p>
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
-          maxWidth: "400px",
-          gap: "20px",
-        }}
-      >
+      <form onSubmit={handleSubmit}>
         <input
-          style={{ padding: "15px", fontSize: "1.2rem" }}
-          placeholder="Nome completo"
+          type="text"
+          placeholder="Seu nome"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
+          required
         />
 
         <input
-          style={{ padding: "15px", fontSize: "1.2rem" }}
-          placeholder="Telefone com DDD"
-          type="tel"
+          type="text"
+          placeholder="Telefone (somente números)"
           value={telefone}
-          onChange={(e) =>
-            setTelefone(e.target.value.replace(/\D/g, "").slice(0, 11))
-          }
-          maxLength={11}
+          onChange={(e) => setTelefone(e.target.value)}
+          required
         />
 
         <input
-          style={{ padding: "15px", fontSize: "1.2rem" }}
-          placeholder="Data de nascimento (dd/mm/aaaa)"
+          type="date"
           value={nascimento}
-          onChange={(e) => {
-            let val = e.target.value.replace(/\D/g, "");
-            if (val.length > 8) val = val.slice(0, 8);
-            if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2);
-            if (val.length > 5) val = val.slice(0, 5) + "/" + val.slice(5);
-            setNascimento(val);
-          }}
-          maxLength={10}
+          onChange={(e) => setNascimento(e.target.value)}
+          required
         />
 
-        <button
-          onClick={salvarCadastro}
-          disabled={loading}
-          style={{
-            padding: "15px",
-            fontSize: "1.5rem",
-            background: "#ff69b4",
-            color: "white",
-            border: "none",
-            borderRadius: "10px",
-          }}
-        >
-          {loading ? "Cadastrando..." : "Criar Conta"}
-        </button>
-      </div>
+        <button type="submit">Continuar</button>
+      </form>
     </div>
   );
 }
