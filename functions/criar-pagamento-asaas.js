@@ -15,22 +15,23 @@ exports.handler = async (event) => {
     "Content-Type": "application/json",
   };
 
-  if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Método não permitido" };
+  if (event.httpMethod !== "POST") return { statusCode: 405, body: "Método não permitido" };
 
   try {
     const { valor, tipo, metodo, pedidoId, telefone, nome } = JSON.parse(event.body || "{}");
 
+    // Agora os valores mínimos são 5 e 10 reais
     if (!valor || !tipo || !metodo || !pedidoId)
-      return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Dados faltando" }) };
+      return { statusCode: 400, body: JSON.stringify({ success: false, error: "Dados faltando" }) };
 
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
     if (!ASAAS_API_KEY) throw new Error("Chave Asaas não configurada");
 
-    // Salva pedido
+    // Salva o pedido no Firestore
     await db.collection("pedidos").doc(pedidoId).set({
       pedidoId,
       nome: nome || "Anônimo",
-      telefone: telefone || "11988265000",
+      telefone: telefone || "00000000000",
       valor,
       tipo,
       metodo,
@@ -43,24 +44,22 @@ exports.handler = async (event) => {
 
     // ===================== PIX =====================
     if (metodo === "PIX") {
-      // cria cliente temporário (CPF válido obrigatório em produção)
       const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
           name: "Adilson Stewart",
-          cpfCnpj: "04616557802",                 // CPF válido de teste (público)
-          email: "temp@deixacomigo.com",
-          mobilePhone: "11988265000",
+          cpfCnpj: "04616557802",                 // seu CPF
+          email: "adilson@deixacomigo.com",
+          mobilePhone: "11988265000",             // coloca teu celular real aqui se quiser
           notificationDisabled: true,
         }),
       });
       const cliente = await clienteRes.json();
       if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
 
-      // cria pagamento PIX
       const vencimento = new Date();
-      vencimento.setDate(vencimento.getDate() + 1);
+      vencimento.setDate(vencimento.getDate() + 3);
 
       const pagamentoRes = await fetch("https://api.asaas.com/v3/payments", {
         method: "POST",
@@ -68,17 +67,19 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           customer: cliente.id,
           billingType: "PIX",
-          value: valor,
+          value: valor,                           // 5.00 ou 10.00
           dueDate: vencimento.toISOString().split("T")[0],
-          description: `DeixaComigo ${tipo} #${pedidoId}`,
+          description: `DeixaComigo - ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
           externalReference: pedidoId,
+          postalCode: "01001000",                 // garante valores a partir de 5 reais
         }),
       });
       const pagamento = await pagamentoRes.json();
       if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-      // QR Code
-      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, { headers: asaasHeaders });
+      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
+        headers: asaasHeaders,
+      });
       const qr = await qrRes.json();
 
       await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: pagamento.id });
