@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase/config"; // ✅ CAMINHO CORRETO
+import { db } from "../firebase/config"; 
 import "./SouCliente.css";
 
 export default function SouCliente() {
@@ -42,7 +42,7 @@ export default function SouCliente() {
     setLoading(false);
   }
 
-  // Monitorar mudança de status a cada 3 segundos
+  // Monitorar status do pagamento
   useEffect(() => {
     if (!cliente || cliente === "nao-encontrado") return;
 
@@ -55,6 +55,7 @@ export default function SouCliente() {
       return;
     }
 
+    // Se for "aguardando", checa novamente a cada 3 segundos
     const interval = setInterval(async () => {
       const ref = collection(db, "clientes");
       const q = query(ref, where("telefone", "==", telefone));
@@ -77,7 +78,6 @@ export default function SouCliente() {
 
   return (
     <div className="soucliente-container">
-
       <h1 className="titulo">Sou Cliente</h1>
 
       {/* Formulário */}
@@ -121,6 +121,13 @@ export default function SouCliente() {
         <div className="erro-box">
           <p>❌ Não encontramos cadastro com esse telefone.</p>
           <p>Se quiser, volte e refaça seu pedido.</p>
+
+          <button
+            className="botao-voltar"
+            onClick={() => navigate("/")}
+          >
+            🔙 Voltar ao início
+          </button>
         </div>
       )}
 
@@ -130,7 +137,8 @@ export default function SouCliente() {
           <img src={aguardandoGif} className="gif" alt="Aguardando" />
 
           <h2>Pagamento em processamento...</h2>
-          <p>Pode aguardar aqui. Atualizamos automaticamente a cada 3 segundos.</p>
+          <p>Pode aguardar aqui.</p>
+          <p>Atualizamos automaticamente a cada 3 segundos.</p>
           <p className="menor">
             Assim que for aprovado, você será levado à gravação.
           </p>
