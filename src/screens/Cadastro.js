@@ -22,7 +22,6 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // Chama a function do Netlify para salvar o cliente e gerar PIX
       const response = await fetch("/.netlify/functions/criar-pagamento-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,7 +39,6 @@ export default function Cadastro() {
 
       if (!data.success) throw new Error(data.error || "Erro desconhecido");
 
-      // Aqui você pode mostrar QR code PIX ou redirecionar
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
@@ -70,13 +68,17 @@ export default function Cadastro() {
             onChange={(e) => setTelefone(e.target.value)}
             className="cadastro-input"
           />
-          <input
-            type="date"
-            placeholder="Nascimento"
-            value={dataNascimento}
-            onChange={(e) => setDataNascimento(e.target.value)}
-            className="cadastro-input"
-          />
+
+          <div className="input-container">
+            <input
+              type="date"
+              value={dataNascimento}
+              onChange={(e) => setDataNascimento(e.target.value)}
+              className="cadastro-input"
+            />
+            {!dataNascimento && <span className="placeholder-text">Nascimento</span>}
+          </div>
+
           <input
             type="text"
             placeholder="CPF ou CNPJ"
