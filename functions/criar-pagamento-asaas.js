@@ -1,47 +1,52 @@
-// functions/criar-pagamento-asaas.js  ←  VERSÃO MÍNIMA SÓ PRA VER O QR CODE
 exports.handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
     "Content-Type": "application/json",
   };
 
-  if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Método não permitido" };
-
   try {
-    const { valor, tipo, metodo, pedidoId } = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}");
+    const valor = body.valor || 5.00;
+
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
+    if (!ASAAS_API_KEY) throw new Error("Chave Asaas não configurada");
 
-    const asaasHeaders = { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" };
+    const asaasHeaders = {
+      "access_token": ASAAS_API_KEY,
+      "Content-Type": "application/json",
+    };
 
-    // cria cliente direto
-    const clienteRes = await fetch("https://sandbox.asaas.com/api/v3/customers", {
+    // 1 – cria cliente
+    const cliente = await fetch("https://sandbox.asaas.com/api/v3/customers", {
       method: "POST",
       headers: asaasHeaders,
-      body: JSON.stringify({ name: "Teste", cpfCnpj: "04616557802", email: "teste@deixacomigo.com" }),
-    });
-    const cliente = await clienteRes.json();
+      body: JSON.stringify({
+        name: "Cliente Teste",
+        cpfCnpj: "04616557802",
+      }),
+    }).then(r => r.json());
 
-    const vencimento = new Date();
-    vencimento.setDate(vencimento.getDate() + 3);
+    if (cliente.errors) throw new Error(cliente.errors[0].description);
 
-    const pagamentoRes = await fetch("https://sandbox.asaas.com/api/v3/payments", {
+    // 2 – cria pagamento PIX
+    const pagamento = await fetch("https://sandbox.asaas.com/api/v3/payments", {
       method: "POST",
       headers: asaasHeaders,
       body: JSON.stringify({
         customer: cliente.id,
         billingType: "PIX",
         value: Number(valor).toFixed(2),
-        dueDate: vencimento.toISOString().split("T")[0],
+        dueDate: new Date(Date.now() + 3*24*60*60*1000).toISOString().split("T")[0],
         description: "DeixaComigo teste",
-        externalReference: pedidoId || "teste123",
       }),
-    });
-    const pagamento = await pagamentoRes.json();
+    }).then(r => r.json());
+
     if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-    const qrRes = await fetch(`https://sandbox.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, { headers: asaasHeaders });
-    const qr = await qrRes.json();
+    // 3 – pega QR Code
+    const qr = await fetch(`https://sandbox.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, {
+      headers: asaasHeaders,
+    }).then(r => r.json());
 
     return {
       statusCode: 200,
@@ -52,7 +57,13 @@ exports.handler = async (event) => {
         copiaECola: qr.payload,
       }),
     };
-  } catch (error) {
-    return { statusCode: 500, headers, body: JSON.stringify({ success: false, error: error.message }) };
+
+  } catch (erro) {
+    console.error("Erro:", erro.message);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: erro.message }),
+    };
   }
 };
