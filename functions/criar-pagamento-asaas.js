@@ -15,24 +15,20 @@ exports.handler = async (event) => {
     "Content-Type": "application/json",
   };
 
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers, body: "Método não permitido" };
-  }
+  if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Método não permitido" };
 
   try {
     const { valor, tipo, metodo, pedidoId, telefone, nome } = JSON.parse(event.body || "{}");
 
-    if (!valor || !tipo || !metodo || !pedidoId) {
+    if (!valor || !tipo || !metodo || !pedidoId)
       return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Dados faltando" }) };
-    }
 
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
     if (!ASAAS_API_KEY) throw new Error("Chave Asaas não configurada");
 
-    // Salva o pedido
     await db.collection("pedidos").doc(pedidoId).set({
       pedidoId,
-      nome: nome || "Anônimo",
+      nome: nome || "Adilson Stewart",
       telefone: telefone || "11988265000",
       valor,
       tipo,
@@ -44,9 +40,7 @@ exports.handler = async (event) => {
 
     const asaasHeaders = { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" };
 
-    // ===================== PIX =====================
     if (metodo === "PIX") {
-      // Cliente mínimo (sem endereço)
       const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
         method: "POST",
         headers: asaasHeaders,
@@ -70,7 +64,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           customer: cliente.id,
           billingType: "PIX",
-          value: Number(valor),
+          value: Number(valor).toFixed(2),   // ← ESSA LINHA É A MÁGICA FINAL
           dueDate: vencimento.toISOString().split("T")[0],
           description: "DeixaComigo - Áudio ou Vídeo 30s",
           externalReference: pedidoId,
@@ -79,15 +73,10 @@ exports.handler = async (event) => {
       const pagamento = await pagamentoRes.json();
       if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
-        headers: asaasHeaders,
-      });
+      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, { headers: asaasHeaders });
       const qr = await qrRes.json();
-      if (qr.errors) throw new Error("QR: " + JSON.stringify(qr.errors));
 
-      await db.collection("pedidos").doc(pedidoId).update({
-        asaasPaymentId: pagamento.id,
-      });
+      await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: pagamento.id });
 
       return {
         statusCode: 200,
@@ -101,14 +90,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // ===================== CARTÃO =====================
+    // Cartão (também corrigido)
     if (metodo === "CREDIT_CARD") {
       const linkRes = await fetch("https://api.asaas.com/v3/paymentLinks", {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
           name: `DeixaComigo – ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
-          value: Number(valor),
+          value: Number(valor).toFixed(2),
           billingType: "CREDIT_CARD",
           chargeType: "DETACHED",
           externalReference: pedidoId,
@@ -119,21 +108,11 @@ exports.handler = async (event) => {
 
       await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: link.id });
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, pedidoId, checkoutUrl: link.url }),
-      };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, pedidoId, checkoutUrl: link.url }) };
     }
 
-    return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Método inválido" }) };
-
   } catch (error) {
-    console.error("Erro Asaas:", error.message);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: error.message }),
-    };
+    console.error("Erro:", error.message);
+    return { statusCode: 500, headers, body: JSON.stringify({ success: false, error: error.message }) };
   }
 };
