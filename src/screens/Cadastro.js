@@ -1,12 +1,18 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase/config";
-import { collection, doc, setDoc, getDoc, updateDoc, increment } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  increment,
+} from "firebase/firestore";
 import "./Cadastro.css";
 
 export default function Cadastro() {
   const navigate = useNavigate();
-
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
@@ -23,19 +29,18 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // 1️⃣ Pegar o último número de pedido
+      // 1. Pega o último número de pedido
       const pedidosRef = doc(db, "Config", "pedidos");
       const pedidosSnap = await getDoc(pedidosRef);
-
-      let novoNumeroPedido = 1; // padrão
+      let novoNumeroPedido = 1;
       if (pedidosSnap.exists()) {
         novoNumeroPedido = pedidosSnap.data().ultimoNumero + 1;
       }
 
-      // 2️⃣ Atualizar o último número no Firestore
+      // 2. Atualiza o contador
       await updateDoc(pedidosRef, { ultimoNumero: increment(1) });
 
-      // 3️⃣ Salvar cliente com número do pedido
+      // 3. Salva o cliente
       const clientesRef = collection(db, "clientes");
       await setDoc(doc(clientesRef, telefone), {
         nome,
@@ -43,51 +48,57 @@ export default function Cadastro() {
         dataNascimento,
         numeroPedido: novoNumeroPedido,
         statusPagamento: "aguardando",
-        tipo: null, // será definido depois de escolher audio ou video
-        criadoEm: new Date().toISOString()
+        tipo: null,
+        criadoEm: new Date().toISOString(),
       });
 
-      // 4️⃣ Redirecionar para a página de serviços
+      // 4. Vai para serviços
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
       setErro("Erro ao salvar dados. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="cadastro-container">
-      <h1 className="titulo">Cadastro</h1>
+    <div className="cadastro-page">
+      <div className="cadastro-card">
+        <h1 className="cadastro-titulo">Cadastro</h1>
 
-      <div className="form-box">
-        <input
-          type="text"
-          placeholder="Nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
+        <div className="cadastro-form">
+          <input
+            type="text"
+            placeholder="Nome completo"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            className="cadastro-input"
+          />
+          <input
+            type="tel"
+            placeholder="Telefone (somente números)"
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+            className="cadastro-input"
+          />
+          <input
+            type="date"
+            value={dataNascimento}
+            onChange={(e) => setDataNascimento(e.target.value)}
+            className="cadastro-input"
+          />
 
-        <input
-          type="tel"
-          placeholder="Telefone (somente números)"
-          value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
-        />
+          <button
+            className="cadastro-botao"
+            onClick={handleCadastro}
+            disabled={loading}
+          >
+            {loading ? "Salvando..." : "Cadastrar e Continuar"}
+          </button>
 
-        <input
-          type="date"
-          placeholder="Data de Nascimento"
-          value={dataNascimento}
-          onChange={(e) => setDataNascimento(e.target.value)}
-        />
-
-        <button className="botao" onClick={handleCadastro} disabled={loading}>
-          {loading ? "Salvando..." : "Cadastrar"}
-        </button>
-
-        {erro && <p className="erro">{erro}</p>}
+          {erro && <p className="cadastro-erro">{erro}</p>}
+        </div>
       </div>
     </div>
   );
