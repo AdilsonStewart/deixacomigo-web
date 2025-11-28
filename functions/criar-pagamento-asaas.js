@@ -17,19 +17,22 @@ exports.handler = async (event) => {
 
     const { valor = 5.00 } = JSON.parse(event.body || "{}");
 
+    if (valor < 5) throw new Error("O valor mínimo permitido pelo Asaas é R$ 5,00");
+
     const key = process.env.ASAAS_API_KEY?.trim();
     if (!key) throw new Error("Chave Asaas não configurada");
 
     console.log("ASAAS_API_KEY encontrada");
 
-    // CRIA CLIENTE MÍNIMO (obrigatório no sandbox)
-    const clienteRes = await fetch("https://sandbox.asaas.com/api/v3/customers", {
+    // Criar cliente único para evitar duplicidade
+    const timestamp = Date.now();
+    const clienteRes = await fetch("https://www.asaas.com/api/v3/customers", {
       method: "POST",
       headers: { "access_token": key, "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: "Cliente Teste",
-        cpfCnpj: "04616557802",
-        email: "teste@deixacomigo.com",
+        name: `Cliente Teste ${timestamp}`,
+        cpfCnpj: `046165${timestamp % 10000000}`,
+        email: `teste${timestamp}@deixacomigo.com`,
         mobilePhone: "11988265000",
       }),
     });
@@ -38,8 +41,8 @@ exports.handler = async (event) => {
 
     console.log("Cliente criado:", cliente.id);
 
-    // CRIA PAGAMENTO PIX
-    const pagamentoRes = await fetch("https://sandbox.asaas.com/api/v3/payments", {
+    // Criar pagamento PIX
+    const pagamentoRes = await fetch("https://www.asaas.com/api/v3/payments", {
       method: "POST",
       headers: { "access_token": key, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -55,8 +58,8 @@ exports.handler = async (event) => {
 
     console.log("Pagamento criado:", pagamento.id);
 
-    // PEGAR QR CODE PIX
-    const qr = await fetch(`https://sandbox.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, {
+    // Pegar QR code PIX
+    const qr = await fetch(`https://www.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, {
       headers: { "access_token": key },
     }).then(r => r.json());
 
