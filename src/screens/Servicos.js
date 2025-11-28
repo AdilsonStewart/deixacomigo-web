@@ -16,8 +16,8 @@ const Servicos = () => {
           valor,
           tipo,
           metodo,
-          pedidoId: "pedido_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
-        })
+          pedidoId: "pedido_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+        }),
       });
 
       const data = await res.json();
@@ -26,9 +26,8 @@ const Servicos = () => {
         if (metodo === "PIX") {
           localStorage.setItem("pedidoId", data.pedidoId);
           localStorage.setItem("tipoServico", tipo);
-          window.location.href = `/aguardando-pix?pedido=${data.pedido}&qrcode=${encodeURIComponent(data.qrCodeBase64)}`;
+          window.location.href = `/aguardando-pix?pedido=${data.pedidoId}&qrcode=${encodeURIComponent(data.qrCodeBase64)}`;
         } else {
-          // Cartão
           window.location.href = data.checkoutUrl;
         }
       } else {
@@ -51,33 +50,33 @@ const Servicos = () => {
           width: "180px",
           borderRadius: "50%",
           border: "3px solid #ff69b4",
-          boxShadow: "0 4px 8px rgba(0,0,0,0.2)"
+          boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
         }}
       />
-      <h2 style={{ marginTop: '20px', color: '#333' }}>Escolha seu serviço</h2>
+      <h2 style={{ marginTop: "20px", color: "#333" }}>Escolha seu serviço</h2>
 
-      {/* ÁUDIO */}
+      {/* ÁUDIO - R$ 5,00 */}
       <div style={cardStyle}>
-        <h3 style={{ color: '#28a745', marginBottom: '15px' }}>ÁUDIO 30s — R$ 5,00</h3>
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <button onClick={() => pagar(5,00, "áudio", "PIX")} disabled={loading} style={btnPix}>
-            {loading && metodoSelecionado === 'PIX' ? "Gerando PIX..." : "PIX"}
+        <h3 style={{ color: "#28a745", marginBottom: "15px" }}>ÁUDIO 30s — R$ 5,00</h3>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+          <button onClick={() => pagar(5.00, "áudio", "PIX")} disabled={loading} style={btnPix}>
+            {loading && metodoSelecionado === "PIX" ? "Gerando PIX..." : "PIX"}
           </button>
-          <button onClick={() => pagar(5,00, "áudio", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
-            {loading && metodoSelecionado === 'CREDIT_CARD' ? "Redirecionando..." : "Cartão"}
+          <button onClick={() => pagar(5.00, "áudio", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
+            {loading && metodoSelecionado === "CREDIT_CARD" ? "Redirecionando..." : "Cartão"}
           </button>
         </div>
       </div>
 
-      {/* VÍDEO */}
+      {/* VÍDEO - R$ 10,00 */}
       <div style={cardStyle}>
-        <h3 style={{ color: '#007bff', marginBottom: '15px' }}>VÍDEO 30s — R$ 8,00</h3>
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <button onClick={() => pagar(8.0, "vídeo", "PIX")} disabled={loading} style={btnPix}>
-            {loading && metodoSelecionado === 'PIX' ? "Gerando PIX..." : "PIX"}
+        <h3 style={{ color: "#007bff", marginBottom: "15px" }}>VÍDEO 30s — R$ 10,00</h3>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+          <button onClick={() => pagar(10.00, "vídeo", "PIX")} disabled={loading} style={btnPix}>
+            {loading && metodoSelecionado === "PIX" ? "Gerando PIX..." : "PIX"}
           </button>
-          <button onClick={() => pagar(8.0, "vídeo", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
-            {loading && metodoSelecionado === 'CREDIT_CARD' ? "Redirecionando..." : "Cartão"}
+          <button onClick={() => pagar(10.00, "vídeo", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
+            {loading && metodoSelecionado === "CREDIT_CARD" ? "Redirecionando..." : "Cartão"}
           </button>
         </div>
       </div>
@@ -90,35 +89,35 @@ const Servicos = () => {
 };
 
 const cardStyle = {
-  backgroundColor: '#f8f9fa',
-  padding: '20px',
-  borderRadius: '10px',
-  margin: '20px 0',
-  border: '2px solid #e9ecef'
+  backgroundColor: "#f8f9fa",
+  padding: "20px",
+  borderRadius: "10px",
+  margin: "20px 0",
+  border: "2px solid #e9ecef",
 };
 
 const btnPix = {
-  backgroundColor: '#32CD32',
-  color: 'white',
-  padding: '14px',
-  border: 'none',
-  borderRadius: '10px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-  flex: 1
+  backgroundColor: "#32CD32",
+  color: "white",
+  padding: "14px",
+  border: "none",
+  borderRadius: "10px",
+  fontSize: "16px",
+  fontWeight: "bold",
+  cursor: "pointer",
+  flex: 1,
 };
 
 const btnCartao = {
-  backgroundColor: '#0066CC',
-  color: 'white',
-  padding: '14px',
-  border: 'none',
-  borderRadius: '10px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-  flex: 1
+  backgroundColor: "#0066CC",
+  color: "white",
+  padding: "14px",
+  border: "none",
+  borderRadius: "10px",
+  fontSize: "16px",
+  fontWeight: "bold",
+  cursor: "pointer",
+  flex: 1,
 };
 
 export default Servicos;
