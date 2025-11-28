@@ -1,14 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase/config";
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
 import "./Cadastro.css";
 
 export default function Cadastro() {
@@ -29,34 +20,26 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // 1. Pega o último número de pedido
-      const pedidosRef = doc(db, "Config", "pedidos");
-      const pedidosSnap = await getDoc(pedidosRef);
-      let novoNumeroPedido = 1;
-      if (pedidosSnap.exists()) {
-        novoNumeroPedido = pedidosSnap.data().ultimoNumero + 1;
-      }
-
-      // 2. Atualiza o contador
-      await updateDoc(pedidosRef, { ultimoNumero: increment(1) });
-
-      // 3. Salva o cliente
-      const clientesRef = collection(db, "clientes");
-      await setDoc(doc(clientesRef, telefone), {
-        nome,
-        telefone,
-        dataNascimento,
-        numeroPedido: novoNumeroPedido,
-        statusPagamento: "aguardando",
-        tipo: null,
-        criadoEm: new Date().toISOString(),
+      // Chama a function do Netlify (server-side) pra salvar o cliente
+      const response = await fetch("/.netlify/functions/salvar-cliente", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome,
+          telefone,
+          dataNascimento,
+        }),
       });
 
-      // 4. Vai para serviços
+      const data = await response.json();
+
+      if (!data.success) throw new Error(data.error || "Erro desconhecido");
+
+      // Redireciona pra serviços
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
-      setErro("Erro ao salvar dados. Tente novamente.");
+      setErro("Erro ao salvar. Tente novamente.");
     } finally {
       setLoading(false);
     }
