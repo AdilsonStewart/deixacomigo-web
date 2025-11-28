@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase"; // AJUSTE O CAMINHO SE NECESSÁRIO
+import { db } from "../firebase/config"; // ✅ CAMINHO CORRETO
 import "./SouCliente.css";
 
 export default function SouCliente() {
@@ -42,7 +42,7 @@ export default function SouCliente() {
     setLoading(false);
   }
 
-  // Quando encontrar o cliente, fica monitorando o status a cada 3 seg.
+  // Monitorar mudança de status a cada 3 segundos
   useEffect(() => {
     if (!cliente || cliente === "nao-encontrado") return;
 
@@ -55,7 +55,6 @@ export default function SouCliente() {
       return;
     }
 
-    // Se ainda for "aguardando", checa novamente a cada 3 segundos
     const interval = setInterval(async () => {
       const ref = collection(db, "clientes");
       const q = query(ref, where("telefone", "==", telefone));
@@ -115,9 +114,7 @@ export default function SouCliente() {
       )}
 
       {/* Carregando */}
-      {loading && (
-        <p className="loading">⏳ Buscando informações...</p>
-      )}
+      {loading && <p className="loading">⏳ Buscando informações...</p>}
 
       {/* Cliente não encontrado */}
       {cliente === "nao-encontrado" && (
@@ -133,10 +130,7 @@ export default function SouCliente() {
           <img src={aguardandoGif} className="gif" alt="Aguardando" />
 
           <h2>Pagamento em processamento...</h2>
-          <p>
-            Pode aguardar aqui.  
-            Atualizamos automaticamente a cada 3 segundos.
-          </p>
+          <p>Pode aguardar aqui. Atualizamos automaticamente a cada 3 segundos.</p>
           <p className="menor">
             Assim que for aprovado, você será levado à gravação.
           </p>
