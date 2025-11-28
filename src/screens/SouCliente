@@ -1,0 +1,85 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './SouCliente.css';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { app } from '../firebase'; // ajuste se necessário
+
+export default function SouCliente() {
+  const navigate = useNavigate();
+  const db = getFirestore(app);
+
+  const [nome, setNome] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirmar = async () => {
+    setErro('');
+    setLoading(true);
+
+    try {
+      const ref = collection(db, 'clientes'); // colecao que você usa no Firebase
+      const q = query(ref, where('telefone', '==', telefone));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        setLoading(false);
+        setErro('Nenhum pagamento encontrado para este telefone.');
+        return;
+      }
+
+      // Achou cliente
+      const dados = snapshot.docs[0].data();
+
+      // Verifica status
+      if (dados.status === 'pago') {
+        navigate('/gravacao');
+      } else if (dados.status === 'aguardando') {
+        navigate('/aguardando');
+      } else {
+        setErro('Pagamento não iniciado ou inválido.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErro('Erro ao consultar dados.');
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="soucliente-container">
+      <h1 className="titulo">Sou Cliente</h1>
+
+      <img
+        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExczlsM2Fkdzg4NmV5MmI0NjZyZ3MzaXRia2FkYWs0bjhzZmpxaTQ0YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/RLILllLdYpAfxxwLbO/giphy.gif"
+        alt="Coruja aguardando"
+        className="coruja-gif"
+      />
+
+      <input
+        type="text"
+        placeholder="Seu nome"
+        className="input"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+      />
+
+      <input
+        type="text"
+        placeholder="Seu telefone"
+        className="input"
+        value={telefone}
+        onChange={(e) => setTelefone(e.target.value)}
+      />
+
+      <button className="botao" onClick={handleConfirmar} disabled={loading}>
+        {loading ? 'Verificando...' : 'Confirmar'}
+      </button>
+
+      {erro && <p className="erro">{erro}</p>}
+
+      <button className="botao-voltar" onClick={() => navigate('/')}>Voltar</button>
+    </div>
+  );
+}
