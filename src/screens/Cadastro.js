@@ -6,7 +6,7 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [dataNascimento, setDataNascimento] = useState(""); // Data de nascimento
+  const [dataNascimento, setDataNascimento] = useState(""); // Campo Nascimento
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [email, setEmail] = useState(""); // Email do usuário
   const [loading, setLoading] = useState(false);
@@ -29,10 +29,10 @@ export default function Cadastro() {
         body: JSON.stringify({
           nome,
           telefone,
-          dataNascimento, // envia data de nascimento
+          dataNascimento, // envia Nascimento
           cpfCnpj,
           email,
-          valor: 5, // ou outro valor que quiser
+          valor: 5, // ou outro valor desejado
         }),
       });
 
@@ -72,6 +72,7 @@ export default function Cadastro() {
           />
           <input
             type="date"
+            placeholder="Nascimento"
             value={dataNascimento}
             onChange={(e) => setDataNascimento(e.target.value)}
             className="cadastro-input"
