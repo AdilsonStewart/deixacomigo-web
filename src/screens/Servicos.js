@@ -15,8 +15,7 @@ const Servicos = () => {
         body: JSON.stringify({
           valor,
           tipo,
-          metodo, // "PIX" ou "CREDIT_CARD"
-          // vamos gerar um ID único pro pedido
+          metodo,
           pedidoId: "pedido_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9)
         })
       });
@@ -25,12 +24,11 @@ const Servicos = () => {
 
       if (data.success) {
         if (metodo === "PIX") {
-          // Asaas devolve QR Code em base64 e link de copia-e-cola
           localStorage.setItem("pedidoId", data.pedidoId);
           localStorage.setItem("tipoServico", tipo);
-          window.location.href = `/aguardando-pix?pedido=${data.pedidoId}&qrcode=${data.qrCodeBase64}`;
+          window.location.href = `/aguardando-pix?pedido=${data.pedido}&qrcode=${encodeURIComponent(data.qrCodeBase64)}`;
         } else {
-          // Cartão: redireciona direto pro checkout do Asaas
+          // Cartão
           window.location.href = data.checkoutUrl;
         }
       } else {
@@ -38,7 +36,7 @@ const Servicos = () => {
       }
     } catch (e) {
       console.error(e);
-      alert("Erro inesperado: " + e.message);
+      alert("Erro: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -63,7 +61,7 @@ const Servicos = () => {
         <h3 style={{ color: '#28a745', marginBottom: '15px' }}>ÁUDIO 30s — R$ 1,99</h3>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button onClick={() => pagar(1.99, "áudio", "PIX")} disabled={loading} style={btnPix}>
-            {loading && metodoSelecionado === 'PIX' ? "Gerando..." : "PIX"}
+            {loading && metodoSelecionado === 'PIX' ? "Gerando PIX..." : "PIX"}
           </button>
           <button onClick={() => pagar(1.99, "áudio", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
             {loading && metodoSelecionado === 'CREDIT_CARD' ? "Redirecionando..." : "Cartão"}
@@ -71,12 +69,12 @@ const Servicos = () => {
         </div>
       </div>
 
-      {/* VÍDEO
+      {/* VÍDEO */}
       <div style={cardStyle}>
         <h3 style={{ color: '#007bff', marginBottom: '15px' }}>VÍDEO 30s — R$ 8,00</h3>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button onClick={() => pagar(8.0, "vídeo", "PIX")} disabled={loading} style={btnPix}>
-            {loading && metodoSelecionado === 'PIX' ? "Gerando..." : "PIX"}
+            {loading && metodoSelecionado === 'PIX' ? "Gerando PIX..." : "PIX"}
           </button>
           <button onClick={() => pagar(8.0, "vídeo", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
             {loading && metodoSelecionado === 'CREDIT_CARD' ? "Redirecionando..." : "Cartão"}
