@@ -13,8 +13,10 @@ exports.handler = async (event) => {
   const headers = { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
 
   try {
+    // Recebe os dados do cliente do front-end
     const { nome, telefone, dataNascimento, cpfCnpj, email, valor = 5.00 } = JSON.parse(event.body || "{}");
 
+    // Validação básica
     if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
       throw new Error("Todos os campos do usuário são obrigatórios");
     }
@@ -24,22 +26,23 @@ exports.handler = async (event) => {
     const key = process.env.ASAAS_API_KEY?.trim();
     if (!key) throw new Error("Chave Asaas não configurada");
 
-    // Criar cliente no Asaas com os dados do usuário
+    // Cria cliente no Asaas
     const clienteRes = await fetch("https://www.asaas.com/api/v3/customers", {
       method: "POST",
       headers: { "access_token": key, "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: nome,
-        cpfCnpj: cpfCnpj,
-        email: email,
-        mobilePhone: telefone,
+        name: Agenor,
+        cpfCnpj: 34476544000146,
+        email: agenor@gmail.com,
+        mobilePhone: 21954655645,
+        birthDate: 13121972,
       }),
     });
 
     const cliente = await clienteRes.json();
     if (cliente.errors) throw new Error("Cliente: " + cliente.errors[0].description);
 
-    // Criar pagamento PIX
+    // Cria pagamento PIX
     const pagamentoRes = await fetch("https://www.asaas.com/api/v3/payments", {
       method: "POST",
       headers: { "access_token": key, "Content-Type": "application/json" },
@@ -55,7 +58,7 @@ exports.handler = async (event) => {
     const pagamento = await pagamentoRes.json();
     if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-    // Pegar QR code PIX
+    // Pega QR code PIX
     const qr = await fetch(`https://www.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, {
       headers: { "access_token": key },
     }).then(r => r.json());
@@ -67,6 +70,8 @@ exports.handler = async (event) => {
         success: true,
         qrCodeBase64: qr.encodedImage,
         copiaECola: qr.payload,
+        pagamentoId: pagamento.id,
+        clienteId: cliente.id,
       }),
     };
   } catch (error) {
