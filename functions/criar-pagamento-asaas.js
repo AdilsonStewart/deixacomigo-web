@@ -30,7 +30,7 @@ exports.handler = async (event) => {
     await db.collection("pedidos").doc(pedidoId).set({
       pedidoId,
       nome: nome || "Anônimo",
-      telefone: telefone || "00000000000",
+      telefone: telefone || "11988265000",
       valor,
       tipo,
       metodo,
@@ -51,7 +51,7 @@ exports.handler = async (event) => {
           name: "Adilson Stewart",
           cpfCnpj: "04616557802",                 // CPF válido de teste (público)
           email: "temp@deixacomigo.com",
-          mobilePhone: "11999999999",
+          mobilePhone: "11988265000",
           notificationDisabled: true,
         }),
       });
