@@ -48,8 +48,8 @@ exports.handler = async (event) => {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
-          name: "Cliente DeixaComigo",
-          cpfCnpj: "39110245897",                 // CPF válido de teste (público)
+          name: "Adilson Stewart",
+          cpfCnpj: "04616557802",                 // CPF válido de teste (público)
           email: "temp@deixacomigo.com",
           mobilePhone: "11999999999",
           notificationDisabled: true,
