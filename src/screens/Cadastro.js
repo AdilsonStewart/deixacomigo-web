@@ -6,13 +6,14 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
-  const [cpfCnpj, setCpfCnpj] = useState(""); // NOVO CAMPO
+  const [dataNascimento, setDataNascimento] = useState(""); // Data de nascimento
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [email, setEmail] = useState(""); // Email do usuário
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
   const handleCadastro = async () => {
-    if (!nome || !telefone || !dataNascimento || !cpfCnpj) {
+    if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
       setErro("Preencha todos os campos!");
       return;
     }
@@ -21,15 +22,17 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // Chama a function do Netlify (server-side) pra salvar o cliente
-      const response = await fetch("/.netlify/functions/salvar-cliente", {
+      // Chama a function do Netlify para salvar o cliente e gerar PIX
+      const response = await fetch("/.netlify/functions/criar-pagamento-asaas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome,
           telefone,
-          dataNascimento,
-          cpfCnpj, // envia CPF/CNPJ
+          dataNascimento, // envia data de nascimento
+          cpfCnpj,
+          email,
+          valor: 5, // ou outro valor que quiser
         }),
       });
 
@@ -37,7 +40,7 @@ export default function Cadastro() {
 
       if (!data.success) throw new Error(data.error || "Erro desconhecido");
 
-      // Redireciona pra serviços
+      // Aqui você pode mostrar QR code PIX ou redirecionar
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
@@ -78,6 +81,13 @@ export default function Cadastro() {
             placeholder="CPF ou CNPJ"
             value={cpfCnpj}
             onChange={(e) => setCpfCnpj(e.target.value)}
+            className="cadastro-input"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="cadastro-input"
           />
 
