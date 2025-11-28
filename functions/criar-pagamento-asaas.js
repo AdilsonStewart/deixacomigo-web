@@ -3,7 +3,7 @@ const admin = require("firebase-admin");
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+    credential: admin.credential.applicationDefault(),
   });
 }
 const db = admin.firestore();
@@ -18,18 +18,13 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, headers, body: "Método não permitido" };
 
   try {
-    const { valor, tipo, metodo, pedidoId, telefone, nome } = JSON.parse(event.body || "{}");
-
-    if (!valor || !tipo || !metodo || !pedidoId)
-      return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Dados faltando" }) };
+    const { valor, tipo, metodo, pedidoId } = JSON.parse(event.body || "{}");
 
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-    if (!ASAAS_API_KEY) throw new Error("Chave Asaas não configurada");
+    if (!ASAAS_API_KEY) throw new Error("Chave Asaas não encontrada");
 
     await db.collection("pedidos").doc(pedidoId).set({
       pedidoId,
-      nome: nome || "Adilson Stewart",
-      telefone: telefone || "11988265000",
       valor,
       tipo,
       metodo,
@@ -41,40 +36,40 @@ exports.handler = async (event) => {
     const asaasHeaders = { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" };
 
     if (metodo === "PIX") {
-      const pagamentoRes = await fetch("https://sandbox.asaas.com/api/v3/payments", {
-  method: "POST",
-  headers: asaasHeaders,
-  body: JSON.stringify({
-    customer: cliente.id,
-    billingType: "PIX",
-    value: Number(valor).toFixed(2),           // ← mantém número com 2 casas
-    dueDate: vencimento.toISOString().split("T")[0],
-    description: "DeixaComigo - Áudio ou Vídeo 30s",
-    externalReference: pedidoId,
-  }),
-});
+      const clienteRes = await fetch("https://sandbox.asaas.com/api/v3/customers", {
+        method: "POST",
+        headers: asaasHeaders,
+        body: JSON.stringify({
+          name: "Adilson Stewart",
+          cpfCnpj: "04616557802",
+          email: "adilson@deixacomigo.com",
+          mobilePhone: "11988265000",
+        }),
+      });
       const cliente = await clienteRes.json();
-      if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
+      if (cliente.errors) throw new Error(JSON.stringify(cliente.errors));
 
       const vencimento = new Date();
       vencimento.setDate(vencimento.getDate() + 3);
 
-      const pagamentoRes = await fetch("https://api.asaas.com/v3/payments", {
+      const pagamentoRes = await fetch("https://sandbox.asaas.com/api/v3/payments", {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
           customer: cliente.id,
           billingType: "PIX",
-          value: Number(valor).toFixed(2),   // ← ESSA LINHA É A MÁGICA FINAL
+          value: Number(valor).toFixed(2),
           dueDate: vencimento.toISOString().split("T")[0],
-          description: "DeixaComigo - Áudio ou Vídeo 30s",
+          description: "DeixaComigo 30s",
           externalReference: pedidoId,
         }),
       });
       const pagamento = await pagamentoRes.json();
       if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, { headers: asaasHeaders });
+      const qrRes = await fetch(`https://sandbox.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, {
+        headers: asaasHeaders,
+      });
       const qr = await qrRes.json();
 
       await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: pagamento.id });
@@ -90,28 +85,6 @@ exports.handler = async (event) => {
         }),
       };
     }
-
-    // Cartão (também corrigido)
-    if (metodo === "CREDIT_CARD") {
-      const linkRes = await fetch("https://api.asaas.com/v3/paymentLinks", {
-        method: "POST",
-        headers: asaasHeaders,
-        body: JSON.stringify({
-          name: `DeixaComigo – ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
-          value: Number(valor).toFixed(2),
-          billingType: "CREDIT_CARD",
-          chargeType: "DETACHED",
-          externalReference: pedidoId,
-        }),
-      });
-      const link = await linkRes.json();
-      if (link.errors) throw new Error(link.errors[0].description);
-
-      await db.collection("pedidos").doc(pedidoId).update({ asaasPaymentId: link.id });
-
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, pedidoId, checkoutUrl: link.url }) };
-    }
-
   } catch (error) {
     console.error("Erro:", error.message);
     return { statusCode: 500, headers, body: JSON.stringify({ success: false, error: error.message }) };
