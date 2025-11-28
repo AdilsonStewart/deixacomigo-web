@@ -1,4 +1,4 @@
-// netlify/functions/criar-pagamento-asaas.js
+// functions/criar-pagamento-asaas.js
 const admin = require("firebase-admin");
 
 if (!admin.apps.length) {
@@ -29,7 +29,7 @@ exports.handler = async (event) => {
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
     if (!ASAAS_API_KEY) throw new Error("Chave Asaas não configurada");
 
-    // SALVA O PEDIDO COM NOME E TELEFONE (essencial pro fluxo "sou cliente")
+    // Salva o pedido no Firestore
     await db.collection("pedidos").doc(pedidoId).set({
       pedidoId,
       nome: nome || "Anônimo",
@@ -47,8 +47,27 @@ exports.handler = async (event) => {
       "Content-Type": "application/json",
     };
 
-    // PIX
+    // ==================== PIX (funciona em produção) ====================
     if (metodo === "PIX") {
+      // 1. Cria cliente temporário (obrigatório em produção)
+      const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
+        method: "POST",
+        headers: asaasHeaders,
+        body: JSON.stringify({
+          name: "Cliente DeixaComigo",
+          cpfCnpj: "00000000000",
+          email: "temp@deixacomigo.com",
+          mobilePhone: "11999999999",
+          notificationDisabled: true,
+        }),
+      });
+      const cliente = await clienteRes.json();
+
+      if (cliente.errors) {
+        throw new Error("Erro ao criar cliente: " + JSON.stringify(cliente.errors));
+      }
+
+      // 2. Cria pagamento PIX
       const vencimento = new Date();
       vencimento.setDate(vencimento.getDate() + 1);
 
@@ -56,29 +75,28 @@ exports.handler = async (event) => {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
-          customer: "cus_00000000000000", // funciona em sandbox e produção sem criar cliente
+          customer: cliente.id,
           billingType: "PIX",
           value: valor,
           dueDate: vencimento.toISOString().split("T")[0],
           description: `DeixaComigo - ${tipo} #${pedidoId}`,
-          externalReference: pedidoId, // ESSA É A CHAVE DO WEBHOOK
+          externalReference: pedidoId,
         }),
       });
 
       const pagamento = await pagamentoRes.json();
+      if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-      if (pagamento.errors) {
-        throw new Error(pagamento.errors[0].description);
-      }
-
-      // Pega o QR Code
+      // 3. Pega QR Code
       const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
         headers: asaasHeaders,
       });
       const qr = await qrRes.json();
 
+      // Atualiza Firestore
       await db.collection("pedidos").doc(pedidoId).update({
         asaasPaymentId: pagamento.id,
+        customerId: cliente.id,
       });
 
       return {
@@ -93,7 +111,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // CARTÃO
+    // ==================== CARTÃO ====================
     if (metodo === "CREDIT_CARD") {
       const linkRes = await fetch("https://api.asaas.com/v3/paymentLinks", {
         method: "POST",
