@@ -46,16 +46,22 @@ exports.handler = async (event) => {
 // ===================== PIX =====================
 if (metodo === "PIX") {
   const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
-    method: "POST",
-    headers: asaasHeaders,
-    body: JSON.stringify({
-      name: "Adilson Stewart",
-      cpfCnpj: "04616557802",
-      email: "adilson@deixacomigo.com",
-      mobilePhone: "11988265000",
-      notificationDisabled: false,   // ← MUDOU AQUI
-    }),
-  });
+  method: "POST",
+  headers: asaasHeaders,
+  body: JSON.stringify({
+    name: "Adilson Stewart",
+    cpfCnpj: "04616557802",
+    email: "adilson@deixacomigo.com",
+    mobilePhone: "11988265000",
+    address: "Rua torta",          // ← ADICIONA ISSO
+    addressNumber: "123",                 // ← ADICIONA ISSO
+    complement: "Apto 101",               // ← ADICIONA ISSO (opcional, mas ajuda)
+    province: "SP",                       // ← ADICIONA ISSO (estado)
+    postalCode: "01001-000",              // ← ADICIONA ISSO (mesmo CEP)
+    country: "BR",                        // ← ADICIONA ISSO
+    notificationDisabled: false,
+  }),
+});
   const cliente = await clienteRes.json();
   if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
 
