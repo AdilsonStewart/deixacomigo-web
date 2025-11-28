@@ -43,18 +43,19 @@ exports.handler = async (event) => {
     const asaasHeaders = { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" };
 
    // ===================== PIX =====================
+// ===================== PIX =====================
 if (metodo === "PIX") {
   const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
-  method: "POST",
-  headers: asaasHeaders,
-  body: JSON.stringify({
-    name: "Adilson Stewart",
-    cpfCnpj: "04616557802",
-    email: "adilson@deixacomigo.com",
-    mobilePhone: "11988265000",
-    // notificationDisabled: false,   ← APAGA OU DEIXA COMO false
-  }),
-});
+    method: "POST",
+    headers: asaasHeaders,
+    body: JSON.stringify({
+      name: "Adilson Stewart",
+      cpfCnpj: "04616557802",
+      email: "adilson@deixacomigo.com",
+      mobilePhone: "11988265000",
+      notificationDisabled: false,   // ← MUDOU AQUI
+    }),
+  });
   const cliente = await clienteRes.json();
   if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
 
@@ -67,11 +68,11 @@ if (metodo === "PIX") {
     body: JSON.stringify({
       customer: cliente.id,
       billingType: "PIX",
-      value: valor,
+      value: Number(valor),                    // ← FORÇA COMO NÚMERO
       dueDate: vencimento.toISOString().split("T")[0],
-      description: `DeixaComigo - ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
+      description: "DeixaComigo - Áudio ou Vídeo 30s",
       externalReference: pedidoId,
-      postalCode: "01001-000",   // ← AQUI, COM TRAÇO. É ESSA A MÁGICA FINAL
+      postalCode: "01001-000",
     }),
   });
   const pagamento = await pagamentoRes.json();
