@@ -13,11 +13,9 @@ exports.handler = async (event) => {
   const headers = { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json" };
 
   try {
-    console.log("EVENT BODY:", event.body);
+    const { nome, telefone, dataNascimento, cpfCnpj, email, valor = 5.00 } = JSON.parse(event.body || "{}");
 
-    const { nome, telefone, cpfCnpj, email, valor = 5.00 } = JSON.parse(event.body || "{}");
-
-    if (!nome || !telefone || !cpfCnpj || !email) {
+    if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
       throw new Error("Todos os campos do usuário são obrigatórios");
     }
 
@@ -25,8 +23,6 @@ exports.handler = async (event) => {
 
     const key = process.env.ASAAS_API_KEY?.trim();
     if (!key) throw new Error("Chave Asaas não configurada");
-
-    console.log("ASAAS_API_KEY encontrada");
 
     // Criar cliente no Asaas com os dados do usuário
     const clienteRes = await fetch("https://www.asaas.com/api/v3/customers", {
@@ -42,8 +38,6 @@ exports.handler = async (event) => {
 
     const cliente = await clienteRes.json();
     if (cliente.errors) throw new Error("Cliente: " + cliente.errors[0].description);
-
-    console.log("Cliente criado:", cliente.id);
 
     // Criar pagamento PIX
     const pagamentoRes = await fetch("https://www.asaas.com/api/v3/payments", {
@@ -61,14 +55,10 @@ exports.handler = async (event) => {
     const pagamento = await pagamentoRes.json();
     if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-    console.log("Pagamento criado:", pagamento.id);
-
     // Pegar QR code PIX
     const qr = await fetch(`https://www.asaas.com/api/v3/payments/${pagamento.id}/pixQrCode`, {
       headers: { "access_token": key },
     }).then(r => r.json());
-
-    console.log("QR code gerado");
 
     return {
       statusCode: 200,
