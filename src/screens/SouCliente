@@ -1,85 +1,147 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './SouCliente.css';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
-import { app } from '../firebase'; // ajuste se necessário
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase"; // AJUSTE O CAMINHO SE NECESSÁRIO
+import "./SouCliente.css";
 
 export default function SouCliente() {
   const navigate = useNavigate();
-  const db = getFirestore(app);
 
-  const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [erro, setErro] = useState('');
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cliente, setCliente] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleConfirmar = async () => {
-    setErro('');
+  // GIFS
+  const aguardandoGif =
+    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbnRxdXh3YmY3c3d3YzdzZDhkM2N4dG9xeXgyNXBpYzltbjJnZGc4ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wH69SAXGiPDI2xQ0OX/giphy.gif";
+
+  const corujaGif =
+    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeXM5bDNhZHc4ODZleTJiNDY2cmdzM2l0YmthZGFrNG44c2ZqcWk0NGE6ZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PXM/RLILllLdYpAfxxwLbO/giphy.gif";
+
+  // Buscar cliente no Firestore
+  async function buscarCliente() {
     setLoading(true);
+    setCliente(null);
 
     try {
-      const ref = collection(db, 'clientes'); // colecao que você usa no Firebase
-      const q = query(ref, where('telefone', '==', telefone));
-      const snapshot = await getDocs(q);
+      const ref = collection(db, "clientes");
+      const q = query(ref, where("telefone", "==", telefone));
+      const result = await getDocs(q);
 
-      if (snapshot.empty) {
-        setLoading(false);
-        setErro('Nenhum pagamento encontrado para este telefone.');
-        return;
-      }
-
-      // Achou cliente
-      const dados = snapshot.docs[0].data();
-
-      // Verifica status
-      if (dados.status === 'pago') {
-        navigate('/gravacao');
-      } else if (dados.status === 'aguardando') {
-        navigate('/aguardando');
+      if (!result.empty) {
+        const dados = result.docs[0].data();
+        setCliente(dados);
       } else {
-        setErro('Pagamento não iniciado ou inválido.');
+        setCliente("nao-encontrado");
       }
-    } catch (e) {
-      console.error(e);
-      setErro('Erro ao consultar dados.');
+    } catch (err) {
+      console.error("Erro ao buscar cliente:", err);
     }
 
     setLoading(false);
-  };
+  }
+
+  // Quando encontrar o cliente, fica monitorando o status a cada 3 seg.
+  useEffect(() => {
+    if (!cliente || cliente === "nao-encontrado") return;
+
+    if (cliente.statusPagamento === "aprovado") {
+      if (cliente.tipo === "audio") {
+        navigate("/audiorecord");
+      } else if (cliente.tipo === "video") {
+        navigate("/videorecord");
+      }
+      return;
+    }
+
+    // Se ainda for "aguardando", checa novamente a cada 3 segundos
+    const interval = setInterval(async () => {
+      const ref = collection(db, "clientes");
+      const q = query(ref, where("telefone", "==", telefone));
+      const result = await getDocs(q);
+
+      if (!result.empty) {
+        const dados = result.docs[0].data();
+        setCliente(dados);
+
+        if (dados.statusPagamento === "aprovado") {
+          clearInterval(interval);
+          if (dados.tipo === "audio") navigate("/audiorecord");
+          if (dados.tipo === "video") navigate("/videorecord");
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [cliente, telefone, navigate]);
 
   return (
     <div className="soucliente-container">
+
       <h1 className="titulo">Sou Cliente</h1>
 
-      <img
-        src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExczlsM2Fkdzg4NmV5MmI0NjZyZ3MzaXRia2FkYWs0bjhzZmpxaTQ0YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/RLILllLdYpAfxxwLbO/giphy.gif"
-        alt="Coruja aguardando"
-        className="coruja-gif"
-      />
+      {/* Formulário */}
+      {!cliente && !loading && (
+        <>
+          <p className="descricao">
+            Digite seu nome e telefone para localizar seu pedido.
+          </p>
 
-      <input
-        type="text"
-        placeholder="Seu nome"
-        className="input"
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-      />
+          <div className="form-box">
+            <input
+              type="text"
+              placeholder="Seu nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
 
-      <input
-        type="text"
-        placeholder="Seu telefone"
-        className="input"
-        value={telefone}
-        onChange={(e) => setTelefone(e.target.value)}
-      />
+            <input
+              type="tel"
+              placeholder="Telefone (somente números)"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+            />
 
-      <button className="botao" onClick={handleConfirmar} disabled={loading}>
-        {loading ? 'Verificando...' : 'Confirmar'}
-      </button>
+            <button className="botao" onClick={buscarCliente}>
+              Buscar
+            </button>
+          </div>
 
-      {erro && <p className="erro">{erro}</p>}
+          <div className="gif-area">
+            <img src={corujaGif} alt="Coruja" className="gif" />
+          </div>
+        </>
+      )}
 
-      <button className="botao-voltar" onClick={() => navigate('/')}>Voltar</button>
+      {/* Carregando */}
+      {loading && (
+        <p className="loading">⏳ Buscando informações...</p>
+      )}
+
+      {/* Cliente não encontrado */}
+      {cliente === "nao-encontrado" && (
+        <div className="erro-box">
+          <p>❌ Não encontramos cadastro com esse telefone.</p>
+          <p>Se quiser, volte e refaça seu pedido.</p>
+        </div>
+      )}
+
+      {/* Aguardando pagamento */}
+      {cliente && cliente.statusPagamento === "aguardando" && (
+        <div className="aguardando-box">
+          <img src={aguardandoGif} className="gif" alt="Aguardando" />
+
+          <h2>Pagamento em processamento...</h2>
+          <p>
+            Pode aguardar aqui.  
+            Atualizamos automaticamente a cada 3 segundos.
+          </p>
+          <p className="menor">
+            Assim que for aprovado, você será levado à gravação.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
