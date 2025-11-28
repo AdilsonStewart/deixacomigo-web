@@ -1,4 +1,4 @@
-// functions/criar-pagamento-asaas.js
+// netlify/functions/criar-pagamento-asaas.js
 const admin = require("firebase-admin");
 
 if (!admin.apps.length) {
@@ -6,7 +6,6 @@ if (!admin.apps.length) {
     credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
   });
 }
-
 const db = admin.firestore();
 
 exports.handler = async (event) => {
@@ -21,54 +20,35 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { valor, tipo, metodo, pedidoId } = JSON.parse(event.body || "{}");
+    const { valor, tipo, metodo, pedidoId, telefone, nome } = JSON.parse(event.body || "{}");
 
     if (!valor || !tipo || !metodo || !pedidoId) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ success: false, error: "Dados incompletos" }),
-      };
+      return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Dados faltando" }) };
     }
 
     const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-    if (!ASAAS_API_KEY) {
-      throw new Error("ASAAS_API_KEY não configurada no Netlify");
-    }
+    if (!ASAAS_API_KEY) throw new Error("Chave Asaas não configurada");
 
-    // Salvar pedido no Firestore ANTES de criar no Asaas
+    // SALVA O PEDIDO COM NOME E TELEFONE (essencial pro fluxo "sou cliente")
     await db.collection("pedidos").doc(pedidoId).set({
       pedidoId,
+      nome: nome || "Anônimo",
+      telefone: telefone || "00000000000",
       valor,
       tipo,
       metodo,
-      status: "PENDENTE",
+      status: "AGUARDANDO_PAGAMENTO",
+      usado: false,
       criadoEm: admin.firestore.FieldValue.serverTimestamp(),
-      asaasPaymentId: null,
     });
 
-    // Cabeçalho comum pro Asaas
     const asaasHeaders = {
-      "Content-Type": "application/json",
       "access_token": ASAAS_API_KEY,
+      "Content-Type": "application/json",
     };
 
+    // PIX
     if (metodo === "PIX") {
-      // 1. Criar cliente temporário
-      const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
-        method: "POST",
-        headers: asaasHeaders,
-        body: JSON.stringify({
-          name: "Cliente DeixaComigo",
-          cpfCnpj: "00000000000", // Asaas aceita isso pra teste/sandbox
-          notificationDisabled: true,
-        }),
-      });
-      const cliente = await clienteRes.json();
-
-      if (cliente.errors) throw new Error(cliente.errors[0].description);
-
-      // 2. Criar pagamento PIX
       const vencimento = new Date();
       vencimento.setDate(vencimento.getDate() + 1);
 
@@ -76,29 +56,29 @@ exports.handler = async (event) => {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
-          customer: cliente.id,
+          customer: "cus_00000000000000", // funciona em sandbox e produção sem criar cliente
           billingType: "PIX",
           value: valor,
           dueDate: vencimento.toISOString().split("T")[0],
-          description: `DeixaComigo - ${tipo} - ${pedidoId}`,
-          externalReference: pedidoId, // SUPER IMPORTANTE pro webhook
+          description: `DeixaComigo - ${tipo} #${pedidoId}`,
+          externalReference: pedidoId, // ESSA É A CHAVE DO WEBHOOK
         }),
       });
 
       const pagamento = await pagamentoRes.json();
-      if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
-      // 3. Pegar QR Code
-      const qrRes = await fetch(
-        `https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`,
-        { headers: asaasHeaders }
-      );
+      if (pagamento.errors) {
+        throw new Error(pagamento.errors[0].description);
+      }
+
+      // Pega o QR Code
+      const qrRes = await fetch(`https://api.asaas.com/v3/payments/${pagamento.id}/pixQrCode`, {
+        headers: asaasHeaders,
+      });
       const qr = await qrRes.json();
 
-      // Atualizar no Firestore com o ID do Asaas
       await db.collection("pedidos").doc(pedidoId).update({
         asaasPaymentId: pagamento.id,
-        status: "AGUARDANDO_PAGAMENTO",
       });
 
       return {
@@ -113,29 +93,25 @@ exports.handler = async (event) => {
       };
     }
 
-    // ========== CARTÃO ==========
+    // CARTÃO
     if (metodo === "CREDIT_CARD") {
       const linkRes = await fetch("https://api.asaas.com/v3/paymentLinks", {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
-          name: `DeixaComigo - ${tipo}`,
-          description: `Pedido ${pedidoId}`,
+          name: `DeixaComigo – ${tipo === "áudio" ? "Áudio" : "Vídeo"} 30s`,
           value: valor,
           billingType: "CREDIT_CARD",
-          chargeType: "DETACHED", // permite cartão sem boleto
-          dueDateLimitDays: 3,
+          chargeType: "DETACHED",
           externalReference: pedidoId,
         }),
       });
 
-      const linkData = await linkRes.json();
-
-      if (linkData.errors) throw new Error(linkData.errors[0].description);
+      const link = await linkRes.json();
+      if (link.errors) throw new Error(link.errors[0].description);
 
       await db.collection("pedidos").doc(pedidoId).update({
-        asaasPaymentId: linkData.id,
-        status: "AGUARDANDO_PAGAMENTO",
+        asaasPaymentId: link.id,
       });
 
       return {
@@ -144,26 +120,19 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           success: true,
           pedidoId,
-          checkoutUrl: linkData.url,
+          checkoutUrl: link.url,
         }),
       };
     }
 
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ success: false, error: "Método inválido" }),
-    };
-  } catch (error) {
-    console.error("Erro na function:", error.message);
+    return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Método inválido" }) };
 
+  } catch (error) {
+    console.error("Erro Asaas:", error.message);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
-        success: false,
-        error: error.message || "Erro interno",
-      }),
+      body: JSON.stringify({ success: false, error: error.message }),
     };
   }
 };
