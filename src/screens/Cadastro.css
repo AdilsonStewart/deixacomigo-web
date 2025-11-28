@@ -1,125 +1,89 @@
-.container {
+/* Cadastro.css – centralizado, bonito e responsivo */
+
+.cadastro-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.cadastro-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.cadastro-titulo {
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.cadastro-form {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #FFFFFF;
-  padding: 20px;
-  min-height: 100vh;
+  gap: 18px;
 }
 
-.titulo {
-  font-size: 32px;
-  font-weight: bold;
-  color: #4A3780;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.slogan {
-  font-size: 18px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 40px;
-  line-height: 24px;
-}
-
-.form-container {
-  width: 100%;
-  max-width: 400px;
-}
-
-.input {
-  background-color: #f8f8f8;
-  padding: 15px;
-  border-radius: 15px;
-  margin-bottom: 15px;
-  border: 1px solid #e0e0e0;
+.cadastro-input {
+  padding: 14px 16px;
   font-size: 16px;
-  color: #333;
-  width: 100%;
-  box-sizing: border-box;
+  border: 2px solid #e1e1e1;
+  border-radius: 12px;
+  transition: all 0.3s;
 }
 
-.input:focus {
+.cadastro-input:focus {
+  outline:focus {
   outline: none;
-  border-color: #6C5CE7;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Campo de data fica igual aos outros inputs */
-input[type="date"] {
-  background-color: #f8f8f8;
-  padding: 15px;
-  border-radius: 15px;
-  border: 1px solid #e0e0e0;
-  font-size: 16px;
-  color: #333;
-  width: 100%;
-  box-sizing: border-box;
-  -webkit-appearance: none;
-  appearance: none;
-  font-family: inherit;
-}
-
-input[type="date"]:focus {
-  outline: none;
-  border-color: #6C5CE7;
-}
-
-/* Texto pequeno embaixo da data */
-small {
-  display: block;
-  text-align: center;
-  color: #888;
-  font-size: 13px;
-  margin-top: -10px;
-  margin-bottom: 15px;
-}
-
-.botao {
-  background-color: #6C5CE7;
-  color: #FFFFFF;
-  border: none;
-  padding: 15px 40px;
-  border-radius: 30px;
-  margin-bottom: 15px;
-  width: 100%;
+.cadastro-botao {
+  background: #667eea;
+  color: white;
   font-size: 18px;
   font-weight: 600;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
-  text-align: center;
-  transition: background-color 0.3s;
+  margin-top: 10px;
+  transition: background 0.3s;
 }
 
-.botao:hover {
-  background-color: #5b4bc4;
+.cadastro-botao:hover {
+  background: #5a6fd8;
 }
 
-.botao-entrar {
-  background-color: #00B894;
-}
-
-.botao-entrar:hover {
-  background-color: #00a885;
-}
-
-.botao-desabilitado {
-  background-color: #CCCCCC;
+.cadastro-botao:disabled {
+  background: #a0a0a0;
   cursor: not-allowed;
 }
 
-.botao-desabilitado:hover {
-  background-color: #CCCCCC;
+.cadastro-erro {
+  color: #e74c3c;
+  font-size: 14px;
+  margin-top: 10px;
+  font-weight: 500;
 }
 
-.voltar-text {
-  color: #6C5CE7;
-  font-size: 16px;
-  font-weight: 500;
-  text-align: center;
-  margin-top: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
+/* Responsivo pra celular */
+@media (max-width: 480px) {
+  .cadastro-card {
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+  .cadastro-titulo {
+    font-size: 24px;
+  }
 }
