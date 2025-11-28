@@ -58,12 +58,12 @@ const Servicos = () => {
 
       {/* ÁUDIO */}
       <div style={cardStyle}>
-        <h3 style={{ color: '#28a745', marginBottom: '15px' }}>ÁUDIO 30s — R$ 1,99</h3>
+        <h3 style={{ color: '#28a745', marginBottom: '15px' }}>ÁUDIO 30s — R$ 5,00</h3>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <button onClick={() => pagar(1.99, "áudio", "PIX")} disabled={loading} style={btnPix}>
+          <button onClick={() => pagar(5,00, "áudio", "PIX")} disabled={loading} style={btnPix}>
             {loading && metodoSelecionado === 'PIX' ? "Gerando PIX..." : "PIX"}
           </button>
-          <button onClick={() => pagar(1.99, "áudio", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
+          <button onClick={() => pagar(5,00, "áudio", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
             {loading && metodoSelecionado === 'CREDIT_CARD' ? "Redirecionando..." : "Cartão"}
           </button>
         </div>
