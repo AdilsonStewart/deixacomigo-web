@@ -7,11 +7,12 @@ export default function Cadastro() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState(""); // NOVO CAMPO
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
   const handleCadastro = async () => {
-    if (!nome || !telefone || !dataNascimento) {
+    if (!nome || !telefone || !dataNascimento || !cpfCnpj) {
       setErro("Preencha todos os campos!");
       return;
     }
@@ -28,6 +29,7 @@ export default function Cadastro() {
           nome,
           telefone,
           dataNascimento,
+          cpfCnpj, // envia CPF/CNPJ
         }),
       });
 
@@ -69,6 +71,13 @@ export default function Cadastro() {
             type="date"
             value={dataNascimento}
             onChange={(e) => setDataNascimento(e.target.value)}
+            className="cadastro-input"
+          />
+          <input
+            type="text"
+            placeholder="CPF ou CNPJ"
+            value={cpfCnpj}
+            onChange={(e) => setCpfCnpj(e.target.value)}
             className="cadastro-input"
           />
 
