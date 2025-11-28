@@ -25,7 +25,7 @@ exports.handler = async (event) => {
         name: "Cliente Teste",
         cpfCnpj: "04616557802",
         email: "teste@deixacomigo.com",
-        mobilePhone: "11999999999",
+        mobilePhone: "11988265000",
       }),
     });
     const cliente = await clienteRes.json();
