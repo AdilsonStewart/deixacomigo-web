@@ -15,7 +15,11 @@ exports.handler = async (event) => {
   try {
     console.log("EVENT BODY:", event.body);
 
-    const { valor = 5.00 } = JSON.parse(event.body || "{}");
+    const { nome, telefone, cpfCnpj, email, valor = 5.00 } = JSON.parse(event.body || "{}");
+
+    if (!nome || !telefone || !cpfCnpj || !email) {
+      throw new Error("Todos os campos do usuário são obrigatórios");
+    }
 
     if (valor < 5) throw new Error("O valor mínimo permitido pelo Asaas é R$ 5,00");
 
@@ -24,18 +28,18 @@ exports.handler = async (event) => {
 
     console.log("ASAAS_API_KEY encontrada");
 
-    // Criar cliente único para evitar duplicidade
-    const timestamp = Date.now();
+    // Criar cliente no Asaas com os dados do usuário
     const clienteRes = await fetch("https://www.asaas.com/api/v3/customers", {
       method: "POST",
       headers: { "access_token": key, "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: `Cliente Teste ${timestamp}`,
-        cpfCnpj: `046165${timestamp % 10000000}`,
-        email: `teste${timestamp}@deixacomigo.com`,
-        mobilePhone: "11988265000",
+        name: nome,
+        cpfCnpj: cpfCnpj,
+        email: email,
+        mobilePhone: telefone,
       }),
     });
+
     const cliente = await clienteRes.json();
     if (cliente.errors) throw new Error("Cliente: " + cliente.errors[0].description);
 
@@ -53,6 +57,7 @@ exports.handler = async (event) => {
         description: "DeixaComigo",
       }),
     });
+
     const pagamento = await pagamentoRes.json();
     if (pagamento.errors) throw new Error(pagamento.errors[0].description);
 
