@@ -41,17 +41,18 @@ exports.handler = async (event) => {
     const asaasHeaders = { "access_token": ASAAS_API_KEY, "Content-Type": "application/json" };
 
     if (metodo === "PIX") {
-      const clienteRes = await fetch("https://api.asaas.com/v3/customers", {
-        method: "POST",
-        headers: asaasHeaders,
-        body: JSON.stringify({
-          name: nome || "Adilson Stewart",
-          cpfCnpj: "04616557802",
-          email: "adilson@deixacomigo.com",
-          mobilePhone: telefone || "11988265000",
-          notificationDisabled: false,
-        }),
-      });
+      const pagamentoRes = await fetch("https://sandbox.asaas.com/api/v3/payments", {
+  method: "POST",
+  headers: asaasHeaders,
+  body: JSON.stringify({
+    customer: cliente.id,
+    billingType: "PIX",
+    value: Number(valor).toFixed(2),           // ← mantém número com 2 casas
+    dueDate: vencimento.toISOString().split("T")[0],
+    description: "DeixaComigo - Áudio ou Vídeo 30s",
+    externalReference: pedidoId,
+  }),
+});
       const cliente = await clienteRes.json();
       if (cliente.errors) throw new Error("Cliente: " + JSON.stringify(cliente.errors));
 
