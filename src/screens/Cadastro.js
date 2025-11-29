@@ -12,9 +12,31 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
+  // Mascara para data DD/MM/AAAA
+  const formatarData = (valor) => {
+    valor = valor.replace(/\D/g, "");
+    if (valor.length > 2) valor = valor.replace(/(\d{2})(\d)/, "$1/$2");
+    if (valor.length > 5) valor = valor.replace(/(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+    return valor;
+  };
+
+  // Converter DD/MM/AAAA → YYYY-MM-DD antes de enviar ao backend
+  const converterParaISO = (str) => {
+    const partes = str.split("/");
+    if (partes.length !== 3) return "";
+    return `${partes[2]}-${partes[1]}-${partes[0]}`;
+  };
+
   const handleCadastro = async () => {
     if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
       setErro("Preencha todos os campos!");
+      return;
+    }
+
+    const nascimentoISO = converterParaISO(dataNascimento);
+
+    if (!nascimentoISO || nascimentoISO.length < 10) {
+      setErro("Data de nascimento inválida");
       return;
     }
 
@@ -28,7 +50,7 @@ export default function Cadastro() {
         body: JSON.stringify({
           nome,
           telefone,
-          dataNascimento,
+          dataNascimento: nascimentoISO,
           cpfCnpj,
           email
         }),
@@ -69,17 +91,15 @@ export default function Cadastro() {
             className="cadastro-input"
           />
 
-          <div className="input-container">
-            <input
-              type="date"
-              value={dataNascimento}
-              onChange={(e) => setDataNascimento(e.target.value)}
-              className="cadastro-input"
-            />
-            {!dataNascimento && (
-              <span className="placeholder-text">Nascimento</span>
-            )}
-          </div>
+          {/* CAMPO DE NASCIMENTO SEM CALENDÁRIO (COM MÁSCARA) */}
+          <input
+            type="text"
+            placeholder="Nascimento (DD/MM/AAAA)"
+            maxLength="10"
+            value={dataNascimento}
+            onChange={(e) => setDataNascimento(formatarData(e.target.value))}
+            className="cadastro-input"
+          />
 
           <input
             type="text"
