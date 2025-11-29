@@ -6,21 +6,11 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [dataNascimento, setDataNascimento] = useState(""); // Campo nascimento
+  const [dataNascimento, setDataNascimento] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
-  const [email, setEmail] = useState(""); // Email do usuário
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
-
-  // 👉 Função para aplicar máscara: DD/MM/AAAA
-  const aplicarMascaraData = (valor) => {
-    let v = valor.replace(/\D/g, ""); // só números
-
-    if (v.length > 4) v = v.replace(/(\d{2})(\d{2})(\d+)/, "$1/$2/$3");
-    else if (v.length > 2) v = v.replace(/(\d{2})(\d+)/, "$1/$2");
-
-    return v;
-  };
 
   const handleCadastro = async () => {
     if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
@@ -32,16 +22,15 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      const response = await fetch("/.netlify/functions/criar-pagamento-asaas", {
+      const response = await fetch("/.netlify/functions/salvar-cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome,
           telefone,
-          dataNascimento, // envia nascimento — mantém igual
+          dataNascimento,
           cpfCnpj,
-          email,
-          valor: 5,
+          email
         }),
       });
 
@@ -80,15 +69,17 @@ export default function Cadastro() {
             className="cadastro-input"
           />
 
-          {/* 👉 Campo com máscara */}
-          <input
-            type="text"
-            placeholder="Nascimento (DD/MM/AAAA)"
-            value={dataNascimento}
-            maxLength={10}
-            onChange={(e) => setDataNascimento(aplicarMascaraData(e.target.value))}
-            className="cadastro-input"
-          />
+          <div className="input-container">
+            <input
+              type="date"
+              value={dataNascimento}
+              onChange={(e) => setDataNascimento(e.target.value)}
+              className="cadastro-input"
+            />
+            {!dataNascimento && (
+              <span className="placeholder-text">Nascimento</span>
+            )}
+          </div>
 
           <input
             type="text"
