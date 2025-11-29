@@ -6,11 +6,21 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [dataNascimento, setDataNascimento] = useState(""); // Campo Nascimento
+  const [dataNascimento, setDataNascimento] = useState(""); // Campo nascimento
   const [cpfCnpj, setCpfCnpj] = useState("");
   const [email, setEmail] = useState(""); // Email do usuário
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+
+  // 👉 Função para aplicar máscara: DD/MM/AAAA
+  const aplicarMascaraData = (valor) => {
+    let v = valor.replace(/\D/g, ""); // só números
+
+    if (v.length > 4) v = v.replace(/(\d{2})(\d{2})(\d+)/, "$1/$2/$3");
+    else if (v.length > 2) v = v.replace(/(\d{2})(\d+)/, "$1/$2");
+
+    return v;
+  };
 
   const handleCadastro = async () => {
     if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
@@ -28,10 +38,10 @@ export default function Cadastro() {
         body: JSON.stringify({
           nome,
           telefone,
-          dataNascimento, // envia Nascimento
+          dataNascimento, // envia nascimento — mantém igual
           cpfCnpj,
           email,
-          valor: 5, // ou outro valor desejado
+          valor: 5,
         }),
       });
 
@@ -61,6 +71,7 @@ export default function Cadastro() {
             onChange={(e) => setNome(e.target.value)}
             className="cadastro-input"
           />
+
           <input
             type="tel"
             placeholder="Telefone (somente números)"
@@ -69,15 +80,15 @@ export default function Cadastro() {
             className="cadastro-input"
           />
 
-          <div className="input-container">
-            <input
-              type="date"
-              value={dataNascimento}
-              onChange={(e) => setDataNascimento(e.target.value)}
-              className="cadastro-input"
-            />
-            {!dataNascimento && <span className="placeholder-text">Nascimento</span>}
-          </div>
+          {/* 👉 Campo com máscara */}
+          <input
+            type="text"
+            placeholder="Nascimento (DD/MM/AAAA)"
+            value={dataNascimento}
+            maxLength={10}
+            onChange={(e) => setDataNascimento(aplicarMascaraData(e.target.value))}
+            className="cadastro-input"
+          />
 
           <input
             type="text"
@@ -86,6 +97,7 @@ export default function Cadastro() {
             onChange={(e) => setCpfCnpj(e.target.value)}
             className="cadastro-input"
           />
+
           <input
             type="email"
             placeholder="Email"
