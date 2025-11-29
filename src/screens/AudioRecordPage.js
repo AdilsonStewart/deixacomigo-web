@@ -1,199 +1,81 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { db, storage } from '../firebase/firebase-client';
-import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import './AudioRecorder.css';
+import React, { useState } from "react";
 
 const AudioRecordPage = () => {
-  const navigate = useNavigate();
-  const [recording, setRecording] = useState(false);
-  const [audioURL, setAudioURL] = useState('');
-  const [time, setTime] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const timerRef = useRef(null);
-  const alreadyStoppedRef = useRef(false); // <<< EVITA DUPLA PARADA
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  let mediaRecorder = null;
+  let chunks = [];
 
-  const saveRecordingToFirebase = async (audioBlob, duration) => {
-    setSaving(true);
-    try {
-      const fileName = `audios/gravacao_${Date.now()}.wav`;
-      const audioRef = ref(storage, fileName);
+  const start = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    chunks = [];
 
-      const snapshot = await uploadBytes(audioRef, audioBlob);
-      const audioUrl = await getDownloadURL(snapshot.ref);
+    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "audio/webm" });
+      const url = URL.createObjectURL(blob);
+      setAudioURL(url);
 
-      const recordingData = {
-        tipo: 'audio',
-        arquivoUrl: audioUrl,
-        duracao: duration,
-        nomeArquivo: snapshot.ref.name,
-        caminhoStorage: snapshot.ref.fullPath,
-        dataCriacao: new Date().toISOString(),
-        status: 'salvo'
-      };
+      // ENVIA AUTOMÁTICO quando parar
+      uploadAudio(blob);
+    };
 
-      const docRef = await addDoc(collection(db, 'audios'), recordingData);
-
-      localStorage.setItem('lastRecordingId', docRef.id);
-      localStorage.setItem('lastRecordingUrl', audioUrl);
-
-    } catch (error) {
-      alert('❌ Erro ao guardar áudio.');
-    } finally {
-      setSaving(false);
-    }
+    mediaRecorder.start();
+    setIsRecording(true);
   };
 
-  // --- PARADA CENTRALIZADA ---
-  const stopRecordingCentral = () => {
-    if (alreadyStoppedRef.current) return; // <<< evita segunda execução
-    alreadyStoppedRef.current = true;
+  const stop = () => {
+    mediaRecorder?.stop();
+    setIsRecording(false);
+  };
 
-    if (!mediaRecorderRef.current) return;
+  const uploadAudio = async (blob) => {
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = async () => {
+      const base64 = reader.result;
 
-    try {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
-    } catch {}
+      const res = await fetch("/.netlify/functions/salvar-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audioBase64: base64 }),
+      });
 
-    setRecording(false);
-    clearInterval(timerRef.current);
+      const json = await res.json();
+      setIsUploading(false);
 
-    setTimeout(async () => {
-      if (audioChunksRef.current.length > 0) {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioURL(url);
-
-        try {
-          await saveRecordingToFirebase(audioBlob, time);
-        } catch {}
+      if (json.success) {
+        alert("ÁUDIO SALVO COM SUCESSO!\n\nLink: " + json.url);
+      } else {
+        alert("Deu ruim: " + json.error);
       }
-    }, 150);
-  };
-
-  const startRecording = async () => {
-    if (saving) return;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      alreadyStoppedRef.current = false;
-      audioChunksRef.current = [];
-      setAudioURL('');
-      setSaving(false);
-      setTime(0);
-
-      mediaRecorder.ondataavailable = (e) => {
-        audioChunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.start();
-      setRecording(true);
-
-      timerRef.current = setInterval(() => {
-        setTime(prev => {
-          if (prev + 1 >= 30) {
-            stopRecordingCentral(); // <<< só aqui chama
-          }
-          return prev + 1;
-        });
-      }, 1000);
-
-    } catch {
-      alert('Erro ao acessar microfone.');
-    }
-  };
-
-  const stopRecording = () => {
-    stopRecordingCentral(); // <<< mesma função central
-  };
-
-  const playAudio = () => {
-    if (audioURL) new Audio(audioURL).play();
-  };
-
-  const newRecording = () => {
-    setAudioURL('');
-    setTime(0);
-    setSaving(false);
-    audioChunksRef.current = [];
-    alreadyStoppedRef.current = false;
-  };
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    };
   };
 
   return (
-    <div className="audio-container">
-      <img 
-        src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGU3djB5cHR4bjJuaXpwZDBrMnRwanJrMmJycDJ6YWt0bmN0OXVsbCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/PSo7PO7VvWgKuhq4r0/giphy.gif" 
-        alt="Gravar áudio"
-        className="audio-gif"
-      />
+    <div style={{ padding: 30, textAlign: "center", fontFamily: "Arial" }}>
+      <h1>Gravar Áudio</h1>
 
-      <h1 className="audio-title">Gravar Áudio</h1>
-      
-      <div className="timer">{formatTime(time)}</div>
+      {!isRecording ? (
+        <button onClick={start} style={{ padding: "15px 30px", fontSize: 18 }}>
+          🎙️ COMEÇAR GRAVAÇÃO
+        </button>
+      ) : (
+        <button onClick={stop} style={{ padding: "15px 30px", fontSize: 18, background: "red", color: "white" }}>
+          ⏹️ PARAR
+        </button>
+      )}
 
-      {recording && (
-        <div className="time-limit">
-          <p>Tempo máximo: 30 segundos</p>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{width: `${(time / 30) * 100}%`}}></div>
-          </div>
+      {audioURL && (
+        <div style={{ marginTop: 30 }}>
+          <audio controls src={audioURL} />
         </div>
       )}
 
-      {!audioURL && (
-        <div className="recording-phase">
-          {!recording ? (
-            <button className="btn-record" onClick={startRecording} disabled={saving}>
-              🎤 Iniciar Gravação
-            </button>
-          ) : (
-            <button className="btn-stop" onClick={stopRecording}>
-              ⏹️ Parar Gravação
-            </button>
-          )}
-        </div>
-      )}
-
-      {audioURL && !saving && (
-        <div className="playback-phase">
-          <button className="btn-play" onClick={playAudio}>▶️ Ouvir Gravação</button>
-        </div>
-      )}
-
-      {saving && (
-        <div className="saving-phase">
-          <p className="saving-status">⏳ Guardando seu áudio...</p>
-        </div>
-      )}
-
-      {audioURL && !saving && (
-        <div className="schedule-phase">
-          <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
-            📅 Agendar Entrega
-          </button>
-          <button className="btn-new" onClick={newRecording}>
-            🔄 Nova Gravação
-          </button>
-        </div>
-      )}
-
-      <div className="status">
-        {recording && <p className="recording-status">🎙️ Gravando... {30 - time}s restantes</p>}
-        {audioURL && !saving && <p className="success-status">✅ Áudio processado</p>}
-      </div>
+      {isUploading && <p style={{ marginTop: 20 }}>Enviando áudio, aguarde…</p>}
     </div>
   );
 };
