@@ -14,25 +14,17 @@ const AudioRecordPage = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
+  const alreadyStoppedRef = useRef(false); // <<< EVITA DUPLA PARADA
 
-  // Salvar gravação no Firebase
   const saveRecordingToFirebase = async (audioBlob, duration) => {
     setSaving(true);
     try {
-      console.log('📤 Iniciando upload para Firebase Storage...');
-      
-      // 1. Upload do áudio para Firebase Storage
       const fileName = `audios/gravacao_${Date.now()}.wav`;
       const audioRef = ref(storage, fileName);
-      console.log('📁 Fazendo upload do arquivo:', fileName);
-      
-      const snapshot = await uploadBytes(audioRef, audioBlob);
-      console.log('✅ Upload do Storage concluído');
-      
-      const audioUrl = await getDownloadURL(snapshot.ref);
-      console.log('🔗 URL gerada:', audioUrl);
 
-      // 2. Salvar metadados no Firestore
+      const snapshot = await uploadBytes(audioRef, audioBlob);
+      const audioUrl = await getDownloadURL(snapshot.ref);
+
       const recordingData = {
         tipo: 'audio',
         arquivoUrl: audioUrl,
@@ -43,110 +35,101 @@ const AudioRecordPage = () => {
         status: 'salvo'
       };
 
-      console.log('💾 Salvando no Firestore...', recordingData);
-      
       const docRef = await addDoc(collection(db, 'audios'), recordingData);
-      
-      console.log('🎉 Gravacao salva no Firestore com ID:', docRef.id);
-      
+
       localStorage.setItem('lastRecordingId', docRef.id);
       localStorage.setItem('lastRecordingUrl', audioUrl);
-      
-      return docRef.id;
 
     } catch (error) {
-      console.error('❌ Erro ao salvar gravação:', error);
-      throw error;
+      alert('❌ Erro ao guardar áudio.');
     } finally {
       setSaving(false);
     }
   };
 
-  // Parar gravação automaticamente aos 30 segundos
-  const stopRecordingAutomatically = () => {
-    if (mediaRecorderRef.current && recording) {
+  // --- PARADA CENTRALIZADA ---
+  const stopRecordingCentral = () => {
+    if (alreadyStoppedRef.current) return; // <<< evita segunda execução
+    alreadyStoppedRef.current = true;
+
+    if (!mediaRecorderRef.current) return;
+
+    try {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      setRecording(false);
-      clearInterval(timerRef.current);
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+    } catch {}
 
-      setTimeout(async () => {
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setAudioURL(audioUrl);
+    setRecording(false);
+    clearInterval(timerRef.current);
 
-          try {
-            await saveRecordingToFirebase(audioBlob, time);
-            alert('✅ Áudio guardado! Prossiga para agendamento.');
-          } catch (error) {
-            alert('❌ Erro ao guardar áudio. Tente novamente.');
-          }
-        }
-      }, 100);
-    }
+    setTimeout(async () => {
+      if (audioChunksRef.current.length > 0) {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioURL(url);
+
+        try {
+          await saveRecordingToFirebase(audioBlob, time);
+        } catch {}
+      }
+    }, 150);
   };
 
-  // Iniciar gravação
   const startRecording = async () => {
+    if (saving) return;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
+      alreadyStoppedRef.current = false;
+      audioChunksRef.current = [];
+      setAudioURL('');
+      setSaving(false);
+      setTime(0);
+
+      mediaRecorder.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data);
       };
 
       mediaRecorder.start();
       setRecording(true);
-      setAudioURL('');
-      setSaving(false);
-      setTime(0);
-      
-      // Timer que para automaticamente em 30 segundos
+
       timerRef.current = setInterval(() => {
         setTime(prev => {
-          const newTime = prev + 1;
-          if (newTime >= 30) { // Para automaticamente em 30 segundos
-            stopRecordingAutomatically();
+          if (prev + 1 >= 30) {
+            stopRecordingCentral(); // <<< só aqui chama
           }
-          return newTime;
+          return prev + 1;
         });
       }, 1000);
 
-    } catch (error) {
-      alert('Erro ao acessar microfone. Verifique as permissões.');
+    } catch {
+      alert('Erro ao acessar microfone.');
     }
   };
 
-  // Parar gravação manual
   const stopRecording = () => {
-    stopRecordingAutomatically();
+    stopRecordingCentral(); // <<< mesma função central
   };
 
-  // Reproduzir áudio
   const playAudio = () => {
-    if (audioURL) {
-      const audio = new Audio(audioURL);
-      audio.play();
-    }
+    if (audioURL) new Audio(audioURL).play();
   };
 
-  // Nova gravação
   const newRecording = () => {
     setAudioURL('');
     setTime(0);
     setSaving(false);
     audioChunksRef.current = [];
+    alreadyStoppedRef.current = false;
   };
 
-  // Formatar tempo
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -156,29 +139,24 @@ const AudioRecordPage = () => {
         alt="Gravar áudio"
         className="audio-gif"
       />
-      
+
       <h1 className="audio-title">Gravar Áudio</h1>
       
       <div className="timer">{formatTime(time)}</div>
-      
-      {/* Indicador de tempo máximo */}
+
       {recording && (
         <div className="time-limit">
           <p>Tempo máximo: 30 segundos</p>
           <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{width: `${(time / 30) * 100}%`}}
-            ></div>
+            <div className="progress-fill" style={{width: `${(time / 30) * 100}%`}}></div>
           </div>
         </div>
       )}
 
-      {/* FASE 1: GRAVAÇÃO */}
       {!audioURL && (
         <div className="recording-phase">
           {!recording ? (
-            <button className="btn-record" onClick={startRecording}>
+            <button className="btn-record" onClick={startRecording} disabled={saving}>
               🎤 Iniciar Gravação
             </button>
           ) : (
@@ -189,24 +167,18 @@ const AudioRecordPage = () => {
         </div>
       )}
 
-      {/* FASE 2: OUVIR E SALVAR */}
       {audioURL && !saving && (
         <div className="playback-phase">
-          <button className="btn-play" onClick={playAudio}>
-            ▶️ Ouvir Gravação
-          </button>
-          <p className="info-status">Áudio pronto para envio</p>
+          <button className="btn-play" onClick={playAudio}>▶️ Ouvir Gravação</button>
         </div>
       )}
 
-      {/* FASE 3: SALVANDO */}
       {saving && (
         <div className="saving-phase">
           <p className="saving-status">⏳ Guardando seu áudio...</p>
         </div>
       )}
 
-      {/* FASE 4: AGENDAR */}
       {audioURL && !saving && (
         <div className="schedule-phase">
           <button className="btn-schedule" onClick={() => navigate('/agendamento')}>
@@ -227,4 +199,3 @@ const AudioRecordPage = () => {
 };
 
 export default AudioRecordPage;
-
