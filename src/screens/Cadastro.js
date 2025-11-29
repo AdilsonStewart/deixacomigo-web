@@ -20,7 +20,7 @@ export default function Cadastro() {
     return valor;
   };
 
-  // Converter DD/MM/AAAA → YYYY-MM-DD antes de enviar ao backend
+  // Converter DD/MM/AAAA → YYYY-MM-DD
   const converterParaISO = (str) => {
     const partes = str.split("/");
     if (partes.length !== 3) return "";
@@ -44,7 +44,7 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      const response = await fetch("/.netlify/functions/salvar-cadastro", {
+      const response = await fetch("/.netlify/functions/salvar-cliente", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function Cadastro() {
             className="cadastro-input"
           />
 
-          {/* CAMPO DE NASCIMENTO SEM CALENDÁRIO (COM MÁSCARA) */}
+          {/* Campo data sem calendário */}
           <input
             type="text"
             placeholder="Nascimento (DD/MM/AAAA)"
