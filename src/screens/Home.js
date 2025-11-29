@@ -89,4 +89,12 @@ export default function Home() {
               🔓 Acessar Painel
             </button>
             {passwordError && (
-              <p className="admin-erro-
+              <p className="admin-erro-central">Senha incorreta - Digite: 123456</p>
+            )}
+            <p className="admin-dica">Senha: 123456</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
