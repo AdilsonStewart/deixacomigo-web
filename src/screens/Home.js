@@ -8,7 +8,12 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
 
-  // Senha do admin - 123456
+  // Campos de data de nascimento SEM calendário
+  const [dia, setDia] = useState('');
+  const [mes, setMes] = useState('');
+  const [ano, setAno] = useState('');
+
+  // Senha do admin
   const ADMIN_PASSWORD = "123456";
 
   const handleAdminAccess = () => {
@@ -40,9 +45,45 @@ export default function Home() {
       </div>
 
       <h1 className="titulo">DeixaComigo</h1>
-      <p className="slogan">Lembrou agora?<br />Programe o parabéns!</p>
+      <p className="slogan">
+        Lembrou agora?<br />Programe o parabéns!
+      </p>
 
-      {/* NOVO FLUXO */}
+      {/* CAMPO DE NASCIMENTO SEM CALENDÁRIO */}
+      <div className="data-container">
+        <p className="label-data">Data de Nascimento</p>
+
+        <div className="data-flex">
+          <input
+            type="text"
+            placeholder="DD"
+            maxLength="2"
+            value={dia}
+            onChange={(e) => setDia(e.target.value.replace(/\D/g, ''))}
+            className="data-input"
+          />
+
+          <input
+            type="text"
+            placeholder="MM"
+            maxLength="2"
+            value={mes}
+            onChange={(e) => setMes(e.target.value.replace(/\D/g, ''))}
+            className="data-input"
+          />
+
+          <input
+            type="text"
+            placeholder="AAAA"
+            maxLength="4"
+            value={ano}
+            onChange={(e) => setAno(e.target.value.replace(/\D/g, ''))}
+            className="data-input"
+          />
+        </div>
+      </div>
+
+      {/* BOTÕES PRINCIPAIS */}
       <button
         className="botao criar-lembrete"
         onClick={() => navigate('/cadastro')}
@@ -62,7 +103,7 @@ export default function Home() {
         Sua voz, na hora certa.<br />Todo mundo acha que você nunca esquece.
       </p>
 
-      {/* ADMIN CENTRALIZADO */}
+      {/* ADMIN */}
       <div className="admin-centralizado">
         <button
           className="admin-btn-central"
@@ -88,9 +129,11 @@ export default function Home() {
             >
               🔓 Acessar Painel
             </button>
+
             {passwordError && (
               <p className="admin-erro-central">Senha incorreta - Digite: 123456</p>
             )}
+
             <p className="admin-dica">Senha: 123456</p>
           </div>
         )}
