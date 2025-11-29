@@ -4,65 +4,58 @@ const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState(null);
   const [audioBlob, setAudioBlob] = useState(null);
-
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [dataEntrega, setDataEntrega] = useState("");
   const [horaEntrega, setHoraEntrega] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
   // ----------------------------
-  // ✔️ Iniciar gravação
+  // Iniciar gravação
   // ----------------------------
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
       audioChunksRef.current = [];
       setAudioURL(null);
       setAudioBlob(null);
 
       const mediaRecorder = new MediaRecorder(stream);
-
       mediaRecorder.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
-      };
+      });
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
         setAudioURL(URL.createObjectURL(blob));
+        // Para o microfone
+        stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
     } catch (error) {
-      console.error("Erro ao iniciar gravação:", error);
-      alert("Não foi possível acessar o microfone.");
+      alert("Não consegui acessar o microfone. Verifique as permissões.");
     }
   };
 
   // ----------------------------
-  // ✔️ Parar gravação (corrigido!)
+  // Parar gravação
   // ----------------------------
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-
-      // 🔴 IMPORTANTE: encerra o stream completamente
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
-
-      mediaRecorderRef.current = null;
+      setIsRecording(false);
     }
-
-    setIsRecording(false);
   };
 
   // ----------------------------
-  // ✔️ Enviar para Netlify Function
+  // Enviar áudio (já sem CORS!)
   // ----------------------------
   const enviarDados = async () => {
     if (!audioBlob) {
@@ -70,106 +63,125 @@ const AudioRecorder = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("audio", audioBlob, "pedido.webm");
-    formData.append("nome", nome);
-    formData.append("telefone", telefone);
-    formData.append("dataEntrega", dataEntrega);
-    formData.append("horaEntrega", horaEntrega);
+    setIsUploading(true);
 
-    try {
-      const response = await fetch("/.netlify/functions/salvar-cliente", {
-        method: "POST",
-        body: formData,
-      });
+    const reader = new FileReader();
+    reader.readAsDataURL(audioBlob);
 
-      const result = await response.json();
+    reader.onloadend = async () => {
+      const base64data = reader.result;
 
-      if (result.success) {
-        alert("Pedido enviado com sucesso!");
+      try {
+        const response = await fetch("/.netlify/functions/salvar-audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            audioBase64: base64data,
+            nome,
+            telefone,
+            dataEntrega,
+            horaEntrega,
+            clienteId: localStorage.getItem("clienteId") || "sem-cadastro",
+          }),
+        });
 
-        // ✔️ Limpa tudo
-        setAudioURL(null);
-        setAudioBlob(null);
-        setNome("");
-        setTelefone("");
-        setDataEntrega("");
-        setHoraEntrega("");
-      } else {
-        alert("Erro ao enviar: " + result.error);
+        const result = await response.json();
+
+        if (result.success) {
+          alert("Áudio enviado com sucesso!\n\nLink permanente:\n" + result.url);
+          // limpa tudo pra próxima gravação
+          setAudioURL(null);
+          setAudioBlob(null);
+          setNome("");
+          setTelefone("");
+          setDataEntrega("");
+          setHoraEntrega("");
+        } else {
+          alert("Erro do servidor: " + (result.error || "tente novamente"));
+        }
+      } catch (err) {
+        alert("Erro de conexão. Verifique sua internet e tente de novo.");
+      } finally {
+        setIsUploading(false);
       }
-    } catch (error) {
-      console.error("Erro ao enviar:", error);
-      alert("Falha ao enviar, tente novamente.");
-    }
+    };
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Gravador de Pedido</h2>
+    <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: "600px", margin: "0 auto" }}>
+      <h2>Gravador de Áudio / Vídeo Mensagem</h2>
 
-      {/* Botões de gravação */}
       {!isRecording ? (
-        <button onClick={startRecording}>🎙️ Gravar</button>
+        <button onClick={startRecording} style={{ fontSize: "18px", padding: "12px 24px" }}>
+          Gravar
+        </button>
       ) : (
-        <button onClick={stopRecording}>⏹️ Parar</button>
+        <button onClick={stopRecording} style={{ fontSize: "18px", padding: "12px 24px", background: "#c00", color: "white" }}>
+          Parar Gravação
+        </button>
       )}
 
-      {/* Player de áudio */}
       {audioURL && (
-        <div style={{ marginTop: 20 }}>
-          <p>Prévia do áudio:</p>
-          <audio controls src={audioURL}></audio>
+        <div style={{ marginTop: 30 }}>
+          <p><strong>Prévia do áudio:</strong></p>
+          <audio controls src={audioURL} style={{ width: "100%" }} />
         </div>
       )}
 
-      <hr />
+      <hr style={{ margin: "40px 0" }} />
 
-      {/* Campos do formulário */}
-      <div>
-        <label>Nome:</label>
+      <div style={{ display: "grid", gap: "15px" }}>
         <input
+          type="text"
+          placeholder="Nome do destinatário"
           value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          placeholder="Nome do cliente"
+          onChange={(e => setNome(e.target.value))
+          style={{ padding: "10px", fontSize: "16px" }}
         />
-
-      <br />
-
-        <label>Telefone:</label>
         <input
+          type="tel"
+          placeholder="Telefone com DDD (ex: 11999999999)"
           value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
-          placeholder="Telefone"
+          onChange={(e) => setTelefone(e.target.value))}
+          style={{ padding: "10px", fontSize: "16px" }}
         />
-
-      <br />
-
-        <label>Data de entrega:</label>
         <input
           type="date"
           value={dataEntrega}
-          onChange={(e) => setDataEntrega(e.target.value)}
+          onChange={(e => setDataEntrega(e.target.value))}
+          style={{ padding: "10px", fontSize: "16px" }}
         />
-
-      <br />
-
-        <label>Horário:</label>
         <select
           value={horaEntrega}
-          onChange={(e) => setHoraEntrega(e.target.value)}
+          onChange={(e => setHoraEntrega(e.target.value))}
+          style={{ padding: "10px", fontSize: "16px" }}
         >
-          <option value="">Selecione</option>
+          <option value="">Horário de entrega</option>
           <option value="09:00">09:00</option>
           <option value="10:00">10:00</option>
           <option value="11:00">11:00</option>
           <option value="14:00">14:00</option>
           <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
         </select>
       </div>
 
-      <button style={{ marginTop: 20 }} onClick={enviarDados}>
-        ✔️ Enviar Pedido
+      <button
+        onClick={enviarDados}
+        disabled={isUploading}
+        style={{
+          marginTop: 30,
+          padding: "15px 30px",
+          fontSize: "18px",
+          background: isUploading ? "#666" : "#28a745",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          cursor: isUploading ? "not-allowed" : "pointer"
+        }}
+      >
+        {isUploading ? "Enviando áudio, aguarde…" : "Enviar Pedido"}
       </button>
     </div>
   );
