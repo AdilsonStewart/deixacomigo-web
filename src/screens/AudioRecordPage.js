@@ -16,14 +16,13 @@ const AudioRecordPage = () => {
   const alreadyStoppedRef = useRef(false);
 
   // ================================================================
-  // NOVA FUNÇÃO: salva via Netlify Function (sem CORS!)
+  // Salva via Netlify Function (sem CORS e sem variável gigante)
   // ================================================================
   const saveRecordingToFirebase = async (audioBlob) => {
     setSaving(true);
     try {
       const reader = new FileReader();
       reader.readAsDataURL(audioBlob);
-
       reader.onloadend = async () => {
         const base64data = reader.result;
 
@@ -39,25 +38,22 @@ const AudioRecordPage = () => {
         });
 
         const json = await res.json();
+        if (!json.success) throw new Error(json.error);
 
-        if (!json.success) throw new Error(json.error || "Erro no servidor");
-
-        // Salva ID e URL pra usar no agendamento depois
-        localStorage.setItem("lastRecordingId", json.docId);
         localStorage.setItem("lastRecordingUrl", json.url);
+        localStorage.setItem("lastRecordingId", "temp"); // só pra não quebrar o fluxo
 
         alert("Áudio salvo com sucesso!");
-        setSaving(false);
       };
     } catch (err) {
-      console.error(err);
-      alert("Erro ao salvar áudio. Tente novamente.");
+      alert("Erro ao salvar áudio: " + err.message);
+    } finally {
       setSaving(false);
     }
   };
 
   // ================================================================
-  // Função centralizada de parada (evita duplicação)
+  // Parada centralizada
   // ================================================================
   const stopRecordingCentral = () => {
     if (alreadyStoppedRef.current) return;
@@ -89,9 +85,7 @@ const AudioRecordPage = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-
-        // Salva automaticamente quando parar
-        saveRecordingToFirebase(blob);
+        saveRecordingToFirebase(blob); // salva automático
       };
 
       mediaRecorder.start();
@@ -99,7 +93,6 @@ const AudioRecordPage = () => {
       setAudioURL("");
       setTime(0);
 
-      // Contador + parada automática aos 30s
       timerRef.current = setInterval(() => {
         setTime((prev) => {
           const novo = prev + 1;
@@ -108,25 +101,16 @@ const AudioRecordPage = () => {
         });
       }, 1000);
     } catch (err) {
-      alert("Erro ao acessar o microfone. Verifique as permissões.");
+      alert("Erro no microfone. Verifique as permissões.");
     }
   };
 
-  // ================================================================
-  // Parar manual
-  // ================================================================
   const stopRecording = () => stopRecordingCentral();
 
-  // ================================================================
-  // Ouvir novamente
-  // ================================================================
   const playAudio = () => {
     if (audioURL) new Audio(audioURL).play();
   };
 
-  // ================================================================
-  // Formatar tempo
-  // ================================================================
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -135,7 +119,7 @@ const AudioRecordPage = () => {
 
   return (
     <div className="audio-record-page">
-      <img src={corujinhaGif} alt="Gravar áudio" className="audio-gif" />
+      <img src={corujinhaGif} alt="Corujinha" className="audio-gif" />
       <h1 className="audio-title">Gravar Áudio</h1>
 
       <div className="timer">{formatTime(time)}</div>
@@ -147,12 +131,12 @@ const AudioRecordPage = () => {
             <div
               className="progress-fill"
               style={{ width: `${(time / 30) * 100}%` }}
-            ></div>
+            />
           </div>
         </div>
-      }
+      )}
 
-      {/* FASE 1 – GRAVANDO */}
+      {/* GRAVANDO */}
       {!audioURL && !saving && (
         <div className="recording-phase">
           {!recording ? (
@@ -161,7 +145,7 @@ const AudioRecordPage = () => {
             </button>
           ) : (
             <div className="recording-controls">
-              <div className="pulse-ring"></div>
+              <div className="pulse-ring" />
               <button className="btn-stop" onClick={stopRecording}>
                 Parar Gravação
               </button>
@@ -170,29 +154,26 @@ const AudioRecordPage = () => {
         </div>
       )}
 
-      {/* FASE 2 – OUVIR */}
+      {/* OUVIR */}
       {audioURL && !saving && (
         <div className="playback-phase">
           <button className="btn-play" onClick={playAudio}>
             Ouvir Gravação
           </button>
-          <p className="info-status">Áudio salvo! Agora é só agendar</p>
+          <p className="info-status">Áudio salvo! Pode agendar</p>
         </div>
       )}
 
-      {/* FASE 3 – SALVANDO */}
+      {/* SALVANDO */}
       {saving && (
         <div className="saving-phase">
           <p className="saving-status">Guardando seu áudio...</p>
         </div>
       )}
 
-      {/* BOTÃO AGENDAR */}
+      {/* AGENDAR */}
       {audioURL && !saving && (
-        <button
-          className="btn-schedule"
-          onClick={() => navigate("/agendamento")}
-        >
+        <button className="btn-schedule" onClick={() => navigate("/agendamento")}>
           Ir para Agendamento
         </button>
       )}
