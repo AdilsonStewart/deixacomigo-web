@@ -1,77 +1,162 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import './AudioRecorder.css';
+import React, { useState, useRef } from "react";
 
 const AudioRecorder = () => {
-  const navigate = useNavigate();
-  const [pago, setPago] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
 
-  useEffect(() => {
-    const checkPagamento = async () => {
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [dataEntrega, setDataEntrega] = useState("");
+  const [horaEntrega, setHoraEntrega] = useState("");
 
-        if (!user) {
-          alert("Você precisa estar logado.");
-          setPago(false);
-          setLoading(false);
-          return;
-        }
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
-        const db = getFirestore();
-        const userRef = doc(db, 'usuarios-asaas', user.uid);
-        const userSnap = await getDoc(userRef);
+  // ----------------------------
+  // Iniciar gravação
+  // ----------------------------
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        if (!userSnap.exists()) {
-          alert("Usuário não encontrado.");
-          setPago(false);
-          setLoading(false);
-          return;
-        }
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
 
-        const userData = userSnap.data();
-        setPago(userData.pago === true);
-      } catch (err) {
-        console.error(err);
-        setPago(false);
-      } finally {
-        setLoading(false);
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+        setAudioURL(URL.createObjectURL(blob));
+      };
+
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Erro ao iniciar gravação:", error);
+      alert("Não foi possível acessar o microfone.");
+    }
+  };
+
+  // ----------------------------
+  // Parar gravação
+  // ----------------------------
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // ----------------------------
+  // Enviar para Netlify Function
+  // ----------------------------
+  const enviarDados = async () => {
+    if (!audioBlob) {
+      alert("Grave um áudio antes de enviar.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "pedido.webm");
+    formData.append("nome", nome);
+    formData.append("telefone", telefone);
+    formData.append("dataEntrega", dataEntrega);
+    formData.append("horaEntrega", horaEntrega);
+
+    try {
+      const response = await fetch("/.netlify/functions/salvar-cliente", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Pedido enviado com sucesso!");
+
+        // limpa tudo
+        setAudioURL(null);
+        setAudioBlob(null);
+
+        setNome("");
+        setTelefone("");
+        setDataEntrega("");
+        setHoraEntrega("");
+
+      } else {
+        alert("Erro ao enviar: " + result.error);
       }
-    };
-
-    checkPagamento();
-  }, []);
-
-  if (loading) return <p>Carregando...</p>;
-
-  if (!pago) {
-    return (
-      <div className="audio-container">
-        <h2>💡 Para acessar a gravação, você precisa pagar primeiro.</h2>
-        <button 
-          className="audio-btn" 
-          onClick={() => navigate(-1)}
-        >
-          Voltar
-        </button>
-      </div>
-    );
-  }
+    } catch (error) {
+      console.error("Erro ao enviar:", error);
+      alert("Falha ao enviar, tente novamente.");
+    }
+  };
 
   return (
-    <div className="audio-container">
-      <h1 className="audio-title">Gravar Áudio</h1>
-      <p className="audio-sub">Funcionalidade em desenvolvimento...</p>
-      
-      <button 
-        className="audio-btn" 
-        onClick={() => navigate(-1)}
-      >
-        Voltar
+    <div style={{ padding: 20 }}>
+      <h2>Gravador de Pedido</h2>
+
+      {/* Botões de gravação */}
+      {!isRecording ? (
+        <button onClick={startRecording}>🎙️ Gravar</button>
+      ) : (
+        <button onClick={stopRecording}>⏹️ Parar</button>
+      )}
+
+      {/* Player de áudio */}
+      {audioURL && (
+        <div style={{ marginTop: 20 }}>
+          <p>Prévia do áudio:</p>
+          <audio controls src={audioURL}></audio>
+        </div>
+      )}
+
+      <hr />
+
+      {/* Campos do formulário */}
+      <div>
+        <label>Nome:</label>
+        <input
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Nome do cliente"
+        />
+
+        <label>Telefone:</label>
+        <input
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          placeholder="Telefone"
+        />
+
+        <label>Data de entrega:</label>
+        <input
+          type="date"
+          value={dataEntrega}
+          onChange={(e) => setDataEntrega(e.target.value)}
+        />
+
+        <label>Horário:</label>
+        <select
+          value={horaEntrega}
+          onChange={(e) => setHoraEntrega(e.target.value)}
+        >
+          <option value="">Selecione</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+        </select>
+      </div>
+
+      <button style={{ marginTop: 20 }} onClick={enviarDados}>
+        ✔️ Enviar Pedido
       </button>
     </div>
   );
