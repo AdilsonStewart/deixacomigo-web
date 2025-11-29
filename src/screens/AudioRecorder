@@ -14,13 +14,16 @@ const AudioRecorder = () => {
   const audioChunksRef = useRef([]);
 
   // ----------------------------
-  // Iniciar gravação
+  // ✔️ Iniciar gravação
   // ----------------------------
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       audioChunksRef.current = [];
+      setAudioURL(null);
+      setAudioBlob(null);
+
       const mediaRecorder = new MediaRecorder(stream);
 
       mediaRecorder.ondataavailable = (event) => {
@@ -43,17 +46,23 @@ const AudioRecorder = () => {
   };
 
   // ----------------------------
-  // Parar gravação
+  // ✔️ Parar gravação (corrigido!)
   // ----------------------------
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
+
+      // 🔴 IMPORTANTE: encerra o stream completamente
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+
+      mediaRecorderRef.current = null;
     }
+
+    setIsRecording(false);
   };
 
   // ----------------------------
-  // Enviar para Netlify Function
+  // ✔️ Enviar para Netlify Function
   // ----------------------------
   const enviarDados = async () => {
     if (!audioBlob) {
@@ -79,15 +88,13 @@ const AudioRecorder = () => {
       if (result.success) {
         alert("Pedido enviado com sucesso!");
 
-        // limpa tudo
+        // ✔️ Limpa tudo
         setAudioURL(null);
         setAudioBlob(null);
-
         setNome("");
         setTelefone("");
         setDataEntrega("");
         setHoraEntrega("");
-
       } else {
         alert("Erro ao enviar: " + result.error);
       }
@@ -127,6 +134,8 @@ const AudioRecorder = () => {
           placeholder="Nome do cliente"
         />
 
+      <br />
+
         <label>Telefone:</label>
         <input
           value={telefone}
@@ -134,12 +143,16 @@ const AudioRecorder = () => {
           placeholder="Telefone"
         />
 
+      <br />
+
         <label>Data de entrega:</label>
         <input
           type="date"
           value={dataEntrega}
           onChange={(e) => setDataEntrega(e.target.value)}
         />
+
+      <br />
 
         <label>Horário:</label>
         <select
