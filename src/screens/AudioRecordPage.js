@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import corujinhaGif from "../assets/corujinha.gif"; // ajuste o caminho se precisar
 
 const AudioRecordPage = () => {
   const navigate = useNavigate();
@@ -15,9 +14,7 @@ const AudioRecordPage = () => {
   const timerRef = useRef(null);
   const alreadyStoppedRef = useRef(false);
 
-  // ================================================================
-  // Salva via Netlify Function (sem CORS e sem variável gigante)
-  // ================================================================
+  // Salva o áudio usando a Netlify Function (sem CORS)
   const saveRecordingToFirebase = async (audioBlob) => {
     setSaving(true);
     try {
@@ -38,23 +35,20 @@ const AudioRecordPage = () => {
         });
 
         const json = await res.json();
-        if (!json.success) throw new Error(json.error);
-
-        localStorage.setItem("lastRecordingUrl", json.url);
-        localStorage.setItem("lastRecordingId", "temp"); // só pra não quebrar o fluxo
-
-        alert("Áudio salvo com sucesso!");
+        if (json.success) {
+          localStorage.setItem("lastRecordingUrl", json.url);
+          alert("Áudio salvo com sucesso!");
+        } else {
+          alert("Erro ao salvar: " + (json.error || "tente novamente"));
+        }
+        setSaving(false);
       };
     } catch (err) {
-      alert("Erro ao salvar áudio: " + err.message);
-    } finally {
+      alert("Erro de conexão ao salvar.");
       setSaving(false);
     }
   };
 
-  // ================================================================
-  // Parada centralizada
-  // ================================================================
   const stopRecordingCentral = () => {
     if (alreadyStoppedRef.current) return;
     alreadyStoppedRef.current = true;
@@ -67,9 +61,6 @@ const AudioRecordPage = () => {
     clearInterval(timerRef.current);
   };
 
-  // ================================================================
-  // Iniciar gravação
-  // ================================================================
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -85,7 +76,7 @@ const AudioRecordPage = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-        saveRecordingToFirebase(blob); // salva automático
+        saveRecordingToFirebase(blob);
       };
 
       mediaRecorder.start();
@@ -101,7 +92,7 @@ const AudioRecordPage = () => {
         });
       }, 1000);
     } catch (err) {
-      alert("Erro no microfone. Verifique as permissões.");
+      alert("Erro ao acessar o microfone.");
     }
   };
 
@@ -119,7 +110,13 @@ const AudioRecordPage = () => {
 
   return (
     <div className="audio-record-page">
-      <img src={corujinhaGif} alt="Corujinha" className="audio-gif" />
+      {/* CORUJINHA DO GIPHY EXATAMENTE A QUE VOCÊ USAVA */}
+      <img
+        src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjJvb3Zudjg1c2lnNHptdHI5aHQ1amduMXI4OHM1OG4wZHJ0OXVveiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/F6Vj7mncrFOYmgVHKb/giphy.gif"
+        alt="Corujinha dançando"
+        className="audio-gif"
+      />
+
       <h1 className="audio-title">Gravar Áudio</h1>
 
       <div className="timer">{formatTime(time)}</div>
@@ -173,7 +170,10 @@ const AudioRecordPage = () => {
 
       {/* AGENDAR */}
       {audioURL && !saving && (
-        <button className="btn-schedule" onClick={() => navigate("/agendamento")}>
+        <button
+          className="btn-schedule"
+          onClick={() => navigate("/agendamento")}
+        >
           Ir para Agendamento
         </button>
       )}
