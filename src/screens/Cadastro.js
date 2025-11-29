@@ -17,10 +17,10 @@ export default function Cadastro() {
     valor = valor.replace(/\D/g, "");
     if (valor.length > 2) valor = valor.replace(/(\d{2})(\d)/, "$1/$2");
     if (valor.length > 5) valor = valor.replace(/(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
-    return valor;
+    return valor.slice(0, 10);
   };
 
-  // Converter para formato ISO
+  // Converter para formato ISO (YYYY-MM-DD)
   const converterParaISO = (str) => {
     const partes = str.split("/");
     if (partes.length !== 3) return "";
@@ -34,7 +34,6 @@ export default function Cadastro() {
     }
 
     const nascimentoISO = converterParaISO(dataNascimento);
-
     if (!nascimentoISO || nascimentoISO.length < 10) {
       setErro("Data de nascimento inválida");
       return;
@@ -60,6 +59,11 @@ export default function Cadastro() {
 
       if (!data.success) throw new Error(data.error || "Erro desconhecido");
 
+      // AQUI GUARDAMOS NO LOCALSTORAGE PRA USAR NAS PRÓXIMAS TELAS
+      localStorage.setItem("clienteId", data.clienteId);
+      localStorage.setItem("clienteNome", nome);
+      localStorage.setItem("clienteTelefone", telefone);
+
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
@@ -73,9 +77,7 @@ export default function Cadastro() {
     <div className="cadastro-page">
       <div className="cadastro-card">
         <h1 className="cadastro-titulo">Cadastro</h1>
-
         <div className="cadastro-form">
-          
           <input
             type="text"
             placeholder="Nome completo"
@@ -84,17 +86,14 @@ export default function Cadastro() {
             className="cadastro-input"
             autoComplete="off"
           />
-
           <input
             type="tel"
             placeholder="Telefone (somente números)"
             value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
+            onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ""))}
             className="cadastro-input"
             autoComplete="off"
           />
-
-          {/* CAMPO DE NASCIMENTO COM MÁSCARA */}
           <input
             type="text"
             placeholder="Nascimento (DD/MM/AAAA)"
@@ -104,16 +103,14 @@ export default function Cadastro() {
             className="cadastro-input"
             autoComplete="off"
           />
-
           <input
             type="text"
-            placeholder="CPF ou CNPJ"
+            placeholder="CPF ou CNPJ (somente números)"
             value={cpfCnpj}
-            onChange={(e) => setCpfCnpj(e.target.value)}
+            onChange={(e) => setCpfCnpj(e.target.value.replace(/\D/g, ""))}
             className="cadastro-input"
             autoComplete="off"
           />
-
           <input
             type="email"
             placeholder="Email"
@@ -128,7 +125,7 @@ export default function Cadastro() {
             onClick={handleCadastro}
             disabled={loading}
           >
-            {loading ? "Salvando..." : "Cadastrar e Continuar"}
+            {loading ? "Salvando…" : "Cadastrar e Continuar"}
           </button>
 
           {erro && <p className="cadastro-erro">{erro}</p>}
