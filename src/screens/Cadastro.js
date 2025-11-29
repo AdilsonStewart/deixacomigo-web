@@ -12,7 +12,7 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
-  // Mascara para data DD/MM/AAAA
+  // Máscara DD/MM/AAAA
   const formatarData = (valor) => {
     valor = valor.replace(/\D/g, "");
     if (valor.length > 2) valor = valor.replace(/(\d{2})(\d)/, "$1/$2");
@@ -20,7 +20,7 @@ export default function Cadastro() {
     return valor;
   };
 
-  // Converter DD/MM/AAAA → YYYY-MM-DD
+  // Converter para formato ISO
   const converterParaISO = (str) => {
     const partes = str.split("/");
     if (partes.length !== 3) return "";
@@ -52,7 +52,7 @@ export default function Cadastro() {
           telefone,
           dataNascimento: nascimentoISO,
           cpfCnpj,
-          email
+          email,
         }),
       });
 
@@ -75,12 +75,14 @@ export default function Cadastro() {
         <h1 className="cadastro-titulo">Cadastro</h1>
 
         <div className="cadastro-form">
+          
           <input
             type="text"
             placeholder="Nome completo"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             className="cadastro-input"
+            autoComplete="off"
           />
 
           <input
@@ -89,9 +91,10 @@ export default function Cadastro() {
             value={telefone}
             onChange={(e) => setTelefone(e.target.value)}
             className="cadastro-input"
+            autoComplete="off"
           />
 
-          {/* Campo data sem calendário */}
+          {/* CAMPO DE NASCIMENTO COM MÁSCARA */}
           <input
             type="text"
             placeholder="Nascimento (DD/MM/AAAA)"
@@ -99,6 +102,7 @@ export default function Cadastro() {
             value={dataNascimento}
             onChange={(e) => setDataNascimento(formatarData(e.target.value))}
             className="cadastro-input"
+            autoComplete="off"
           />
 
           <input
@@ -107,6 +111,7 @@ export default function Cadastro() {
             value={cpfCnpj}
             onChange={(e) => setCpfCnpj(e.target.value)}
             className="cadastro-input"
+            autoComplete="off"
           />
 
           <input
@@ -115,6 +120,7 @@ export default function Cadastro() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="cadastro-input"
+            autoComplete="off"
           />
 
           <button
