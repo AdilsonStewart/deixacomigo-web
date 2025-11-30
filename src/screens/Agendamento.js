@@ -53,11 +53,11 @@ const Agendamento = () => {
 
       if (!res.ok) throw new Error("Erro no servidor");
 
-      // ←←← AQUI TÁ O SEGREDO: salva exatamente o que Saida.js espera
+      // ← AQUI SALVA EXATAMENTE O QUE A TELA DE SAÍDA PRECISA
       localStorage.setItem('lastAgendamento', JSON.stringify({
-        nome: nome.trim(),
-        dataEntrega: selectedDate,    // ← nome exato que Saida.js procura
-        horario: selectedTime         // ← nome exato que Saida.js procura
+        nomeDestinatario: nome.trim(),     // nome do destinatário
+        dataEntrega: selectedDate,         // data da entrega
+        horarioEntrega: selectedTime       // horário da entrega
       }));
 
       alert("Agendamento confirmado com sucesso!");
@@ -100,27 +100,62 @@ const Agendamento = () => {
         maxWidth: "500px",
         backdropFilter: "blur(10px)"
       }}>
-        <input type="text" placeholder="Nome do destinatário" value={nome} onChange={e => setNome(e.target.value)}
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }} />
+        {/* ← AQUI O TEXTO QUE VOCÊ PEDIU */}
+        <label style={{ fontSize: "1.3rem", fontWeight: "bold", marginBottom: "8px", display: "block" }}>
+          Enviar para:
+        </label>
+        <input
+          type="text"
+          placeholder="Nome do destinatário"
+          value={nome}
+          onChange={e => setNome(e.target.value)}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
+        />
 
-        <input type="tel" placeholder="(41) 99999-9999" value={telefone} onChange={e => setTelefone(formatPhone(e.target.value))} maxLength="15"
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }} />
+        <label style={{ fontSize: "1.1rem", marginTop: "15px", display: "block" }}>Celular do destinatário</label>
+        <input
+          type="tel"
+          placeholder="(41) 99999-9999"
+          value={telefone}
+          onChange={e => setTelefone(formatPhone(e.target.value))}
+          maxLength="15"
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
+        />
 
-        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} min={minDate()}
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }} />
+        <label style={{ fontSize: "1.1rem", marginTop: "15px", display: "block" }}>Data da entrega</label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={e => setSelectedDate(e.target.value)}
+          min={minDate()}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
+        />
 
-        <select value={selectedTime} onChange={e => setSelectedTime(e.target.value)}
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}>
+        <label style={{ fontSize: "1.1rem", marginTop: "15px", display: "block" }}>Horário da entrega</label>
+        <select
+          value={selectedTime}
+          onChange={e => setSelectedTime(e.target.value)}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
+        >
           <option value="">Escolha o horário</option>
           {horariosFixos.map(h => <option key={h} value={h}>{h}</option>)}
         </select>
 
-        <button onClick={handleSchedule} disabled={loading}
+        <button
+          onClick={handleSchedule}
+          disabled={loading}
           style={{
-            marginTop: "30px", width: "100%", padding: "18px", fontSize: "1.4rem",
-            background: loading ? "#666" : "#FF9800", color: "white", border: "none", borderRadius: "50px",
+            marginTop: "35px",
+            width: "100%",
+            padding: "18px",
+            fontSize: "1.4rem",
+            background: loading ? "#666" : "#FF9800",
+            color: "white",
+            border: "none",
+            borderRadius: "50px",
             cursor: loading ? "not-allowed" : "pointer"
-          }}>
+          }}
+        >
           {loading ? "Salvando..." : "Confirmar Agendamento"}
         </button>
       </div>
