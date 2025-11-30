@@ -1,30 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import './Agendamento.css';
-
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 const Agendamento = () => {
   const navigate = useNavigate();
+
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const linkMensagem = localStorage.getItem('lastRecordingUrl');
+  const linkMensagem = localStorage.getItem('lastRecordingUrl') || '';
+
+  const horariosFixos = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
 
   const handleSchedule = async () => {
     if (!nome || !telefone || !selectedDate || !selectedTime) {
@@ -34,139 +22,138 @@ const Agendamento = () => {
 
     const digits = telefone.replace(/\D/g, '');
     if (digits.length < 10 || digits.length > 11) {
-      alert('Telefone inválido!');
+      alert('Telefone inválido! Use 10 ou 11 dígitos.');
       return;
     }
-    const telefoneFull = `+55${digits}`;
+
+    const telefoneFull = `55${digits}`; // +55 já incluso
 
     const hoje = new Date();
     const dataEscolhida = new Date(selectedDate);
     const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
-
     if (dataEscolhida < minimo24h) {
-      alert('Mínimo 24 horas! 🦉');
+      alert('O agendamento precisa ser com no mínimo 24 horas de antecedência!');
       return;
     }
 
     setLoading(true);
 
     try {
-      await addDoc(collection(db, 'agendamentos'), {
-        linkMensagem,
-        nome: nome.trim(),
-        telefone: telefoneFull,
-        data: selectedDate,
-        horario: selectedTime,
-        status: 'agendado',
-        criadoEm: serverTimestamp()
+      const response = await fetch("/.netlify/functions/salvar-agendamento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          telefone: telefoneFull,
+          data: selectedDate,
+          hora: selectedTime,
+          linkMidia: linkMensagem,
+        }),
       });
 
-      localStorage.setItem('lastAgendamento', JSON.stringify({
-        nome: nome.trim(),
-        data: selectedDate,
-        horario: selectedTime,
-        status: 'Agendado'
-      }));
+      const result = await response.json();
 
-      navigate('/saida');
-      
-    } catch (error) {
-      alert('Erro! Tente novamente.');
+      if (result.success) {
+        alert("Agendamento confirmado! O cliente receberá o áudio automaticamente no dia e horário escolhidos.");
+        navigate('/saida');
+      } else {
+        alert("Erro ao salvar agendamento. Tente novamente.");
+      }
+    } catch (err) {
+      alert("Erro de conexão. Verifique sua internet e tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatPhone = (value) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 10) {
-      return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-    } else {
-      return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+  const formatPhone = (v) => {
+    const n = v.replace(/\D/g, '');
+    if (n.length <= 11) {
+      return n.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     }
+    return v;
   };
 
-  const handlePhoneChange = (e) => {
-    setTelefone(formatPhone(e.target.value));
-  };
-
-  const getMinDate = () => {
-    const amanha = new Date();
-    amanha.setDate(amanha.getDate() + 1);
-    return amanha.toISOString().split('T')[0];
-  };
-
-  const getMaxDate = () => {
-    const max = new Date();
-    max.setDate(max.getDate() + 365);
-    return max.toISOString().split('T')[0];
+  const minDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2); // mínimo 48h pra dar margem
+    return d.toISOString().split('T')[0];
   };
 
   return (
-    <div className="agendamento-container">
-      <h1 className="agendamento-title">📅 Agendar Entrega</h1>
-      
-      <div className="form-group">
-        <label>👤 Nome *</label>
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      color: "white",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+      fontFamily: "Arial, sans-serif"
+    }}>
+      <h1 style={{ fontSize: "2.8rem", marginBottom: "30px" }}>Agendar Entrega</h1>
+
+      <div style={{
+        background: "rgba(255,255,255,0.1)",
+        padding: "40px",
+        borderRadius: "20px",
+        width: "100%",
+        maxWidth: "500px",
+        backdropFilter: "blur(10px)"
+      }}>
         <input
           type="text"
+          placeholder="Nome do destinatário"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          placeholder="Nome"
-          required
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         />
-      </div>
 
-      <div className="form-group">
-        <label>📞 Celular *</label>
         <input
           type="tel"
+          placeholder="(41) 99999-9999"
           value={telefone}
-          onChange={handlePhoneChange}
-          placeholder="(41) 99999-8888"
+          onChange={(e) => setTelefone(formatPhone(e.target.value))}
           maxLength="15"
-          required
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         />
-      </div>
 
-      <div className="form-group">
-        <label>📆 Data *</label>
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          min={getMinDate()}
-          max={getMaxDate()}
-          required
+          min={minDate()}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         />
-      </div>
 
-      <div className="form-group">
-        <label>⏰ Horário *</label>
         <select
           value={selectedTime}
           onChange={(e) => setSelectedTime(e.target.value)}
-          required
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         >
-          <option value="">Selecione</option>
-          <option value="08:00-10:00">🕗 08:00 - 10:00</option>
-          <option value="10:00-12:00">🕙 10:00 - 12:00</option>
-          <option value="14:00-16:00">🕑 14:00 - 16:00</option>
-          <option value="16:00-18:00">🕓 16:00 - 18:00</option>
-          <option value="18:00-20:00">🕕 18:00 - 20:00</option>
+          <option value="">Escolha o horário</option>
+          {horariosFixos.map(h => (
+            <option key={h} value={h}>{h}</option>
+          ))}
         </select>
-      </div>
 
-      <div className="agendamento-buttons">
         <button
-          className="btn-confirm"
           onClick={handleSchedule}
           disabled={loading}
+          style={{
+            marginTop: "30px",
+            width: "100%",
+            padding: "18px",
+            fontSize: "1.4rem",
+            background: loading ? "#666" : "#FF9800",
+            color: "white",
+            border: "none",
+            borderRadius: "50px",
+            cursor: loading ? "not-allowed" : "pointer"
+          }}
         >
-          {loading ? '🦉 Salvando...' : '✅ Confirmar'}
-        </button>
-        <button className="btn-back" onClick={() => navigate(-1)}>
-          ↩️ Voltar
+          {loading ? "Salvando agendamento..." : "Confirmar Agendamento"}
         </button>
       </div>
     </div>
