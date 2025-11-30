@@ -1,77 +1,56 @@
-// functions/salvar-cadastro.js
-const admin = require("firebase-admin");
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
-if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_JSON);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+// Inicializa o Firebase Admin (só uma vez)
+let app;
+if (!getApps()?.length) {
+  app = initializeApp();
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST")
+export const handler = async (event) => {
+  // Só aceita POST
+  if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Método não permitido" };
+  }
 
   try {
-    const {
-      nome,
-      telefone,
-      dataNascimento,
-      cpfCnpj,
-      email
-    } = JSON.parse(event.body);
+    const body = JSON.parse(event.body || "{}");
+    const { nome, telefone, dataNascimento, cpfCnpj, email } = body;
 
-    // Validação
-    if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
+    if (!nome || !telefone || !email) {
       return {
         statusCode: 400,
-        body: JSON.stringify({
-          success: false,
-          error: "Dados faltando"
-        }),
+        body: JSON.stringify({ success: false, error: "Faltam dados obrigatórios" }),
       };
     }
 
-    // Gera número do pedido incremental
-    const counterRef = db.collection("Config").doc("pedidos");
-    const counterSnap = await counterRef.get();
-
-    let numeroPedido = 1;
-
-    if (counterSnap.exists) {
-      numeroPedido = counterSnap.data().ultimoNumero + 1;
-    }
-
-    await counterRef.set(
-      { ultimoNumero: numeroPedido },
-      { merge: true }
-    );
-
-    // Salva cliente usando telefone como ID
-    await db.collection("clientes").doc(telefone).set({
+    // Salva no Firestore
+    const docRef = await db.collection("clientes").add({
       nome,
       telefone,
-      dataNascimento,
-      cpfCnpj,
+      dataNascimento: dataNascimento || null,
+      cpfCnpj: cpfCnpj || null,
       email,
-      numeroPedido,
-      statusPagamento: "aguardando",
-      tipo: null,
-      criadoEm: new Date().toISOString(),
+      criadoEm: new Date(),
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, numeroPedido }),
+      body: JSON.stringify({
+        success: true,
+        clienteId: docRef.id,
+      }),
     };
-
   } catch (error) {
-    console.error("Erro ao salvar cadastro:", error);
+    console.error("Erro em salvar-cliente:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
+      body: JSON.stringify({
+        success: false,
+        error: error.message || "Erro interno",
+      }),
     };
   }
 };
