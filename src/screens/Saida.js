@@ -5,17 +5,12 @@ import './Saida.css';
 const Saida = () => {
   const navigate = useNavigate();
 
+  // Pega os dados do último agendamento salvo no localStorage
   const getAgendamentoData = () => {
     try {
       const saved = localStorage.getItem('lastAgendamento');
       if (!saved) return null;
-
-      const data = JSON.parse(saved);
-      return {
-        nome: data.nome || 'Não informado',
-        dataEntrega: data.dataEntrega || data.data || null,
-        horario: data.horario || 'Não informado',
-      };
+      return JSON.parse(saved);
     } catch (err) {
       console.error('Erro ao ler agendamento:', err);
       return null;
@@ -24,6 +19,7 @@ const Saida = () => {
 
   const agendamento = getAgendamentoData();
 
+  // Formata data de YYYY-MM-DD para DD/MM/YYYY
   const formatDate = (isoDate) => {
     if (!isoDate) return 'A ser definida';
     const [yyyy, mm, dd] = isoDate.split('-');
@@ -42,7 +38,6 @@ const Saida = () => {
   return (
     <div className="saida-container">
       <div className="saida-content">
-
         <div className="gif-container">
           <img
             src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExOTNoNnJiOHFwOHczb3VvbDg1bngxN3F3eG93dG01YXplbWoyMDJodiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Y258CvWqb5qyfp5JA9/giphy.gif"
@@ -51,14 +46,14 @@ const Saida = () => {
           />
         </div>
 
-        <h1 className="saida-title">Agendamento Confirmado! 🦉✨</h1>
+        <h1 className="saida-title">Agendamento Confirmado!</h1>
 
         <div className="saida-info">
-          <h3>📋 Resumo do Agendamento:</h3>
+          <h3>Resumo do Agendamento:</h3>
 
           <div className="info-item">
             <strong>Status:</strong>
-            <span className="status-confirmado"> Confirmado ✅</span>
+            <span className="status-confirmado"> Confirmado</span>
           </div>
 
           <div className="info-item">
@@ -68,7 +63,7 @@ const Saida = () => {
 
           <div className="info-item">
             <strong>Data da entrega:</strong>{' '}
-            {formatDate(agendamento?.dataEntrega)}
+            {agendamento?.data ? formatDate(agendamento.data) : 'A ser definida'}
           </div>
 
           <div className="info-item">
@@ -77,22 +72,21 @@ const Saida = () => {
           </div>
 
           <div className="info-item">
-            <strong>Entrega:</strong> Via mensagem de texto (SMS)
+            <strong>Entrega:</strong> Via mensagem de texto (SMS) pelo ClickSend
           </div>
         </div>
 
         <div className="saida-buttons">
           <button className="btn-nova-mensagem" onClick={handleNovaMensagem}>
-            🎤 Enviar Nova Mensagem
+            Enviar Nova Mensagem
           </button>
-
           <button className="btn-sair" onClick={handleSair}>
-            🚪 Sair do App
+            Sair do App
           </button>
         </div>
 
         <div className="saida-footer">
-          <p>Obrigado por usar nosso serviço! A corujinha agradece! 💜</p>
+          <p>Obrigado por usar nosso serviço! A corujinha agradece!</p>
         </div>
       </div>
     </div>
