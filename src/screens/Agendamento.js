@@ -22,7 +22,7 @@ const Agendamento = () => {
 
     const digits = telefone.replace(/\D/g, '');
     if (digits.length < 10 || digits.length > 11) {
-      alert('Telefone inválido! Use 10 ou 11 dígitos.');
+      alert('Telefone inválido!');
       return;
     }
 
@@ -32,14 +32,14 @@ const Agendamento = () => {
     const dataEscolhida = new Date(selectedDate);
     const minimo24h = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
     if (dataEscolhida < minimo24h) {
-      alert('O agendamento precisa ser com no mínimo 24 horas de antecedência!');
+      alert('Precisa ser com no mínimo 24h de antecedência!');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch("/.netlify/functions/salvar-agendamento", {
+      const res = await fetch("/.netlify/functions/salvar-agendamento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -51,35 +51,26 @@ const Agendamento = () => {
         }),
       });
 
-      const result = await response.json();
+      if (!res.ok) throw new Error("Erro no servidor");
 
-      if (result.success) {
-        // ←←← AQUI ESTAVA O PROBLEMA! Agora salva exatamente o que Saida.js espera
-        localStorage.setItem('lastAgendamento', JSON.stringify({
-          nome: nome.trim(),
-          data: selectedDate,      // ← campo "data" (Saida.js usa isso)
-          horario: selectedTime    // ← campo "horario" (Saida.js usa isso)
-        }));
+      // ←←← AQUI TÁ O SEGREDO: salva exatamente o que Saida.js espera
+      localStorage.setItem('lastAgendamento', JSON.stringify({
+        nome: nome.trim(),
+        dataEntrega: selectedDate,    // ← nome exato que Saida.js procura
+        horario: selectedTime         // ← nome exato que Saida.js procura
+      }));
 
-        alert("Agendamento confirmado! O áudio será enviado automaticamente no horário escolhido.");
-        navigate('/saida');
-      } else {
-        alert("Erro ao salvar agendamento. Tente novamente.");
-      }
+      alert("Agendamento confirmado com sucesso!");
+      navigate('/saida');
+
     } catch (err) {
-      alert("Erro de conexão. Tente novamente.");
+      alert("Erro ao salvar. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatPhone = (v) => {
-    const n = v.replace(/\D/g, '');
-    if (n.length <= 11) {
-      return n.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    }
-    return v;
-  };
+  const formatPhone = (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
 
   const minDate = () => {
     const d = new Date();
@@ -109,58 +100,28 @@ const Agendamento = () => {
         maxWidth: "500px",
         backdropFilter: "blur(10px)"
       }}>
-        <input
-          type="text"
-          placeholder="Nome do destinatário"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
-        />
+        <input type="text" placeholder="Nome do destinatário" value={nome} onChange={e => setNome(e.target.value)}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }} />
 
-        <input
-          type="tel"
-          placeholder="(41) 99999-9999"
-          value={telefone}
-          onChange={(e) => setTelefone(formatPhone(e.target.value))}
-          maxLength="15"
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
-        />
+        <input type="tel" placeholder="(41) 99999-9999" value={telefone} onChange={e => setTelefone(formatPhone(e.target.value))} maxLength="15"
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }} />
 
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          min={minDate()}
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
-        />
+        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} min={minDate()}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }} />
 
-        <select
-          value={selectedTime}
-          onChange={(e) => setSelectedTime(e.target.value)}
-          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
-        >
+        <select value={selectedTime} onChange={e => setSelectedTime(e.target.value)}
+          style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}>
           <option value="">Escolha o horário</option>
-          {horariosFixos.map(h => (
-            <option key={h} value={h}>{h}</option>
-          ))}
+          {horariosFixos.map(h => <option key={h} value={h}>{h}</option>)}
         </select>
 
-        <button
-          onClick={handleSchedule}
-          disabled={loading}
+        <button onClick={handleSchedule} disabled={loading}
           style={{
-            marginTop: "30px",
-            width: "100%",
-            padding: "18px",
-            fontSize: "1.4rem",
-            background: loading ? "#666" : "#FF9800",
-            color: "white",
-            border: "none",
-            borderRadius: "50px",
+            marginTop: "30px", width: "100%", padding: "18px", fontSize: "1.4rem",
+            background: loading ? "#666" : "#FF9800", color: "white", border: "none", borderRadius: "50px",
             cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? "Salvando agendamento..." : "Confirmar Agendamento"}
+          }}>
+          {loading ? "Salvando..." : "Confirmar Agendamento"}
         </button>
       </div>
     </div>
