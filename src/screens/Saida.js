@@ -33,7 +33,7 @@ const Saida = () => {
           <div className="info-item"><strong>Nome do destinatário:</strong> {dados.nomeDestinatario || 'Não informado'}</div>
           <div className="info-item"><strong>Data da entrega:</strong> {formatDate(dados.dataEntrega)}</div>
           <div className="info-item"><strong>Horário preferencial:</strong> {dados.horarioEntrega || 'Não informado'}</div>
-          <div className="info-item"><strong>Entrega:</strong> Via SMS (ClickSend)</div>
+          <div className="info-item"><strong>Entrega:</strong> Link Via SMS </div>
         </div>
 
         <div className="saida-buttons">
