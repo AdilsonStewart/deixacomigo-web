@@ -26,7 +26,7 @@ const Agendamento = () => {
       return;
     }
 
-    const telefoneFull = `55${digits}`; // +55 já incluso
+    const telefoneFull = `55${digits}`;
 
     const hoje = new Date();
     const dataEscolhida = new Date(selectedDate);
@@ -54,13 +54,20 @@ const Agendamento = () => {
       const result = await response.json();
 
       if (result.success) {
-        alert("Agendamento confirmado! O cliente receberá o áudio automaticamente no dia e horário escolhidos.");
+        // ←←← AQUI ESTAVA O PROBLEMA! Agora salva exatamente o que Saida.js espera
+        localStorage.setItem('lastAgendamento', JSON.stringify({
+          nome: nome.trim(),
+          data: selectedDate,      // ← campo "data" (Saida.js usa isso)
+          horario: selectedTime    // ← campo "horario" (Saida.js usa isso)
+        }));
+
+        alert("Agendamento confirmado! O áudio será enviado automaticamente no horário escolhido.");
         navigate('/saida');
       } else {
         alert("Erro ao salvar agendamento. Tente novamente.");
       }
     } catch (err) {
-      alert("Erro de conexão. Verifique sua internet e tente novamente.");
+      alert("Erro de conexão. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -76,7 +83,7 @@ const Agendamento = () => {
 
   const minDate = () => {
     const d = new Date();
-    d.setDate(d.getDate() + 2); // mínimo 48h pra dar margem
+    d.setDate(d.getDate() + 2);
     return d.toISOString().split('T')[0];
   };
 
