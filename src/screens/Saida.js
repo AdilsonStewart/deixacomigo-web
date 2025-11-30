@@ -5,16 +5,13 @@ import './Saida.css';
 const Saida = () => {
   const navigate = useNavigate();
 
-  const agendamento = JSON.parse(localStorage.getItem('lastAgendamento') || '{}');
+  const dados = JSON.parse(localStorage.getItem('lastAgendamento') || '{}');
 
   const formatDate = (iso) => {
     if (!iso) return 'A ser definida';
     const [y, m, d] = iso.split('-');
     return `${d}/${m}/${y}`;
   };
-
-  const handleNovaMensagem = () => navigate('/servicos');
-  const handleSair = () => { localStorage.clear(); navigate('/'); };
 
   return (
     <div className="saida-container">
@@ -33,15 +30,19 @@ const Saida = () => {
           <h3>Resumo do Agendamento:</h3>
 
           <div className="info-item"><strong>Status:</strong> <span className="status-confirmado">Confirmado</span></div>
-          <div className="info-item"><strong>Nome do destinatário:</strong> {agendamento.nome || 'Não informado'}</div>
-          <div className="info-item"><strong>Data da entrega:</strong> {formatDate(agendamento.dataEntrega)}</div>
-          <div className="info-item"><strong>Horário preferencial:</strong> {agendamento.horario || 'Não informado'}</div>
+          <div className="info-item"><strong>Nome do destinatário:</strong> {dados.nomeDestinatario || 'Não informado'}</div>
+          <div className="info-item"><strong>Data da entrega:</strong> {formatDate(dados.dataEntrega)}</div>
+          <div className="info-item"><strong>Horário preferencial:</strong> {dados.horarioEntrega || 'Não informado'}</div>
           <div className="info-item"><strong>Entrega:</strong> Via SMS (ClickSend)</div>
         </div>
 
         <div className="saida-buttons">
-          <button className="btn-nova-mensagem" onClick={handleNovaMensagem}>Enviar Nova Mensagem</button>
-          <button className="btn-sair" onClick={handleSair}>Sair do App</button>
+          <button className="btn-nova-mensagem" onClick={() => navigate('/servicos')}>
+            Enviar Nova Mensagem
+          </button>
+          <button className="btn-sair" onClick={() => { localStorage.clear(); navigate('/'); }}>
+            Sair do App
+          </button>
         </div>
 
         <div className="saida-footer">
