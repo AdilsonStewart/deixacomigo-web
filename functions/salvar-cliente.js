@@ -1,55 +1,33 @@
-import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-
-// Inicializa o Firebase Admin (só uma vez)
-let app;
-if (!getApps()?.length) {
-  app = initializeApp();
-}
-
-const db = getFirestore();
-
-export const handler = async (event) => {
-  // Só aceita POST
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Método não permitido" };
   }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-    const { nome, telefone, dataNascimento, cpfCnpj, email } = body;
+    const dados = JSON.parse(event.body);
 
-    if (!nome || !telefone || !email) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ success: false, error: "Faltam dados obrigatórios" }),
-      };
-    }
+    // Simula salvar no banco (na real vai pro Firestore depois)
+    console.log("Cliente recebido:", dados);
 
-    // Salva no Firestore
-    const docRef = await db.collection("clientes").add({
-      nome,
-      telefone,
-      dataNascimento: dataNascimento || null,
-      cpfCnpj: cpfCnpj || null,
-      email,
-      criadoEm: new Date(),
-    });
+    // Gera um ID fake só pra frente continuar funcionando
+    const fakeId = "cli_" + Date.now();
 
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: true,
-        clienteId: docRef.id,
+        clienteId: fakeId,
+        mensagem: "Cliente salvo (modo teste)"
       }),
     };
   } catch (error) {
-    console.error("Erro em salvar-cliente:", error);
     return {
       statusCode: 500,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         success: false,
-        error: error.message || "Erro interno",
+        error: "Erro interno"
       }),
     };
   }
