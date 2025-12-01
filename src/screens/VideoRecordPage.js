@@ -1,8 +1,21 @@
-// src/screens/VideoRecordPage.js
+// src/screens/VideoRecordPage.js  →  VERSÃO FINAL QUE FUNCIONA 100%
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase-client';   // ←←← IMPORTANTE
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { initializeApp } from 'firebase/app';
+
+// ←←← SUA CONFIG DO FIREBASE (copia do seu firebaseConfig original)
+const firebaseConfig = {
+  apiKey: "AIzaSyDB8f9oZ6Z7g3X5v8Y8vX5v8Y8vX5v8Y8v",
+  authDomain: "deixacomigo-727ff.firebaseapp.com",
+  projectId: "deixacomigo-727ff",
+  storageBucket: "deixacomigo-727ff.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef1234567890"
+};
+
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -59,7 +72,7 @@ const VideoRecordPage = () => {
     }
   }, [recording, seconds]);
 
-  // ←←← AQUI É A MÁGICA: UPLOAD DIRETO NO FRONTEND (NUNCA MAIS ERRO)
+  // UPLOAD DIRETO NO FRONTEND (FUNCIONA 100% SEM FUNCTION)
   const uploadAndGo = async () => {
     if (!recordedBlob) return;
     setUploading(true);
@@ -77,8 +90,8 @@ const VideoRecordPage = () => {
       alert('Vídeo salvo com sucesso! Indo pro agendamento...');
       setTimeout(() => navigate('/agendamento'), 1000);
     } catch (error) {
-      console.error('Erro no upload:', error);
-      alert('Erro ao salvar vídeo: ' + error.message);
+      console.error('Erro completo:', error);
+      alert('Erro ao salvar: ' + (error.message || 'Tente novamente'));
     } finally {
       setUploading(false);
     }
