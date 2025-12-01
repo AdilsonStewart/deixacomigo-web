@@ -1,24 +1,8 @@
-// src/screens/VideoRecordPage.js  →  VERSÃO QUE FUNCIONA 100% AGORA
+// src/screens/VideoRecordPage.js  →  VERSÃO FINAL QUE FUNCIONA COM SEU PROJETO
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-// IMPORTS CORRETOS DO FIREBASE v9+
-import { initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-// SUA CONFIG EXATA (pega no Firebase Console → Project Settings → Seu app web)
-const firebaseConfig = {
-  apiKey: "AIzaSyDB8f9oZ6Z7g3X5v8Y8vX5v8Y8vX5v8Y8v",
-  authDomain: "deixacomigo-727ff.firebaseapp.com",
-  projectId: "deixacomigo-727ff",
-  storageBucket: "deixacomigo-727ff.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef1234567890"
-};
-
-// Inicializa o Firebase
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase/firebase-client';   // ← usa o que já existe
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -32,8 +16,6 @@ const VideoRecordPage = () => {
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [gravacaoId] = useState(() => `VID-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
-
-  // ... (todo o resto do código de gravação continua igual) ...
 
   const startCamera = async () => {
     try {
@@ -88,7 +70,7 @@ const VideoRecordPage = () => {
       const url = await getDownloadURL(storageRef);
 
       localStorage.setItem('lastRecordingUrl', url);
-      alert('Vídeo salvo! Indo pro agendamento...');
+      alert('Vídeo salvo com sucesso!');
       setTimeout(() => navigate('/agendamento'), 1000);
     } catch (error) {
       console.error(error);
@@ -113,7 +95,7 @@ const VideoRecordPage = () => {
       <h1 style={{ fontSize: "2.5rem" }}>Gravar Vídeo Surpresa</h1>
       <h3>ID: {gravacaoId}</h3>
 
-      {recording && <div style={{ margin: "20px", fontSize: "2rem" }}>⏺️ {seconds}s</div>}
+      {recording && <div style={{ margin: "20px", fontSize: "2rem" }}>Gravando... {seconds}s</div>}
 
       <div style={{ margin: "20px auto", maxWidth: "800px", background: "#000", borderRadius: "15px" }}>
         {!recordedBlob ? (
@@ -124,26 +106,20 @@ const VideoRecordPage = () => {
       </div>
 
       <div style={{ margin: "30px 0", display: "flex", gap: "15px", justifyContent: "center", flexWrap: "wrap" }}>
-        {!recordedBlob && !recording && <button onClick={startRecording} style={btnGreen}>Iniciar Gravação</button>}
-        {recording && <button onClick={stopRecording} style={btnRed}>Parar</button>}
+        {!recordedBlob && !recording && <button onClick={startRecording} style={{padding:"18px 40px",fontSize:"1.4rem",background:"#4CAF50",color:"white",border:"none",borderRadius:"50px"}}>Iniciar Gravação</button>}
+        {recording && <button onClick={stopRecording} style={{padding:"18px 40px",fontSize:"1.4rem",background:"#f44336",color:"white",border:"none",borderRadius:"50px"}}>Parar</button>}
         {recordedBlob && !uploading && (
           <>
-            <button onClick={uploadAndGo} style={btnOrange}>Salvar e Agendar</button>
-            <button onClick={regravar} style={btnGray}>Regravar</button>
+            <button onClick={uploadAndGo} style={{padding:"18px 40px",fontSize:"1.4rem",background:"#FF9800",color:"white",border:"none",borderRadius:"50px"}}>Salvar e Agendar</button>
+            <button onClick={regravar} style={{padding:"18px 40px",fontSize:"1.2rem",background:"#666",color:"white",border:"none",borderRadius:"50px"}}>Regravar</button>
           </>
         )}
-        {uploading && <p>Enviando vídeo...</p>}
+        {uploading && <p style={{fontSize:"1.5rem"}}>Enviando vídeo...</p>}
       </div>
 
-      <button onClick={() => navigate(-1)} style={btnBack}>Voltar</button>
+      <button onClick={() => navigate(-1)} style={{padding:"12px 30px",background:"#333",color:"white",border:"none",borderRadius:"50px",marginTop:"20px"}}>Voltar</button>
     </div>
   );
 };
-
-const btnGreen = { padding: "18px 40px", fontSize: "1.4rem", background: "#4CAF50", color: "white", border: "none", borderRadius: "50px", cursor: "pointer" };
-const btnRed = { ...btnGreen, background: "#f44336" };
-const btnOrange = { ...btnGreen, background: "#FF9800" };
-const btnGray = { ...btnGreen, background: "#666", fontSize: "1.2rem" };
-const btnBack = { padding: "12px 30px", background: "#333", color: "white", border: "none", borderRadius: "50px", marginTop: "20px" };
 
 export default VideoRecordPage;
