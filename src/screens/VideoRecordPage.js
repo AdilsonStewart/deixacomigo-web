@@ -1,4 +1,4 @@
-// src/screens/VideoRecordPage.js  →  VERSÃO FINAL, SEM ERRO DE SINTAXE
+// src/screens/VideoRecordPage.js  →  VERSÃO FINAL PERFEITA (preview lindo + upload funcionando)
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -100,7 +100,14 @@ const VideoRecordPage = () => {
         {!recordedBlob ? (
           <video ref={liveVideoRef} autoPlay muted playsInline style={{ width: "100%" }} />
         ) : (
-          <video controls src={URL.createObjectURL(recordedBlob)} style={{ width: "100%" }} />
+          <video
+            controls
+            src={URL.createObjectURL(recordedBlob)}
+            style={{ width: "100%" }}
+            autoPlay
+            loop
+            playsInline
+          />
         )}
       </div>
 
