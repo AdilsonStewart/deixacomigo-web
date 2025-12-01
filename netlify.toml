@@ -3,3 +3,5 @@
   to = "/index.html"
   status = 200
   force = true
+  [build.environment]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
