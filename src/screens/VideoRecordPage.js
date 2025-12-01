@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
-  const videoRef = useRef(null);
-  const liveVideoRef = useRef(null);
+  const liveVideoRef = useRef(null);           // ← só esse que usa
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -16,10 +15,8 @@ const VideoRecordPage = () => {
   const [uploading, setUploading] = useState(false);
   const [gravacaoId, setGravacaoId] = useState('');
 
-  // Gera ID único
   const generateId = () => `VID-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
-  // Inicia câmera
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -31,18 +28,15 @@ const VideoRecordPage = () => {
         liveVideoRef.current.srcObject = stream;
       }
     } catch (err) {
-      alert('Erro ao acessar câmera/mic. Permita o acesso!');
+      alert('Erro ao acessar câmera/microfone. Permita o acesso!');
     }
   };
 
-  // INÍCIO DA GRAVAÇÃO (FORÇA MP4!)
   const startRecording = async () => {
     if (!streamRef.current) return;
-
     chunksRef.current = [];
 
     const options = { mimeType: 'video/mp4' };
-    // Se MP4 não for suportado, tenta WebM com opus
     if (!MediaRecorder.isTypeSupported('video/mp4')) {
       options.mimeType = 'video/webm;codecs=vp9,opus';
     }
@@ -62,8 +56,7 @@ const VideoRecordPage = () => {
       setGravacaoId(id);
       setRecording(false);
       setSeconds(0);
-      localStorage.setItem('lastRecordingUrl', url); // já salva pra agendamento
-      localStorage.setItem('lastVideoBlob', url);   // backup
+      localStorage.setItem('lastRecordingUrl', url);
     };
 
     recorder.start();
@@ -81,7 +74,6 @@ const VideoRecordPage = () => {
     }
   };
 
-  // Contador
   useEffect(() => {
     if (recording && seconds > 0) {
       const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
@@ -91,7 +83,6 @@ const VideoRecordPage = () => {
     }
   }, [recording, seconds]);
 
-  // Upload via Netlify Function (sem CORS!)
   const uploadAndGo = async () => {
     if (!recordedUrl) return;
     setUploading(true);
@@ -113,7 +104,7 @@ const VideoRecordPage = () => {
         alert('Vídeo salvo com sucesso! Indo para agendamento...');
         setTimeout(() => navigate('/agendamento'), 1000);
       } else {
-        alert('Erro ao salvar vídeo: ' + json.error);
+        alert('Erro ao salvar: ' + json.error);
       }
     } catch (err) {
       alert('Erro de conexão ao salvar vídeo.');
@@ -148,7 +139,7 @@ const VideoRecordPage = () => {
     }}>
       <h1 style={{ fontSize: "2.5rem" }}>Gravar Vídeo Surpresa</h1>
 
-      {gravacaoId && <h3>ID: {gravacaoId}</h3>}
+      {gravacaoId && <h3>ID da gravação: {gravacaoId}</h3>}
 
       {recording && (
         <div style={{ margin: "20px 0", fontSize: "2rem" }}>
@@ -171,60 +162,39 @@ const VideoRecordPage = () => {
         )}
       </div>
 
-      <div style={{ margin: "30px 0" }}>
+      <div style={{ margin: "30px 0", gap: "15px", display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
         {!recordedUrl && !recording && (
-          <button onClick={startRecording} style={{
-            padding: "18px 40px", fontSize: "1.4rem", background: "#4CAF50", color: "white",
-            border: "none", borderRadius: "50px", cursor: "pointer"
-          }}>
-            Iniciar Gravação (30s)
-          </button>
+          <button onClick={startRecording} style={btnGreen}>Iniciar Gravação (30s)</button>
         )}
 
         {recording && (
-          <button onClick={stopRecording} style={{
-            padding: "18px 40px", fontSize: "1.4rem", background: "#f44336", color: "white",
-            border: "none", borderRadius: "50px", cursor: "pointer"
-          }}>
-            Parar Gravação
-          </button>
+          <button onClick={stopRecording} style={btnRed}>Parar Gravação</button>
         )}
 
         {recordedUrl && !uploading && (
           <>
-            <button onClick={uploadAndGo} style={{
-              padding: "18px 40px", fontSize: "1.4rem", background: "#FF9800", color: "white",
-              border: "none", borderRadius: "50px", cursor: "pointer", margin: "0 10px"
-            }}>
-              Salvar e Agendar
-            </button>
-            <button onClick={regravar} style={{
-              padding: "18px 40px", fontSize: "1.2rem", background: "#666", color: "white",
-              border: "none", borderRadius: "50px", cursor: "pointer"
-            }}>
-              Regravar
-            </button>
+            <button onClick={uploadAndGo} style={btnOrange}>Salvar e Agendar</button>
+            <button onClick={regravar} style={btnGray}>Regravar</button>
           </>
         )}
 
         {uploading && <p style={{ fontSize: "1.5rem" }}>Enviando vídeo...</p>}
       </div>
 
-      <button onClick={() => navigate(-1)} style={{
-        padding: "12px 30px", background: "#333", color: "white", border: "none", borderRadius: "50px"
-      }}>
-        Voltar
-      </button>
+      <button onClick={() => navigate(-1)} style={btnBack}>Voltar</button>
 
       <style jsx>{`
-        @keyframes pulse {
-          0% { box-shadow: 0 0 0 0 rgba(255,0,0,0.7); }
-          70% { box-shadow: 0 0 0 20px rgba(255,0,0,0); }
-          100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); }
-        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,0,0,0.7); } 70% { box-shadow: 0 0 0 20px rgba(255,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); } }
       `}</style>
     </div>
   );
 };
+
+// estilos rapidinhos pra ficar lindo
+const btnGreen = { padding: "18px 40px", fontSize: "1.4rem", background: "#4CAF50", color: "white", border: "none", borderRadius: "50px", cursor: "pointer" };
+const btnRed = { ...btnGreen, background: "#f44336" };
+const btnOrange = { ...btnGreen, background: "#FF9800" };
+const btnGray = { ...btnGreen, background: "#666", fontSize: "1.2rem" };
+const btnBack = { padding: "12px 30px", background: "#333", color: "white", border: "none", borderRadius: "50px", marginTop: "20px" };
 
 export default VideoRecordPage;
