@@ -1,66 +1,57 @@
 // netlify/functions/salvar-video.js
-const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
-const { storage } = require("firebase-admin/storage");
-const { initializeApp, getApps } = require("firebase-admin/app");
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { initializeApp } from "firebase/app";
 
-// Inicializa Firebase Admin (funciona no Netlify sem service account)
-if (!getApps().length) {
-  initializeApp();
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyDB8f9oZ6Z7g3X5v8Y8vX5v8Y8vX5v8Y8v",
+  authDomain: "deixacomigo-727ff.firebaseapp.com",
+  projectId: "deixacomigo-727ff",
+  storageBucket: "deixacomigo-727ff.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
+};
 
-const bucket = storage().bucket(); // usa o bucket padrão do projeto
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Método não permitido" };
-  }
+  if (event.httpMethod !== "POST") return { statusCode: 405 };
 
   try {
-    const formData = new URLSearchParams(event.body);
-    const file = event.isBase64Encoded 
-      ? Buffer.from(event.body.split(",")[1], "base64")
-      : event.body; // Netlify já manda como buffer
-
     // Pega o arquivo do FormData (o React manda como multipart)
-    const boundary = event.headers["content-type"].split("boundary=")[1];
+    const form = new FormData();
+    const boundary = event.headers["content-type"].match(/boundary=(.*)/)[1];
     const parts = event.body.split(`--${boundary}`);
+
     let videoBuffer = null;
     let filename = `video_${Date.now()}.webm`;
 
     for (const part of parts) {
-      if (part.includes("filename=")) {
+      if (part.includes('name="video"') && part.includes("filename=")) {
+        const headerEnd = part.indexOf("\r\n\r\n");
+        const content = part.slice(headerEnd + 4, -2); // tira \r\n-- no final
+        videoBuffer = Buffer.from(content, "binary");
         const match = part.match(/filename="(.+?)"/);
         if (match) filename = match[1];
-        const start = part.indexOf("\r\n\r\n") + 4;
-        const end = part.lastIndexOf("\r\n--");
-        videoBuffer = Buffer.from(part.slice(start, end), "binary");
       }
     }
 
-    if (!videoBuffer) {
-      const rawBody = Buffer.from(event.body, event.isBase64Encoded ? "base64" : "utf8");
-      videoBuffer = rawBody;
-    }
+    if (!videoBuffer) throw new Error("Vídeo não encontrado");
 
-    const fileRef = bucket.file(`videos/${filename}`);
-    await fileRef.save(videoBuffer, {
-      metadata: { contentType: "video/webm" },
-    });
-
-    await fileRef.makePublic();
-    const publicUrl = `https://storage.googleapis.com/${bucket.bucketName}/${fileRef.name}`;
+    const storageRef = ref(storage, `videos/${filename}`);
+    await uploadBytes(storageRef, videoBuffer, { contentType: "video/webm" });
+    const url = await getDownloadURL(storageRef);
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ success: true, url: publicUrl }),
+      body: JSON.stringify({ success: true, url })
     };
 
   } catch (error) {
-    console.error("Erro ao salvar vídeo:", error);
+    console.error("Erro:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
+      body: JSON.stringify({ success: false, error: error.message })
     };
   }
 };
