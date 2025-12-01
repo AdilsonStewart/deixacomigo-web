@@ -1,18 +1,14 @@
-// netlify/functions/salvar-video.js
-const admin = require('firebase-admin');
+const { Storage } = require('@google-cloud/storage');
+const storage = new Storage({
+  projectId: 'deixacomigo-727ff',
+  credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS)
+});
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK)),
-    storageBucket: 'deixacomigo-727ff.appspot.com'
-  });
-}
-
-const bucket = admin.storage().bucket();
+const bucket = storage.bucket('deixacomigo-727ff.appspot.com');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405 };
   }
 
   try {
@@ -23,10 +19,9 @@ exports.handler = async (event) => {
     const file = bucket.file(filename);
 
     await file.save(buffer, {
-      metadata: { contentType: 'video/webm' }
+      metadata: { contentType: 'video/webm' },
+      public: true
     });
-
-    await file.makePublic();
 
     const url = `https://storage.googleapis.com/deixacomigo-727ff.appspot.com/${filename}`;
 
@@ -34,8 +29,9 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ url })
     };
+
   } catch (error) {
-    console.error('Erro:', error);
+    console.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message })
