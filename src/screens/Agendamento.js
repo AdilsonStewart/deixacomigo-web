@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase/firebase-client';  // ← usa o Firestore direto
 
 const Agendamento = () => {
   const navigate = useNavigate();
-
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -39,38 +40,41 @@ const Agendamento = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("/.netlify/functions/salvar-agendamento", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: nome.trim(),
-          telefone: telefoneFull,
-          data: selectedDate,
-          hora: selectedTime,
-          linkMidia: linkMensagem,
-        }),
+      // ←←← SALVA DIRETO NO FIRESTORE (SEM FUNCTION, SEM 500)
+      await addDoc(collection(db, 'agendamentos'), {
+        nome: nome.trim(),
+        telefone: telefoneFull,
+        data: selectedDate,
+        hora: selectedTime,
+        linkMidia: linkMensagem,
+        enviado: false,
+        criadoEm: serverTimestamp()
       });
 
-      if (!res.ok) throw new Error("Erro no servidor");
-
-      // ← AQUI SALVA EXATAMENTE O QUE A TELA DE SAÍDA PRECISA
+      // Salva no localStorage pra tela de saída
       localStorage.setItem('lastAgendamento', JSON.stringify({
-        nomeDestinatario: nome.trim(),     // nome do destinatário
-        dataEntrega: selectedDate,         // data da entrega
-        horarioEntrega: selectedTime       // horário da entrega
+        nome: nome.trim(),
+        dataEntrega: selectedDate,
+        horario: selectedTime
       }));
 
-      alert("Agendamento confirmado com sucesso!");
+      alert("Agendamento confirmado! O cliente receberá o áudio automaticamente no horário escolhido.");
       navigate('/saida');
-
     } catch (err) {
-      alert("Erro ao salvar. Tente novamente.");
+      console.error('Erro no Firestore:', err);
+      alert("Erro ao salvar agendamento. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatPhone = (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  const formatPhone = (v) => {
+    const n = v.replace(/\D/g, '');
+    if (n.length <= 11) {
+      return n.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    return v;
+  };
 
   const minDate = () => {
     const d = new Date();
@@ -100,7 +104,6 @@ const Agendamento = () => {
         maxWidth: "500px",
         backdropFilter: "blur(10px)"
       }}>
-        {/* ← AQUI O TEXTO QUE VOCÊ PEDIU */}
         <label style={{ fontSize: "1.3rem", fontWeight: "bold", marginBottom: "8px", display: "block" }}>
           Enviar para:
         </label>
@@ -108,33 +111,30 @@ const Agendamento = () => {
           type="text"
           placeholder="Nome do destinatário"
           value={nome}
-          onChange={e => setNome(e.target.value)}
+          onChange={(e) => setNome(e.target.value)}
           style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         />
 
-        <label style={{ fontSize: "1.1rem", marginTop: "15px", display: "block" }}>Celular do destinatário</label>
         <input
           type="tel"
           placeholder="(41) 99999-9999"
           value={telefone}
-          onChange={e => setTelefone(formatPhone(e.target.value))}
+          onChange={(e) => setTelefone(formatPhone(e.target.value))}
           maxLength="15"
           style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         />
 
-        <label style={{ fontSize: "1.1rem", marginTop: "15px", display: "block" }}>Data da entrega</label>
         <input
           type="date"
           value={selectedDate}
-          onChange={e => setSelectedDate(e.target.value)}
+          onChange={(e) => setSelectedDate(e.target.value)}
           min={minDate()}
           style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         />
 
-        <label style={{ fontSize: "1.1rem", marginTop: "15px", display: "block" }}>Horário da entrega</label>
         <select
           value={selectedTime}
-          onChange={e => setSelectedTime(e.target.value)}
+          onChange={(e) => setSelectedTime(e.target.value)}
           style={{ width: "100%", padding: "15px", margin: "10px 0", borderRadius: "10px", border: "none", fontSize: "1.1rem" }}
         >
           <option value="">Escolha o horário</option>
@@ -145,7 +145,7 @@ const Agendamento = () => {
           onClick={handleSchedule}
           disabled={loading}
           style={{
-            marginTop: "35px",
+            marginTop: "30px",
             width: "100%",
             padding: "18px",
             fontSize: "1.4rem",
