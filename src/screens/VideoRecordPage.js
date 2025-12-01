@@ -1,4 +1,4 @@
-// src/screens/VideoRecordPage.js  →  VERSÃO FINAL QUE FUNCIONA DE VERDADE
+// src/screens/VideoRecordPage.js  →  VERSÃO FINAL, SEM ERRO DE SINTAXE
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -7,7 +7,6 @@ import { storage } from '../firebase/firebase-client';
 const VideoRecordPage = () => {
   const navigate = useNavigate();
   const liveVideoRef = useRef(null);
-  );
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -16,18 +15,15 @@ const VideoRecordPage = () => {
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [gravacaoId] = useState(() => `VID-${Date.now()}-${Math.floor(Math.random()*10000)}`);
+  const [gravacaoId] = useState(() => `VID-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
 
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
-      if (liveVideoRef.current) {
-        liveVideoRef.current.srcObject = stream;
-      }
+      if (liveVideoRef.current) liveVideoRef.current.srcObject = stream;
     } catch (err) {
       alert('Permita câmera e microfone!');
-    ');
     }
   };
 
@@ -94,21 +90,21 @@ const VideoRecordPage = () => {
   }, []);
 
   return (
-    <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#667eea,#764ba2)", color:"white", padding:"20px", textAlign:"center" }}>
-      <h1 style={{fontSize:"2.5rem"}}>Gravar Vídeo Surpresa</h1>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#667eea,#764ba2)", color: "white", padding: "20px", textAlign: "center" }}>
+      <h1 style={{ fontSize: "2.5rem" }}>Gravar Vídeo Surpresa</h1>
       <h3>ID: {gravacaoId}</h3>
 
-      {recording && <div style={{fontSize:"2rem",margin:"20px"}}>Gravando… {seconds}s</div>}
+      {recording && <div style={{ fontSize: "2rem", margin: "20px" }}>Gravando… {seconds}s</div>}
 
-      <div style={{maxWidth:"800px", margin:"20px auto", background:"#000", borderRadius:"15px", overflow:"hidden"}}>
+      <div style={{ maxWidth: "800px", margin: "20px auto", background: "#000", borderRadius: "15px", overflow: "hidden" }}>
         {!recordedBlob ? (
-          <video ref={liveVideoRef} autoPlay muted playsInline style={{width:"100%"}} />
+          <video ref={liveVideoRef} autoPlay muted playsInline style={{ width: "100%" }} />
         ) : (
-          <video controls src={URL.createObjectURL(recordedBlob)} style={{width:"100%"}} />
+          <video controls src={URL.createObjectURL(recordedBlob)} style={{ width: "100%" }} />
         )}
       </div>
 
-      <div style={{display:"flex", gap:"15px", justifyContent:"center", flexWrap:"wrap", margin:"30px 0"}}>
+      <div style={{ display: "flex", gap: "15px", justifyContent: "center", flexWrap: "wrap", margin: "30px 0" }}>
         {!recordedBlob && !recording && <button onClick={startRecording} style={btnGreen}>Iniciar Gravação</button>}
         {recording && <button onClick={stopRecording} style={btnRed}>Parar</button>}
         {recordedBlob && !uploading && (
@@ -117,7 +113,7 @@ const VideoRecordPage = () => {
             <button onClick={regravar} style={btnGray}>Regravar</button>
           </>
         )}
-        {uploading && <p style={{fontSize:"1.5rem"}}>Enviando…</p>}
+        {uploading && <p style={{ fontSize: "1.5rem" }}>Enviando vídeo…</p>}
       </div>
 
       <button onClick={() => navigate(-1)} style={btnBack}>Voltar</button>
@@ -125,10 +121,10 @@ const VideoRecordPage = () => {
   );
 };
 
-const btnGreen  = {padding:"18px 40px",fontSize:"1.4rem",background:"#4CAF50",color:"white",border:"none",borderRadius:"50px",cursor:"pointer"};
-const btnRed    = {...btnGreen, background:"#f44336"};
-const btnOrange = {...btnGreen, background:"#FF9800"};
-const btnGray   = {...btnGreen, background:"#666", fontSize:"1.2rem"};
-const btnBack   = {padding:"12px 30px",background:"#333",color:"white",border:"none",borderRadius:"50px",marginTop:"20px"};
+const btnGreen  = { padding: "18px 40px", fontSize: "1.4rem", background: "#4CAF50", color: "white", border: "none", borderRadius: "50px", cursor: "pointer" };
+const btnRed    = { ...btnGreen, background: "#f44336" };
+const btnOrange = { ...btnGreen, background: "#FF9800" };
+const btnGray   = { ...btnGreen, background: "#666", fontSize: "1.2rem" };
+const btnBack   = { padding: "12px 30px", background: "#333", color: "white", border: "none", borderRadius: "50px", marginTop: "20px" };
 
 export default VideoRecordPage;
