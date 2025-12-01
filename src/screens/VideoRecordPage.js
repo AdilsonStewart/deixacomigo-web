@@ -1,6 +1,8 @@
 // src/screens/VideoRecordPage.js
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase/firebase-client';   // ←←← IMPORTANTE
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -10,7 +12,7 @@ const VideoRecordPage = () => {
   const chunksRef = useRef([]);
 
   const [recording, setRecording] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState(null);  // ← agora guarda o blob
+  const [recordedBlob, setRecordedBlob] = useState(null);
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [gravacaoId] = useState(() => `VID-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
@@ -19,9 +21,7 @@ const VideoRecordPage = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
-      if (liveVideoRef.current) {
-        liveVideoRef.current.srcObject = stream;
-      }
+      if (liveVideoRef.current) liveVideoRef.current.srcObject = stream;
     } catch (err) {
       alert('Permita câmera e microfone!');
     }
@@ -29,17 +29,16 @@ const VideoRecordPage = () => {
 
   const startRecording = () => {
     chunksRef.current = [];
-    const options = { mimeType: 'video/webm;codecs=vp9,opus' }; // ← funciona em TODOS os celulares
+    const options = { mimeType: 'video/webm;codecs=vp9,opus' };
     const recorder = new MediaRecorder(streamRef.current, options);
     mediaRecorderRef.current = recorder;
 
     recorder.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-      setRecordedBlob(blob);           // ← guarda o blob
+      setRecordedBlob(blob);
       setRecording(false);
       setSeconds(0);
-      // limpa a câmera
       if (liveVideoRef.current) liveVideoRef.current.srcObject = null;
     };
 
@@ -60,29 +59,26 @@ const VideoRecordPage = () => {
     }
   }, [recording, seconds]);
 
+  // ←←← AQUI É A MÁGICA: UPLOAD DIRETO NO FRONTEND (NUNCA MAIS ERRO)
   const uploadAndGo = async () => {
     if (!recordedBlob) return;
     setUploading(true);
+
     try {
-      const formData = new FormData();
-      formData.append('video', recordedBlob, `${gravacaoId}.webm`);
-      formData.append('tipo', 'video');
+      const filename = `videos/video_${gravacaoId}.webm`;
+      const storageRef = ref(storage, filename);
 
-      const res = await fetch('/.netlify/functions/salvar-video', {
-        method: 'POST',
-        body: formData
-      });
-      const json = await res.json();
+      await uploadBytes(storageRef, recordedBlob, { contentType: 'video/webm' });
+      const url = await getDownloadURL(storageRef);
 
-      if (json.success) {
-        localStorage.setItem('lastRecordingUrl', json.url);
-        alert('Vídeo salvo! Indo pro agendamento...');
-        setTimeout(() => navigate('/agendamento'), 1000);
-      } else {
-        alert('Erro: ' + json.error);
-      }
-    } catch (err) {
-      alert('Erro de rede.');
+      localStorage.setItem('lastRecordingUrl', url);
+      localStorage.setItem('lastRecordingType', 'video');
+
+      alert('Vídeo salvo com sucesso! Indo pro agendamento...');
+      setTimeout(() => navigate('/agendamento'), 1000);
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      alert('Erro ao salvar vídeo: ' + error.message);
     } finally {
       setUploading(false);
     }
@@ -111,18 +107,10 @@ const VideoRecordPage = () => {
       )}
 
       <div style={{ margin: "20px auto", maxWidth: "800px", background: "#000", borderRadius: "15px", overflow: "hidden" }}>
-        {/* AO VIVO */}
-        {!recordedBlob && (
+        {!recordedBlob ? (
           <video ref={liveVideoRef} autoPlay muted playsInline style={{ width: "100%" }} />
-        )}
-        {/* GRAVADO */}
-        {recordedBlob && (
-          <video
-            controls
-            src={URL.createObjectURL(recordedBlob)}
-            style={{ width: "100%" }}
-            autoPlay={false}
-          />
+        ) : (
+          <video controls src={URL.createObjectURL(recordedBlob)} style={{ width: "100%" }} />
         )}
       </div>
 
@@ -140,7 +128,7 @@ const VideoRecordPage = () => {
 
       <button onClick={() => navigate(-1)} style={btnBack}>Voltar</button>
 
-      <style jsx>{`@keyframes pulse {0%{box-shadow:0 0 0 0 #f003; }70%{box-shadow:0 0 0 20px #0000;}100%{box-shadow:0 0 0 0 #0000;}}`}</style>
+      <style jsx>{`@keyframes pulse {0%{box-shadow:0 0 0 0 #f003;}70%{box-shadow:0 0 0 20px #0000;}100%{box-shadow:0 0 0 0 #0000;}}`}</style>
     </div>
   );
 };
