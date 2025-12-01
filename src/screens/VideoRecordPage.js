@@ -1,4 +1,4 @@
-// src/screens/VideoRecordPage.js → VERSÃO FINAL QUE PASSA NO NETLIFY E FUNCIONA COM CORS BLOQUEADO
+// src/screens/VideoRecordPage.js → VERSÃO FINAL QUE COMPILA E FUNCIONA
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,7 +17,7 @@ const VideoRecordPage = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
-      if (videoRef.current).srcObject = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
       alert('Permita câmera e microfone!');
     }
@@ -69,8 +69,8 @@ const VideoRecordPage = () => {
         alert('Vídeo salvo com sucesso!');
         navigate('/agendamento');
       } else {
-        const err = await response.text();
-        alert('Erro no upload: ' + err);
+        const errText = await response.text();
+        alert('Erro no upload: ' + errText);
       }
     } catch (e) {
       alert('Erro de rede: ' + e.message);
