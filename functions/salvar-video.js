@@ -1,48 +1,53 @@
-// netlify/functions/salvar-video.js → VERSÃO FINAL QUE SALVA DE VERDADE
+// netlify/functions/salvar-video.js
 const { initializeApp } = require("firebase/app");
 const { getStorage, ref, uploadBytes, getDownloadURL } = require("firebase/storage");
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDB8f9oZ6Z7g3X5v8Y8vX5v8Y8vX5v8Y8v",
-  authDomain: "deixacomigo-727ff.firebaseapp.com",
-  projectId: "deixacomigo-727ff",
-  storageBucket: "deixacomigo-727ff.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef1234567890"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return { statusCode: 405 };
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Método não permitido" };
+  }
 
   try {
-    // Converte o body bruto que o Netlify manda em Buffer
-    const videoBuffer = Buffer.from(event.body, "binary");
+    // Pega o buffer do vídeo do body (Netlify manda como string)
+    const buffer = Buffer.from(event.body, "binary");
 
-    // Nome único do arquivo
-    const filename = `videos/video_${Date.now()}_${Math.floor(Math.random() * 10000)}.webm`;
+    if (buffer.length === 0) {
+      throw new Error("Vídeo vazio – tente gravar de novo");
+    }
+
+    // Nome único
+    const filename = `videos/video_${Date.now()}.webm`;
     const videoRef = ref(storage, filename);
 
-    // Upload com metadados
-    await uploadBytes(videoRef, videoBuffer, {
-      contentType: "video/webm"
+    // Upload
+    await uploadBytes(videoRef, buffer, {
+      contentType: "video/webm",
     });
 
-    // URL pública real
+    // URL pública
     const url = await getDownloadURL(videoRef);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, url })
+      body: JSON.stringify({ success: true, url }),
     };
-
   } catch (error) {
-    console.error("Erro no upload:", error);
+    console.error("Erro detalhado:", error.code, error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message })
+      body: JSON.stringify({ success: false, error: error.message }),
     };
   }
 };
