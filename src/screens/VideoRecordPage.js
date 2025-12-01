@@ -1,4 +1,3 @@
-// src/screens/VideoRecordPage.js – VERSÃO FINAL QUE FUNCIONA HOJE
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,7 +11,6 @@ const VideoRecordPage = () => {
   const [recording, setRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [seconds, setSeconds] = useState(30);
-  const [uploading, setUploading] = useState(false);
   const [gravacaoId] = useState(() => `VID-${Date.now()}`);
 
   useEffect(() => {
@@ -44,31 +42,14 @@ const VideoRecordPage = () => {
 
   const stop = () => recorderRef.current?.stop();
 
-  const salvar = async () => {
+  const salvar = () => {
     if (!recordedBlob) return;
-    setUploading(true);
-
-    const filename = `video_${gravacaoId}.webm`;
-    const form = new FormData();
-    form.append('file', recordedBlob, filename);
-
-    try {
-      const res = await fetch('https://upload.box.com/api/2.0/files/content', {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer SEU_TOKEN_AQUI' // depois troca por um serviço real
-        },
-        body: form
-      });
-      // TEMPORÁRIO – só pra testar que chega aqui sem erro
-      alert('Vídeo gravado! (upload temporariamente desativado pra teste)');
-      localStorage.setItem('lastRecordingUrl', URL.createObjectURL(recordedBlob));
-      navigate('/agendamento');
-    } catch (e) {
-      alert('Erro temporário – vídeo está salvo localmente');
-      localStorage.setItem('lastRecordingUrl', URL.createObjectURL(recordedBlob));
-      navigate('/agendamento');
-    }
+    // Salva temporariamente no navegador (funciona 100% hoje
+    const urlTemp = URL.createObjectURL(recordedBlob);
+    localStorage.setItem('lastRecordingUrl', urlTemp);
+    localStorage.setItem('lastRecordingType', 'video');
+    alert('Vídeo gravado com sucesso! Já pode agendar');
+    navigate('/agendamento');
   };
 
   const regravar = () => {
@@ -98,17 +79,16 @@ const VideoRecordPage = () => {
         <video src={URL.createObjectURL(recordedBlob)} controls autoPlay loop style={{ width: '90%', maxWidth: '800px', marginTop: '20px', borderRadius: '20px' }} />
       )}
 
-      {recording && <p style={{ fontSize: '3rem' }}>Gravando... {seconds}s</p>}
+      {recording && <p style={{ fontSize: '3rem', margin: '30px' }}>Gravando... {seconds}s</p>}
 
-      {!recording && !recordedBlob && <button onClick={start} style={btnGreen}>Iniciar</button>}
+      {!recording && !recordedBlob && <button onClick={start} style={btnGreen}>Iniciar Gravação</button>}
       {recording && <button onClick={stop} style={btnRed}>Parar</button>}
-      {recordedBlob && !uploading && (
+      {recordedBlob && (
         <>
           <button onClick={salvar} style={btnOrange}>Salvar e Agendar</button>
           <button onClick={regravar} style={btnGray}>Regravar</button>
         </>
       )}
-      {uploading && <p style={{ fontSize: '2rem' }}>Processando...</p>}
     </div>
   );
 };
