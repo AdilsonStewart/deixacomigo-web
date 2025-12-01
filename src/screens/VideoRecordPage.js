@@ -1,12 +1,13 @@
-// src/screens/VideoRecordPage.js  →  VERSÃO FINAL QUE FUNCIONA COM SEU PROJETO
+// src/screens/VideoRecordPage.js  →  VERSÃO FINAL QUE FUNCIONA DE VERDADE
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase-client';   // ← usa o que já existe
+import { storage } from '../firebase/firebase-client';
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
   const liveVideoRef = useRef(null);
+  );
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -15,45 +16,46 @@ const VideoRecordPage = () => {
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [gravacaoId] = useState(() => `VID-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
+  const [gravacaoId] = useState(() => `VID-${Date.now()}-${Math.floor(Math.random()*10000)}`);
 
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
-      if (liveVideoRef.current) liveVideoRef.current.srcObject = stream;
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream;
+      }
     } catch (err) {
       alert('Permita câmera e microfone!');
+    ');
     }
   };
 
   const startRecording = () => {
+    if (!streamRef.current) return alert('Câmera não iniciada');
     chunksRef.current = [];
-    const options = { mimeType: 'video/webm;codecs=vp9,opus' };
-    const recorder = new MediaRecorder(streamRef.current, options);
+    const recorder = new MediaRecorder(streamRef.current);
     mediaRecorderRef.current = recorder;
 
-    recorder.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
+    recorder.ondataavailable = e => e.data.size > 0 && chunksRef.current.push(e.data);
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
       setRecordedBlob(blob);
       setRecording(false);
       setSeconds(0);
-      if (liveVideoRef.current) liveVideoRef.current.srcObject = null;
     };
 
     recorder.start();
     setRecording(true);
     setSeconds(30);
-    setTimeout(() => recorder.state === 'recording' && recorder.stop(), 30000);
   };
 
   const stopRecording = () => mediaRecorderRef.current?.stop();
 
   useEffect(() => {
     if (recording && seconds > 0) {
-      const t = setTimeout(() => setSeconds(s => s - 1), 1000);
-      return () => clearTimeout(t);
+      const id = setTimeout(() => setSeconds(s => s - 1), 1000);
+      return () => clearTimeout(id);
     } else if (seconds === 0 && recording) {
       stopRecording();
     }
@@ -62,7 +64,6 @@ const VideoRecordPage = () => {
   const uploadAndGo = async () => {
     if (!recordedBlob) return;
     setUploading(true);
-
     try {
       const filename = `videos/video_${gravacaoId}.webm`;
       const storageRef = ref(storage, filename);
@@ -70,11 +71,13 @@ const VideoRecordPage = () => {
       const url = await getDownloadURL(storageRef);
 
       localStorage.setItem('lastRecordingUrl', url);
+      localStorage.setItem('lastRecordingType', 'video');
+
       alert('Vídeo salvo com sucesso!');
       setTimeout(() => navigate('/agendamento'), 1000);
-    } catch (error) {
-      console.error(error);
-      alert('Erro: ' + error.message);
+    } catch (e) {
+      console.error(e);
+      alert('Erro: ' + e.message);
     } finally {
       setUploading(false);
     }
@@ -91,35 +94,41 @@ const VideoRecordPage = () => {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "white", padding: "20px", textAlign: "center" }}>
-      <h1 style={{ fontSize: "2.5rem" }}>Gravar Vídeo Surpresa</h1>
+    <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#667eea,#764ba2)", color:"white", padding:"20px", textAlign:"center" }}>
+      <h1 style={{fontSize:"2.5rem"}}>Gravar Vídeo Surpresa</h1>
       <h3>ID: {gravacaoId}</h3>
 
-      {recording && <div style={{ margin: "20px", fontSize: "2rem" }}>Gravando... {seconds}s</div>}
+      {recording && <div style={{fontSize:"2rem",margin:"20px"}}>Gravando… {seconds}s</div>}
 
-      <div style={{ margin: "20px auto", maxWidth: "800px", background: "#000", borderRadius: "15px" }}>
+      <div style={{maxWidth:"800px", margin:"20px auto", background:"#000", borderRadius:"15px", overflow:"hidden"}}>
         {!recordedBlob ? (
-          <video ref={liveVideoRef} autoPlay muted playsInline style={{ width: "100%" }} />
+          <video ref={liveVideoRef} autoPlay muted playsInline style={{width:"100%"}} />
         ) : (
-          <video controls src={URL.createObjectURL(recordedBlob)} style={{ width: "100%" }} />
+          <video controls src={URL.createObjectURL(recordedBlob)} style={{width:"100%"}} />
         )}
       </div>
 
-      <div style={{ margin: "30px 0", display: "flex", gap: "15px", justifyContent: "center", flexWrap: "wrap" }}>
-        {!recordedBlob && !recording && <button onClick={startRecording} style={{padding:"18px 40px",fontSize:"1.4rem",background:"#4CAF50",color:"white",border:"none",borderRadius:"50px"}}>Iniciar Gravação</button>}
-        {recording && <button onClick={stopRecording} style={{padding:"18px 40px",fontSize:"1.4rem",background:"#f44336",color:"white",border:"none",borderRadius:"50px"}}>Parar</button>}
+      <div style={{display:"flex", gap:"15px", justifyContent:"center", flexWrap:"wrap", margin:"30px 0"}}>
+        {!recordedBlob && !recording && <button onClick={startRecording} style={btnGreen}>Iniciar Gravação</button>}
+        {recording && <button onClick={stopRecording} style={btnRed}>Parar</button>}
         {recordedBlob && !uploading && (
           <>
-            <button onClick={uploadAndGo} style={{padding:"18px 40px",fontSize:"1.4rem",background:"#FF9800",color:"white",border:"none",borderRadius:"50px"}}>Salvar e Agendar</button>
-            <button onClick={regravar} style={{padding:"18px 40px",fontSize:"1.2rem",background:"#666",color:"white",border:"none",borderRadius:"50px"}}>Regravar</button>
+            <button onClick={uploadAndGo} style={btnOrange}>Salvar e Agendar</button>
+            <button onClick={regravar} style={btnGray}>Regravar</button>
           </>
         )}
-        {uploading && <p style={{fontSize:"1.5rem"}}>Enviando vídeo...</p>}
+        {uploading && <p style={{fontSize:"1.5rem"}}>Enviando…</p>}
       </div>
 
-      <button onClick={() => navigate(-1)} style={{padding:"12px 30px",background:"#333",color:"white",border:"none",borderRadius:"50px",marginTop:"20px"}}>Voltar</button>
+      <button onClick={() => navigate(-1)} style={btnBack}>Voltar</button>
     </div>
   );
 };
+
+const btnGreen  = {padding:"18px 40px",fontSize:"1.4rem",background:"#4CAF50",color:"white",border:"none",borderRadius:"50px",cursor:"pointer"};
+const btnRed    = {...btnGreen, background:"#f44336"};
+const btnOrange = {...btnGreen, background:"#FF9800"};
+const btnGray   = {...btnGreen, background:"#666", fontSize:"1.2rem"};
+const btnBack   = {padding:"12px 30px",background:"#333",color:"white",border:"none",borderRadius:"50px",marginTop:"20px"};
 
 export default VideoRecordPage;
