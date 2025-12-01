@@ -1,77 +1,78 @@
 // src/screens/VideoRecordPage.js
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { storage, db } from '../firebase/firebase-client';
-import './VideoRecorder.css';
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const liveVideoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
-  
+  const chunksRef = useRef([]);
+
   const [recording, setRecording] = useState(false);
-  const [recordedVideo, setRecordedVideo] = useState(null);
+  const [recordedUrl, setRecordedUrl] = useState('');
   const [seconds, setSeconds] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [gravacaoId, setGravacaoId] = useState(null);
+  const [gravacaoId, setGravacaoId] = useState('');
 
-  const generateGravacaoId = () => {
-    return `GRV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
+  // Gera ID único
+  const generateId = () => `VID-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
+  // Inicia câmera
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 1280, height: 720 }, 
-        audio: true 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 },
+        audio: true
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream;
       }
-    } catch (error) {
-      console.error('Erro ao acessar câmera:', error);
-      alert('Não foi possível acessar a câmera. Verifique as permissões.');
+    } catch (err) {
+      alert('Erro ao acessar câmera/mic. Permita o acesso!');
     }
   };
 
+  // INÍCIO DA GRAVAÇÃO (FORÇA MP4!)
   const startRecording = async () => {
     if (!streamRef.current) return;
 
-    try {
-      const mediaRecorder = new MediaRecorder(streamRef.current);
-      mediaRecorderRef.current = mediaRecorder;
-      const chunks = [];
+    chunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/mp4' });
-        const videoUrl = URL.createObjectURL(blob);
-        setRecordedVideo({ blob, url: videoUrl });
-        setRecording(false);
-        setSeconds(0);
-      };
-
-      setSeconds(30);
-      setRecording(true);
-      mediaRecorder.start(1000);
-
-      setTimeout(() => {
-        if (mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-        }
-      }, 30000);
-
-    } catch (error) {
-      console.error('Erro ao iniciar gravação:', error);
-      alert('Erro ao iniciar gravação.');
+    const options = { mimeType: 'video/mp4' };
+    // Se MP4 não for suportado, tenta WebM com opus
+    if (!MediaRecorder.isTypeSupported('video/mp4')) {
+      options.mimeType = 'video/webm;codecs=vp9,opus';
     }
+
+    const recorder = new MediaRecorder(streamRef.current, options);
+    mediaRecorderRef.current = recorder;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      const id = generateId();
+      setRecordedUrl(url);
+      setGravacaoId(id);
+      setRecording(false);
+      setSeconds(0);
+      localStorage.setItem('lastRecordingUrl', url); // já salva pra agendamento
+      localStorage.setItem('lastVideoBlob', url);   // backup
+    };
+
+    recorder.start();
+    setRecording(true);
+    setSeconds(30);
+
+    setTimeout(() => {
+      if (recorder.state === 'recording') recorder.stop();
+    }, 30000);
   };
 
   const stopRecording = () => {
@@ -80,60 +81,50 @@ const VideoRecordPage = () => {
     }
   };
 
+  // Contador
   useEffect(() => {
-    let interval = null;
     if (recording && seconds > 0) {
-      interval = setInterval(() => {
-        setSeconds(seconds => seconds - 1);
-      }, 1000);
+      const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
+      return () => clearTimeout(timer);
     } else if (seconds === 0 && recording) {
       stopRecording();
     }
-    return () => clearInterval(interval);
   }, [recording, seconds]);
 
-  const uploadVideo = async () => {
-    if (!recordedVideo) return;
-
+  // Upload via Netlify Function (sem CORS!)
+  const uploadAndGo = async () => {
+    if (!recordedUrl) return;
     setUploading(true);
+
     try {
-      const gravacaoId = generateGravacaoId();
-      setGravacaoId(gravacaoId);
+      const blob = await fetch(recordedUrl).then(r => r.blob());
+      const formData = new FormData();
+      formData.append('video', blob, `${gravacaoId}.mp4`);
+      formData.append('tipo', 'video');
 
-      const videoRefStorage = ref(storage, `videos/${gravacaoId}.mp4`);
-      await uploadBytes(videoRefStorage, recordedVideo.blob);
-      const videoUrl = await getDownloadURL(videoRefStorage);
+      const res = await fetch('/.netlify/functions/salvar-video', {
+        method: 'POST',
+        body: formData
+      });
 
-      const gravacaoData = {
-        id: gravacaoId,
-        videoUrl: videoUrl,
-        duracao: (30 - seconds) + ' segundos',
-        timestamp: serverTimestamp(),
-        status: 'pendente',
-        tipo: 'video'
-      };
-
-      await setDoc(doc(db, 'gravacoes', gravacaoId), gravacaoData);
-
-      localStorage.setItem('lastRecordingUrl', videoUrl);
-
-      alert('✅ Vídeo salvo com sucesso!');
-      
-      setTimeout(() => {
-        navigate('/agendamento');
-      }, 1500);
-
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao salvar vídeo. Tente novamente.');
+      const json = await res.json();
+      if (json.success) {
+        localStorage.setItem('lastRecordingUrl', json.url);
+        alert('Vídeo salvo com sucesso! Indo para agendamento...');
+        setTimeout(() => navigate('/agendamento'), 1000);
+      } else {
+        alert('Erro ao salvar vídeo: ' + json.error);
+      }
+    } catch (err) {
+      alert('Erro de conexão ao salvar vídeo.');
     } finally {
       setUploading(false);
     }
   };
 
-  const newRecording = () => {
-    setRecordedVideo(null);
-    setGravacaoId(null);
+  const regravar = () => {
+    setRecordedUrl('');
+    setGravacaoId('');
     startCamera();
   };
 
@@ -141,92 +132,97 @@ const VideoRecordPage = () => {
     startCamera();
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach(t => t.stop());
       }
     };
   }, []);
 
   return (
-    <div className="video-container">
-      <h1 className="video-title">🎥 Gravar Vídeo Surpresa</h1>
-      
-      {gravacaoId && (
-        <div className="gravacao-id">
-          <strong>ID da Gravação: {gravacaoId}</strong>
-        </div>
-      )}
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      color: "white",
+      padding: "20px",
+      textAlign: "center",
+      fontFamily: "Arial, sans-serif"
+    }}>
+      <h1 style={{ fontSize: "2.5rem" }}>Gravar Vídeo Surpresa</h1>
+
+      {gravacaoId && <h3>ID: {gravacaoId}</h3>}
 
       {recording && (
-        <div className="recording-timer">
-          <div className="timer-circle">
-            <span>{seconds}s</span>
-          </div>
-          <p>⏺️ Gravando... ({30 - seconds}/30 segundos)</p>
+        <div style={{ margin: "20px 0", fontSize: "2rem" }}>
+          <div style={{
+            display: "inline-block",
+            width: 80, height: 80,
+            border: "6px solid #ff3333",
+            borderRadius: "50%",
+            animation: "pulse 1.5s infinite"
+          }}></div>
+          <p>{seconds}s restantes</p>
         </div>
       )}
 
-      <div className="video-preview">
-        {recordedVideo ? (
-          <video 
-            controls 
-            src={recordedVideo.url} 
-            className="recorded-video"
-          />
+      <div style={{ margin: "20px auto", maxWidth: "800px", background: "#000", borderRadius: "15px", overflow: "hidden" }}>
+        {recordedUrl ? (
+          <video controls src={recordedUrl} style={{ width: "100%", maxHeight: "70vh" }} />
         ) : (
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            muted 
-            className="live-video"
-          />
+          <video ref={liveVideoRef} autoPlay muted playsInline style={{ width: "100%", maxHeight: "70vh" }} />
         )}
       </div>
 
-      <div className="video-controls">
-        {!recordedVideo && !recording && (
-          <button className="btn-record" onClick={startRecording}>
-            🎬 Iniciar Gravação (30s)
+      <div style={{ margin: "30px 0" }}>
+        {!recordedUrl && !recording && (
+          <button onClick={startRecording} style={{
+            padding: "18px 40px", fontSize: "1.4rem", background: "#4CAF50", color: "white",
+            border: "none", borderRadius: "50px", cursor: "pointer"
+          }}>
+            Iniciar Gravação (30s)
           </button>
         )}
-        
+
         {recording && (
-          <button className="btn-stop" onClick={stopRecording}>
-            ⏹️ Parar Gravação
+          <button onClick={stopRecording} style={{
+            padding: "18px 40px", fontSize: "1.4rem", background: "#f44336", color: "white",
+            border: "none", borderRadius: "50px", cursor: "pointer"
+          }}>
+            Parar Gravação
           </button>
         )}
-        
-        {recordedVideo && !uploading && (
+
+        {recordedUrl && !uploading && (
           <>
-            <button className="btn-upload" onClick={uploadVideo}>
-              ✅ Salvar e Agendar
+            <button onClick={uploadAndGo} style={{
+              padding: "18px 40px", fontSize: "1.4rem", background: "#FF9800", color: "white",
+              border: "none", borderRadius: "50px", cursor: "pointer", margin: "0 10px"
+            }}>
+              Salvar e Agendar
             </button>
-            <button className="btn-retry" onClick={newRecording}>
-              🔄 Regravar
+            <button onClick={regravar} style={{
+              padding: "18px 40px", fontSize: "1.2rem", background: "#666", color: "white",
+              border: "none", borderRadius: "50px", cursor: "pointer"
+            }}>
+              Regravar
             </button>
           </>
         )}
-        
-        <button className="btn-back" onClick={() => navigate('/')}>
-          ↩️ Voltar
-        </button>
+
+        {uploading && <p style={{ fontSize: "1.5rem" }}>Enviando vídeo...</p>}
       </div>
 
-      <div className="video-instructions">
-        <h3>📋 Instruções:</h3>
-        <ol>
-          <li>Clique em "Iniciar Gravação"</li>
-          <li>Grave sua mensagem especial (máximo 30 segundos)</li>
-          <li>Assista a prévia e clique em "Salvar Vídeo"</li>
-          <li>Agende a entrega na próxima tela</li>
-        </ol>
-      </div>
+      <button onClick={() => navigate(-1)} style={{
+        padding: "12px 30px", background: "#333", color: "white", border: "none", borderRadius: "50px"
+      }}>
+        Voltar
+      </button>
 
-      {uploading && (
-        <div className="upload-status">
-          <p>📤 Enviando vídeo para o servidor...</p>
-          <div className="loading-spinner"></div>
-        </div>
-      )}
+      <style jsx>{`
+        @keyframes pulse {
+          0% { box-shadow: 0 0 0 0 rgba(255,0,0,0.7); }
+          70% { box-shadow: 0 0 0 20px rgba(255,0,0,0); }
+          100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); }
+        }
+      `}</style>
     </div>
   );
 };
