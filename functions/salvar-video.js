@@ -1,6 +1,6 @@
 // netlify/functions/salvar-video.js
-const { initializeApp } = require("firebase/app");
-const { getStorage, ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+const { initializeApp } from 'firebase/app';
+const { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -15,28 +15,16 @@ const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Método não permitido" };
-  }
+  if (event.httpMethod !== 'POST') return { statusCode: 405 };
 
   try {
-    // Pega o buffer do vídeo do body (Netlify manda como string)
-    const buffer = Buffer.from(event.body, "binary");
+    const buffer = Buffer.from(event.body, 'binary');
+    if (buffer.length === 0) throw new Error('Vídeo vazio');
 
-    if (buffer.length === 0) {
-      throw new Error("Vídeo vazio – tente gravar de novo");
-    }
-
-    // Nome único
     const filename = `videos/video_${Date.now()}.webm`;
     const videoRef = ref(storage, filename);
 
-    // Upload
-    await uploadBytes(videoRef, buffer, {
-      contentType: "video/webm",
-    });
-
-    // URL pública
+    await uploadBytes(videoRef, buffer, { contentType: 'video/webm' });
     const url = await getDownloadURL(videoRef);
 
     return {
@@ -44,7 +32,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, url }),
     };
   } catch (error) {
-    console.error("Erro detalhado:", error.code, error.message);
+    console.error('Erro detalhado:', error.code, error.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ success: false, error: error.message }),
