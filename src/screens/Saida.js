@@ -4,7 +4,8 @@ import './Saida.css';
 
 const Saida = () => {
   const navigate = useNavigate();
-
+  
+  // Puxa os dados com os nomes corretos que o Agendamento.js salva
   const dados = JSON.parse(localStorage.getItem('lastAgendamento') || '{}');
 
   const formatDate = (iso) => {
@@ -28,12 +29,11 @@ const Saida = () => {
 
         <div className="saida-info">
           <h3>Resumo do Agendamento:</h3>
-
           <div className="info-item"><strong>Status:</strong> <span className="status-confirmado">Confirmado</span></div>
-          <div className="info-item"><strong>Nome do destinatário:</strong> {dados.nomeDestinatario || 'Não informado'}</div>
+          <div className="info-item"><strong>Nome do destinatário:</strong> {dados.nome || 'Não informado'}</div>
           <div className="info-item"><strong>Data da entrega:</strong> {formatDate(dados.dataEntrega)}</div>
-          <div className="info-item"><strong>Horário preferencial:</strong> {dados.horarioEntrega || 'Não informado'}</div>
-          <div className="info-item"><strong>Entrega:</strong> Link Via SMS </div>
+          <div className="info-item"><strong>Horário preferencial:</strong> {dados.horario || 'Não informado'}</div>
+          <div className="info-item"><strong>Entrega:</strong> Link Via SMS</div>
         </div>
 
         <div className="saida-buttons">
