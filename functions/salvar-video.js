@@ -1,41 +1,40 @@
 // netlify/functions/salvar-video.js
-const { initializeApp } from 'firebase/app';
-const { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
-
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405 };
 
   try {
-    const buffer = Buffer.from(event.body, 'binary');
-    if (buffer.length === 0) throw new Error('Vídeo vazio');
+    const { videoBase64, gravacaoId } = JSON.parse(event.body);
+    const base64Data = videoBase64.split(',')[1];
+    const buffer = Buffer.from(base64Data, 'base64');
 
-    const filename = `videos/video_${Date.now()}.webm`;
-    const videoRef = ref(storage, filename);
+    const filename = `videos/video_${gravacaoId}.webm`;
 
-    await uploadBytes(videoRef, buffer, { contentType: 'video/webm' });
-    const url = await getDownloadURL(videoRef);
+    // Salva no Firebase Storage (sem CORS porque é server-side)
+    const { storage } = require('firebase-admin/storage');
+    const { initializeApp, getApps } = require('firebase-admin/app');
+
+    if (!getApps().length) {
+      initializeApp({
+        credential: require('firebase-admin/credential').cert(JSON.parse(process.env.FIREBASE_ADMIN_SDK)),
+        storageBucket: 'deixacomigo-727ff.appspot.com'
+      });
+    }
+
+    const bucket = storage().bucket();
+    const file = bucket.file(filename);
+    await file.save(buffer, { contentType: 'video/webm' });
+    await file.makePublic();
+
+    const url = `https://storage.googleapis.com/deixacomigo-727ff.appspot.com/${filename}`;
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, url }),
+      body: JSON.stringify({ success: true, url })
     };
   } catch (error) {
-    console.error('Erro detalhado:', error.code, error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
+      body: JSON.stringify({ success: false, error: error.message })
     };
   }
 };
