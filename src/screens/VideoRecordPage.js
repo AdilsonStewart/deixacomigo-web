@@ -118,3 +118,4 @@ const btnOrange = { ...btnGreen, background: '#FF9800' };
 const btnGray   = { ...btnGreen, background: '#666' };
 
 export default VideoRecordPage;
+         
