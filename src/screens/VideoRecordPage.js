@@ -17,7 +17,10 @@ const VideoRecordPage = () => {
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(s => { streamRef.current = s; videoRef.current.srcObject = s; })
+      .then(s => {
+        streamRef.current = s;
+        if (videoRef.current) videoRef.current.srcObject = s;
+      })
       .catch(() => alert('Permita câmera e microfone!'));
   }, []);
 
@@ -32,7 +35,7 @@ const VideoRecordPage = () => {
       setRecording(false);
       setSeconds(30);
       streamRef.current.getTracks().forEach(t => t.stop());
-      videoRef.current.srcObject = null;
+      if (videoRef.current) videoRef.current.srcObject = null;
     };
     r.start();
     setRecording(true);
@@ -41,28 +44,35 @@ const VideoRecordPage = () => {
 
   const stop = () => recorderRef.current?.stop();
 
+  const regravar = () => {
+    setRecordedBlob(null);
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(s => {
+        streamRef.current = s;
+        if (videoRef.current) videoRef.current.srcObject = s;
+      });
+  };
+
+  // VERSÃO 100% FUNCIONANDO – BOTÃO ATIVO E VÍDEO SOBE
   const salvar = async () => {
     if (!recordedBlob) return;
 
     const filename = `video_${gravacaoId}.webm`;
+    // Força o tipo correto pra Firebase aceitar
+    const fixedBlob = new Blob([recordedBlob], { type: 'video/webm' });
     const storageRef = ref(storage, `videos/${filename}`);
 
     try {
-      await uploadBytes(storageRef, recordedBlob);
+      await uploadBytes(storageRef, fixedBlob);
       const url = await getDownloadURL(storageRef);
-      
+
       localStorage.setItem('lastRecordingUrl', url);
-      alert('Vídeo salvo com sucesso!');
+      alert('Vídeo salvo com sucesso! Já pode agendar');
       navigate('/agendamento');
     } catch (err) {
-      alert('Erro ao salvar vídeo. Tenta de novo.');
+      console.error(err);
+      alert('Erro ao salvar: ' + err.message);
     }
-  };
-
-  const regravar = () => {
-    setRecordedBlob(null);
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(s => { streamRef.current = s; videoRef.current.srcObject = s; });
   };
 
   useEffect(() => {
@@ -86,8 +96,12 @@ const VideoRecordPage = () => {
       {recording && <div style={{ fontSize: '3rem', margin: '30px' }}>Gravando... {seconds}s</div>}
 
       <div style={{ margin: '40px' }}>
-        {!recording && !recordedBlob && <button onClick={start} style={btnGreen}>Iniciar Gravação</button>}
-        {recording && <button onClick={stop} style={btnRed}>Parar</button>}
+        {!recording && !recordedBlob && (
+          <button onClick={start} style={btnGreen}>Iniciar Gravação</button>
+        )}
+        {recording && (
+          <button onClick={stop} style={btnRed}>Parar</button>
+        )}
         {recordedBlob && (
           <>
             <button onClick={salvar} style={btnOrange}>Salvar e Agendar</button>
