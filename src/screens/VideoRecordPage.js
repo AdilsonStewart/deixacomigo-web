@@ -3,8 +3,6 @@ const salvar = async () => {
 
   const filename = `video_${gravacaoId}.webm`;
 
-  `;
-
   const reader = new FileReader();
   reader.onload = async () => {
     const base64 = reader.result;
@@ -23,11 +21,13 @@ const salvar = async () => {
         alert('Vídeo enviado com sucesso! Já pode agendar');
         navigate('/agendamento');
       } else {
-        alert('Erro: ' + (data.error || 'Tenta novamente'));
+        alert('Erro ao enviar: ' + (data.error || 'Tenta novamente'));
       }
     } catch (err) {
-      alert('Erro de conexão. Tenta de novo.');
+      console.error(err);
+      alert('Erro de conexão. Tenta novamente.');
     }
   };
+
   reader.readAsDataURL(recordedBlob);
 };
