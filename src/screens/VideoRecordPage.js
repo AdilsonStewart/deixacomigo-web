@@ -1,17 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase-client';
-import { getApp } from 'firebase/app';
-import { getStorage as getStorageAgain } from 'firebase/storage';
-
-// Força o bucket correto sem dar duplicate-app
-let fixedStorage;
-try {
-  fixedStorage = getStorageAgain(getApp(), "gs://deixacomigo-727ff.firebasestorage.app");
-} catch (e) {
-  fixedStorage = storage;
-}
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -67,17 +55,26 @@ const VideoRecordPage = () => {
     if (!recordedBlob) return;
 
     const filename = `video_${gravacaoId}.webm`;
-    const storageRef = ref(fixedStorage, `videos/${filename}`);
+    const formData = new FormData();
+    formData.append('file', recordedBlob, filename);
+    formData.append('upload_preset', 'ml_default'); // preset público padrão do Cloudinary
 
     try {
-      await uploadBytes(storageRef, recordedBlob);
-      const url = await getDownloadURL(storageRef);
-      localStorage.setItem('lastRecordingUrl', url);
-      alert('Vídeo salvo com sucesso!');
-      navigate('/agendamento');
+      const res = await fetch(`https://api.cloudinary.com/v1_1/do2zvxbfb/video/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      if (data.secure_url) {
+        localStorage.setItem('lastRecordingUrl', data.secure_url);
+        alert('Vídeo salvo com sucesso! Link permanente gerado.');
+        navigate('/agendamento');
+      } else {
+        alert('Erro: ' + data.error.message);
+      }
     } catch (err) {
-      console.error(err);
-      alert('Erro: ' + err.message);
+      alert('Erro de conexão. Tenta de novo.');
     }
   };
 
@@ -85,9 +82,7 @@ const VideoRecordPage = () => {
     if (recording && seconds > 0) {
       const t = setTimeout(() => setSeconds(s => s - 1), 1000);
       return () => clearTimeout(t);
-    } else if (seconds === 0 && recording) {
-      stop();
-    }
+    } else if (seconds === 0 && recording) stop();
   }, [recording, seconds]);
 
   return (
