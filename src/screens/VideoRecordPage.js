@@ -1,21 +1,17 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { initializeApp } from 'firebase/app';
-import { getStorage } from 'firebase/storage';
+import { storage } from '../firebase/firebase-client'; // ← usa o que já existe
+import { getApp } from 'firebase/app';
+import { connectStorageEmulator, getStorage as getStorageAgain } from 'firebase/storage';
 
-// CONFIGURAÇÃO CORRETA PRO TEU PROJETO (usando variáveis do .env)
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: "deixacomigo-727ff.firebasestorage.app", // ← FORÇA O BUCKET CERTO
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
-};
-
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+// Força o bucket correto sem dar duplicate-app
+let fixedStorage;
+try {
+  fixedStorage = getStorageAgain(getApp(), "gs://deixacomigo-727ff.firebasestorage.app");
+} catch (e) {
+  fixedStorage = storage; // fallback se der algum erro bizarro
+}
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -71,9 +67,10 @@ const VideoRecordPage = () => {
     if (!recordedBlob) return;
 
     const filename = `video_${gravacaoId}.webm`;
-    const storageRef = ref(storage, `videos/${filename}`);
+    const storageRef = ref(fixedStorage, `videos/${filename}`);
 
     try {
+      {
       await uploadBytes(storageRef, recordedBlob);
       const url = await getDownloadURL(storageRef);
       localStorage.setItem('lastRecordingUrl', url);
