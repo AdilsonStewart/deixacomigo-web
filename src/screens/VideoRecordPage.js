@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase-client';
+import { UploadButton } from "@uploadthing/react";
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -17,11 +16,9 @@ const VideoRecordPage = () => {
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(s => {
-        streamRef.current = s;
-        if (videoRef.current) videoRef.current.srcObject = s;
-      })
+      .then(s => { streamRef.current = s; videoRef.current.srcObject = s; })
       .catch(() => alert('Permita câmera e microfone!'));
+    return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
   const start = () => {
@@ -35,7 +32,7 @@ const VideoRecordPage = () => {
       setRecording(false);
       setSeconds(30);
       streamRef.current.getTracks().forEach(t => t.stop());
-      if (videoRef.current) videoRef.current.srcObject = null;
+      videoRef.current.srcObject = null;
     };
     r.start();
     setRecording(true);
@@ -47,39 +44,15 @@ const VideoRecordPage = () => {
   const regravar = () => {
     setRecordedBlob(null);
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then(s => {
-        streamRef.current = s;
-        if (videoRef.current) videoRef.current.srcObject = s;
-      });
-  };
-
-  // VERSÃO 100% FUNCIONANDO – BOTÃO ATIVO E VÍDEO SOBE
-  const salvar = async () => {
-    if (!recordedBlob) return;
-
-    const filename = `video_${gravacaoId}.webm`;
-    // Força o tipo correto pra Firebase aceitar
-    const fixedBlob = new Blob([recordedBlob], { type: 'video/webm' });
-    const storageRef = ref(storage, `videos/${filename}`);
-
-    try {
-      await uploadBytes(storageRef, fixedBlob);
-      const url = await getDownloadURL(storageRef);
-
-      localStorage.setItem('lastRecordingUrl', url);
-      alert('Vídeo salvo com sucesso! Já pode agendar');
-      navigate('/agendamento');
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao salvar: ' + err.message);
-    }
+      .then(s => { streamRef.current = s; videoRef.current.srcObject = s; });
   };
 
   useEffect(() => {
     if (recording && seconds > 0) {
-      const t = setTimeout(() => setSeconds(s => s - 1), 1000);
-      return () => clearTimeout(t);
-    } else if (seconds === 0 && recording) stop();
+      const id = setTimeout(() => setSeconds(s => s - 1), 1000);
+      return () => clearTimeout(id);
+    }
+    if (seconds === 0 && recording) stop();
   }, [recording, seconds]);
 
   return (
@@ -96,15 +69,25 @@ const VideoRecordPage = () => {
       {recording && <div style={{ fontSize: '3rem', margin: '30px' }}>Gravando... {seconds}s</div>}
 
       <div style={{ margin: '40px' }}>
-        {!recording && !recordedBlob && (
-          <button onClick={start} style={btnGreen}>Iniciar Gravação</button>
-        )}
-        {recording && (
-          <button onClick={stop} style={btnRed}>Parar</button>
-        )}
+        {!recording && !recordedBlob && <button onClick={start} style={btnGreen}>Iniciar Gravação</button>}
+        {recording && <button onClick={stop} style={btnRed}>Parar</button>}
         {recordedBlob && (
           <>
-            <button onClick={salvar} style={btnOrange}>Salvar e Agendar</button>
+            <div style={{ margin: '20px 0' }}>
+              <UploadButton
+                endpoint="videoUploader"
+                appearance={{
+                  button: { background: '#FF9800', fontSize: '1.8rem', padding: '20px 60px', borderRadius: '50px' },
+                  allowedContent: { display: 'none' }
+                }}
+                onClientUploadComplete={(res) => {
+                  localStorage.setItem('lastRecordingUrl', res[0].url);
+                  alert('Vídeo enviado com sucesso! Já pode agendar');
+                  navigate('/agendamento');
+                }}
+                onUploadError={(error) => alert('Erro: ' + error.message)}
+              />
+            </div>
             <button onClick={regravar} style={btnGray}>Regravar</button>
           </>
         )}
@@ -115,7 +98,6 @@ const VideoRecordPage = () => {
 
 const btnGreen  = { padding: '20px 60px', fontSize: '1.8rem', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '50px', margin: '10px' };
 const btnRed    = { ...btnGreen, background: '#f44336' };
-const btnOrange = { ...btnGreen, background: '#FF9800' };
 const btnGray   = { ...btnGreen, background: '#666' };
 
 export default VideoRecordPage;
