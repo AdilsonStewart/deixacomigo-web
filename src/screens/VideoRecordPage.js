@@ -4,14 +4,14 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 
-// FORÇA O BUCKET CERTO (nunca mais CORS)
+// CONFIGURAÇÃO CORRETA PRO TEU PROJETO (usando variáveis do .env)
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_REACT_APP_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: "deixacomigo-727ff.firebasestorage.app", // ← AQUI TÁ O SEGREDO
-  messagingSenderId: import.meta.env.VITE_REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_REACT_APP_FIREBASE_APP_ID
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: "deixacomigo-727ff.firebasestorage.app", // ← FORÇA O BUCKET CERTO
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
@@ -81,7 +81,7 @@ const VideoRecordPage = () => {
       navigate('/agendamento');
     } catch (err) {
       console.error(err);
-      alert('Erro ao salvar: ' + err.message);
+      alert('Erro: ' + err.message);
     }
   };
 
