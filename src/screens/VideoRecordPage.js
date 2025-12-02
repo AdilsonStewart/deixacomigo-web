@@ -1,16 +1,16 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase-client'; // ← usa o que já existe
+import { storage } from '../firebase/firebase-client';
 import { getApp } from 'firebase/app';
-import { connectStorageEmulator, getStorage as getStorageAgain } from 'firebase/storage';
+import { getStorage as getStorageAgain } from 'firebase/storage';
 
 // Força o bucket correto sem dar duplicate-app
 let fixedStorage;
 try {
   fixedStorage = getStorageAgain(getApp(), "gs://deixacomigo-727ff.firebasestorage.app");
 } catch (e) {
-  fixedStorage = storage; // fallback se der algum erro bizarro
+  fixedStorage = storage;
 }
 
 const VideoRecordPage = () => {
@@ -70,7 +70,6 @@ const VideoRecordPage = () => {
     const storageRef = ref(fixedStorage, `videos/${filename}`);
 
     try {
-      {
       await uploadBytes(storageRef, recordedBlob);
       const url = await getDownloadURL(storageRef);
       localStorage.setItem('lastRecordingUrl', url);
@@ -86,7 +85,9 @@ const VideoRecordPage = () => {
     if (recording && seconds > 0) {
       const t = setTimeout(() => setSeconds(s => s - 1), 1000);
       return () => clearTimeout(t);
-    } else if (seconds === 0 && recording) stop();
+    } else if (seconds === 0 && recording) {
+      stop();
+    }
   }, [recording, seconds]);
 
   return (
