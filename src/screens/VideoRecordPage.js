@@ -57,7 +57,7 @@ const VideoRecordPage = () => {
     const filename = `video_${gravacaoId}.webm`;
     const formData = new FormData();
     formData.append('file', recordedBlob, filename);
-    formData.append('upload_preset', 'ml_default'); // preset público padrão do Cloudinary
+    formData.append('upload_preset', 'deixacomigo'); // preset público padrão do Cloudinary
 
     try {
       const res = await fetch(`https://api.cloudinary.com/v1_1/do2zvxbfb/video/upload`, {
