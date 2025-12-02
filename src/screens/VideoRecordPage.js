@@ -1,7 +1,21 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/firebase-client';
+import { initializeApp } from 'firebase/app';
+import { getStorage } from 'firebase/storage';
+
+// FORÇA O BUCKET CERTO (nunca mais CORS)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_REACT_APP_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: "deixacomigo-727ff.firebasestorage.app", // ← AQUI TÁ O SEGREDO
+  messagingSenderId: import.meta.env.VITE_REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_REACT_APP_FIREBASE_APP_ID
+};
+
+const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
 
 const VideoRecordPage = () => {
   const navigate = useNavigate();
@@ -62,7 +76,6 @@ const VideoRecordPage = () => {
     try {
       await uploadBytes(storageRef, recordedBlob);
       const url = await getDownloadURL(storageRef);
-
       localStorage.setItem('lastRecordingUrl', url);
       alert('Vídeo salvo com sucesso!');
       navigate('/agendamento');
