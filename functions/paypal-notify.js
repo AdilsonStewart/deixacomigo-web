@@ -1,4 +1,12 @@
-const fetch = require("node-fetch"); // se necessário instalar
+const admin = require("firebase-admin");
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(), // ou suas credenciais JSON
+  });
+}
+
+const db = admin.firestore();
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -7,16 +15,29 @@ exports.handler = async (event) => {
 
   try {
     const data = JSON.parse(event.body);
-
-    // Aqui você pode validar a notificação do PayPal
-    // Para IPN/Webhook real, você deve verificar com PayPal
-    // Por simplicidade, assumimos que data.status === "COMPLETED"
     const { tipo, pedidoId, status, payer_email } = data;
 
     if (status === "COMPLETED") {
-      // Atualizar seu pedido no Firebase
-      // Exemplo usando Firestore (assumindo já configurado)
-      const admin = require("firebase-admin");
-      if (!admin.apps.length) {
-        admin.initializeApp({
-          credential: admin.
+      const pedidoRef = db.collection("pedidos").doc(pedidoId);
+
+      await pedidoRef.update({
+        status: "PAGO",
+        pagoEm: admin.firestore.FieldValue.serverTimestamp(),
+        emailPagador: payer_email,
+      });
+
+      console.log(`Pedido ${pedidoId} atualizado como PAGO`);
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true }),
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ success: false, error: error.message }),
+    };
+  }
+};
