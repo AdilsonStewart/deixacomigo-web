@@ -11,7 +11,7 @@ import VideoRecordPage from './screens/VideoRecordPage';
 import AdminDashboard from './screens/AdminDashboard';
 
 import SouCliente from './screens/SouCliente';
-import Retorno from './screens/Retorno'; // 🔥 ADICIONADO AQUI
+import Retorno from './screens/retorno'; // 🔥 ADICIONADO AQUI
 
 function App() {
   return (
@@ -30,7 +30,7 @@ function App() {
         <Route path="/soucliente" element={<SouCliente />} />
 
         {/* ⭐ ROTA DE RETORNO DO PAYPAL */}
-        <Route path="/retorno" element={<Retorno />} />
+        <Route path="/retorno" element={<retorno />} />
 
         {/* ROTA 404 */}
         <Route path="*" element={<Erro />} />
