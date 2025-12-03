@@ -10,14 +10,15 @@ const Retorno = () => {
     } else if (tipo === "video") {
       window.location.href = "/videorecord";
     } else {
+      // Caso algo dê errado, manda para a home
       window.location.href = "/";
     }
   }, []);
 
   return (
     <div style={{ textAlign: "center", marginTop: "80px" }}>
-      <h2>Processando retorno do pagamento...</h2>
-      <p>Aguarde, estamos redirecionando você.</p>
+      <h2>Pagamento confirmado!</h2>
+      <p>Estamos preparando sua página. Aguarde alguns instantes...</p>
     </div>
   );
 };
