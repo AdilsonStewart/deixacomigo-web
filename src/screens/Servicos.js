@@ -25,8 +25,11 @@ const Servicos = () => {
         <button
           style={btnCartao}
           onClick={() => {
-            window.location.href =
-              "https://www.paypal.com/ncp/payment/AZQP9SCDU33AE?custom=audio";
+            // SALVA tipo para a página retorno.js
+            localStorage.setItem("tipoCompra", "audio");
+
+            // Vai para PayPal
+            window.location.href = "https://www.paypal.com/ncp/payment/AZQP9SCDU33AE";
           }}
         >
           Pagar com PayPal
@@ -42,8 +45,11 @@ const Servicos = () => {
         <button
           style={btnCartao}
           onClick={() => {
-            window.location.href =
-              "https://www.paypal.com/ncp/payment/AM34Z2WZ8EQXQ?custom=video";
+            // SALVA tipo para a página retorno.js
+            localStorage.setItem("tipoCompra", "video");
+
+            // Vai para PayPal
+            window.location.href = "https://www.paypal.com/ncp/payment/AM34Z2WZ8EQXQ";
           }}
         >
           Pagar com PayPal
