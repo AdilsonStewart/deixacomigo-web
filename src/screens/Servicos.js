@@ -4,7 +4,7 @@ const Servicos = () => {
   // Carrega o SDK do PayPal só uma vez
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.REACT_APP_PAYPAL_CLIENT_ID}&currency=BRL&intent=capture`;
+    script.src = "https://www.paypal.com/sdk/js?client-id=SbAxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&currency=BRL&intent=capture";
     script.async = true;
     script.onload = () => iniciarBotoesPayPal();
     document.body.appendChild(script);
