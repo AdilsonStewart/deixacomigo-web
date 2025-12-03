@@ -25,13 +25,8 @@ const Servicos = () => {
         <button
           style={btnCartao}
           onClick={() => {
-            // Redireciona para PayPal
-            window.location.href = "https://www.paypal.com/ncp/payment/AZQP9SCDU33AE";
-
-            // Quando voltar do PayPal:
-            setTimeout(() => {
-              window.location.href = "https://deixacomigoweb.netlify.app/audiorecord";
-            }, 1500);
+            window.location.href =
+              "https://www.paypal.com/ncp/payment/AZQP9SCDU33AE?custom=audio";
           }}
         >
           Pagar com PayPal
@@ -47,11 +42,8 @@ const Servicos = () => {
         <button
           style={btnCartao}
           onClick={() => {
-            window.location.href = "https://www.paypal.com/ncp/payment/AM34Z2WZ8EQXQ";
-
-            setTimeout(() => {
-              window.location.href = "https://deixacomigoweb.netlify.app/videorecord";
-            }, 1500);
+            window.location.href =
+              "https://www.paypal.com/ncp/payment/AM34Z2WZ8EQXQ?custom=video";
           }}
         >
           Pagar com PayPal
