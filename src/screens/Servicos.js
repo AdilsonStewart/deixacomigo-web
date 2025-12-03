@@ -1,46 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 
 const Servicos = () => {
-  const [loading, setLoading] = useState(false);
-  const [metodoSelecionado, setMetodoSelecionado] = useState(null);
-
-  const pagar = async (valor, tipo, metodo) => {
-    setLoading(true);
-    setMetodoSelecionado(metodo);
-
-    try {
-      const res = await fetch("/.netlify/functions/criar-pagamento-asaas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          valor,
-          tipo,
-          metodo,
-          pedidoId: "pedido_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        if (metodo === "PIX") {
-          localStorage.setItem("pedidoId", data.pedidoId);
-          localStorage.setItem("tipoServico", tipo);
-          window.location.href = `/aguardando-pix?pedido=${data.pedidoId}&qrcode=${encodeURIComponent(data.qrCodeBase64)}`;
-        } else {
-          window.location.href = data.checkoutUrl;
-        }
-      } else {
-        alert("Erro do Asaas: " + (data.error || "Tente novamente"));
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Erro: " + e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
       <img
@@ -53,37 +13,50 @@ const Servicos = () => {
           boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
         }}
       />
+
       <h2 style={{ marginTop: "20px", color: "#333" }}>Escolha seu serviço</h2>
 
       {/* ÁUDIO - R$ 5,00 */}
       <div style={cardStyle}>
-        <h3 style={{ color: "#28a745", marginBottom: "15px" }}>ÁUDIO 30s — R$ 5,00</h3>
-        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-          <button onClick={() => pagar(5.00, "áudio", "PIX")} disabled={loading} style={btnPix}>
-            {loading && metodoSelecionado === "PIX" ? "Gerando PIX..." : "PIX"}
-          </button>
-          <button onClick={() => pagar(5.00, "áudio", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
-            {loading && metodoSelecionado === "CREDIT_CARD" ? "Redirecionando..." : "Cartão"}
-          </button>
-        </div>
+        <h3 style={{ color: "#28a745", marginBottom: "15px" }}>
+          ÁUDIO 30s — R$ 5,00
+        </h3>
+
+        <button
+          style={btnCartao}
+          onClick={() => {
+            // Redireciona para PayPal
+            window.location.href = "https://www.paypal.com/ncp/payment/AZQP9SCDU33AE";
+
+            // Quando voltar do PayPal:
+            setTimeout(() => {
+              window.location.href = "https://deixacomigoweb.netlify.app/audiorecord";
+            }, 1500);
+          }}
+        >
+          Pagar com PayPal
+        </button>
       </div>
 
       {/* VÍDEO - R$ 10,00 */}
       <div style={cardStyle}>
-        <h3 style={{ color: "#007bff", marginBottom: "15px" }}>VÍDEO 30s — R$ 10,00</h3>
-        <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-          <button onClick={() => pagar(10.00, "vídeo", "PIX")} disabled={loading} style={btnPix}>
-            {loading && metodoSelecionado === "PIX" ? "Gerando PIX..." : "PIX"}
-          </button>
-          <button onClick={() => pagar(10.00, "vídeo", "CREDIT_CARD")} disabled={loading} style={btnCartao}>
-            {loading && metodoSelecionado === "CREDIT_CARD" ? "Redirecionando..." : "Cartão"}
-          </button>
-        </div>
-      </div>
+        <h3 style={{ color: "#007bff", marginBottom: "15px" }}>
+          VÍDEO 30s — R$ 10,00
+        </h3>
 
-      <p style={{ marginTop: "40px", color: "#666", fontSize: "14px" }}>
-        Pagou com PIX? Você será redirecionado automaticamente em até 15 segundos após a confirmação.
-      </p>
+        <button
+          style={btnCartao}
+          onClick={() => {
+            window.location.href = "https://www.paypal.com/ncp/payment/AM34Z2WZ8EQXQ";
+
+            setTimeout(() => {
+              window.location.href = "https://deixacomigoweb.netlify.app/videorecord";
+            }, 1500);
+          }}
+        >
+          Pagar com PayPal
+        </button>
+      </div>
     </div>
   );
 };
@@ -96,18 +69,6 @@ const cardStyle = {
   border: "2px solid #e9ecef",
 };
 
-const btnPix = {
-  backgroundColor: "#32CD32",
-  color: "white",
-  padding: "14px",
-  border: "none",
-  borderRadius: "10px",
-  fontSize: "16px",
-  fontWeight: "bold",
-  cursor: "pointer",
-  flex: 1,
-};
-
 const btnCartao = {
   backgroundColor: "#0066CC",
   color: "white",
@@ -117,7 +78,7 @@ const btnCartao = {
   fontSize: "16px",
   fontWeight: "bold",
   cursor: "pointer",
-  flex: 1,
+  width: "100%",
 };
 
 export default Servicos;
