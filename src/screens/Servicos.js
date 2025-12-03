@@ -3,13 +3,16 @@ import React from "react";
 const Servicos = () => {
 
   const pagarPayPal = (tipo, valor) => {
-    // URL de retorno
+    // URL de retorno que já criamos
     const returnUrl = `https://deixacomigoweb.netlify.app/retorno?tipo=${tipo}`;
-    
-    // PayPal URL de checkout usando variável de ambiente
-    const PAYPAL_CLIENT = process.env.REACT_APP_PAYPAL_CLIENT; // seu Client ID
-    const paypalUrl = `https://www.paypal.com/checkoutnow?amount=${valor}&currency=BRL&client-id=${PAYPAL_CLIENT}&return=${encodeURIComponent(returnUrl)}&custom=${tipo}`;
 
+    // Seu Client ID do PayPal
+    const PAYPAL_CLIENT = process.env.REACT_APP_PAYPAL_CLIENT;
+
+    // Link oficial de checkout do PayPal com valores e retorno
+    const paypalUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${PAYPAL_CLIENT}&item_name=${tipo}&amount=${valor}&currency_code=BRL&return=${encodeURIComponent(returnUrl)}&custom=${tipo}`;
+
+    // Redireciona para o PayPal
     window.location.href = paypalUrl;
   };
 
@@ -55,4 +58,3 @@ const btn = {
 };
 
 export default Servicos;
-
