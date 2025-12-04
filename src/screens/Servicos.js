@@ -6,7 +6,7 @@ const Servicos = () => {
     if (existente) existente.remove();
 
     const script = document.createElement("script");
-    script.src = `https://www.sandbox.paypal.com/sdk/js?client-id=AVD417LfpK64Lm3pLnztDsPwYfq2LlnDP4r9oqR5csBs3T4foZIBpmQM-fzAqXO_FjezfaVNWr2BmcYV&currency=BRL&intent=capture&disable-funding=credit`;
+    script.src = `https://www.sandbox.paypal.com/sdk/js?client-id=AVD417LfpK64Lm3pLnztDsPwYfq2LlnDP4r9oqR5csBs3T4foZIBpmQM-fzAqXO_FjezfaVNWr2BmcYV&currency=BRL&intent=capture&disable-funding=credit&enable-funding=pix`;
     script.async = true;
     script.onload = () => {
       console.log("PayPal SDK carregado!");
