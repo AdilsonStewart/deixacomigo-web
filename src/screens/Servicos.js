@@ -1,23 +1,44 @@
 import React, { useEffect } from "react";
 
 const Servicos = () => {
-  // Carrega o SDK do PayPal só uma vez
+  // ==================== CARREGA O PAYPAL CORRETAMENTE ====================
   useEffect(() => {
+    // Remove script antigo se já existir (evita erro)
+    const existente = document.querySelector('script[src*="paypal.com/sdk/js"]');
+    if (existente) existente.remove();
+
     const script = document.createElement("script");
-    script.src = "https://www.paypal.com/sdk/js?client-id=SbAxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&currency=BRL&intent=capture";
+    // <<< COLOQUE AQUI SEU CLIENT-ID COMPLETO (começa com AWcGR2Fa2OoZ8lTaDiGTI...) >>>
+    script.src = `https://www.paypal.com/sdk/js?client-id=AWcGR2Fa2OoZ8lTaDiGTIxxxxxxxxxxxxxxxxxxxxxxxx&currency=BRL&intent=capture&components=buttons`;
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // Substitua só o que está depois de client-id= até o & antes de currency
+
     script.async = true;
-    script.onload = () => iniciarBotoesPayPal();
+    script.onload = () => {
+      console.log("PayPal carregado com sucesso!");
+      iniciarBotoesPayPal();
+    };
+    script.onerror = () => {
+      alert("Erro ao carregar o PayPal. Verifica a internet ou me chama no Whats!");
+    };
     document.body.appendChild(script);
 
+    // limpa quando sair da página
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
+  // ==================== CRIA OS BOTÕES DO PAYPAL ====================
   const iniciarBotoesPayPal = () => {
-    if (!window.paypal) return;
+    if (!window.paypal) {
+      console.error("PayPal ainda não carregou");
+      return;
+    }
 
-    // Botão Áudio R$ 5,00
+    // Botão ÁUDIO R$ 5,00
     window.paypal
       .Buttons({
         createOrder: (data, actions) => {
@@ -26,14 +47,14 @@ const Servicos = () => {
               {
                 description: "Áudio 30s - Deixa Comigo",
                 amount: { currency_code: "BRL", value: "5.00" },
-                custom_id: "audio",
+                custom_id: "audio_30s",
               },
             ],
           });
         },
         onApprove: (data, actions) => {
           return actions.order.capture().then((details) => {
-            const nome = details.payer.name.given_name;
+            const nome = details.payer.name.given_name || "amigo";
             alert(`Obrigado, ${nome}! Seu áudio de 30s já está na fila`);
             window.location.href = `https://deixacomigoweb.netlify.app/retorno?tipo=audio&status=success&orderID=${data.orderID}`;
           });
@@ -42,13 +63,13 @@ const Servicos = () => {
           window.location.href = "https://deixacomigoweb.netlify.app/retorno?tipo=audio&status=cancel";
         },
         onError: (err) => {
-          console.error(err);
-          alert("Erro no pagamento. Tenta de novo ou me chama!");
+          console.error("Erro PayPal:", err);
+          alert("Deu ruim no pagamento. Tenta de novo ou me chama!");
         },
       })
       .render("#paypal-audio");
 
-    // Botão Vídeo R$ 10,00
+    // Botão VÍDEO R$ 10,00
     window.paypal
       .Buttons({
         createOrder: (data, actions) => {
@@ -57,20 +78,24 @@ const Servicos = () => {
               {
                 description: "Vídeo 30s - Deixa Comigo",
                 amount: { currency_code: "BRL", value: "10.00" },
-                custom_id: "video",
+                custom_id: "video_30s",
               },
             ],
           });
         },
         onApprove: (data, actions) => {
           return actions.order.capture().then((details) => {
-            const nome = details.payer.name.given_name;
+            const nome = details.payer.name.given_name || "amigo";
             alert(`Valeu demais, ${nome}! Seu vídeo de 30s já tá na fila`);
             window.location.href = `https://deixacomigoweb.netlify.app/retorno?tipo=video&status=success&orderID=${data.orderID}`;
           });
         },
         onCancel: () => {
           window.location.href = "https://deixacomigoweb.netlify.app/retorno?tipo=video&status=cancel";
+        },
+        onError: (err) => {
+          console.error("Erro PayPal:", err);
+          alert("Deu ruim no pagamento. Tenta de novo ou me chama!");
         },
       })
       .render("#paypal-video");
@@ -82,22 +107,29 @@ const Servicos = () => {
 
       {/* CARD ÁUDIO */}
       <div style={cardStyle}>
-        <img src="https://deixacomigoweb.netlify.app/audio.gif" alt="Áudio 30s" style={{ width: "100%", borderRadius: "10px", marginBottom: "15px" }} />
+        <img
+          src="https://deixacomigoweb.netlify.app/audio.gif"
+          alt="Áudio 30s"
+          style={{ width: "100%", borderRadius: "10px", marginBottom: "15px" }}
+        />
         <h3>ÁUDIO 30s — R$ 5,00</h3>
-        <div id="paypal-audio" style={{ marginTop: "15px" }}></div>
-        {/* Botão azul grande (fallback bonito caso demore carregar) */}
+        <div id="paypal-audio" style={{ marginTop: "20px", minHeight: "60px" }}></div>
         <button style={btn} onClick={() => alert("Carregando PayPal... aguarde uns segundos")}>
-          Pagar com PayPal ou Cartão
+          Pagar com PayPal, Cartão ou Pix
         </button>
       </div>
 
       {/* CARD VÍDEO */}
       <div style={cardStyle}>
-        <img src="https://deixacomigoweb.netlify.app/video.gif" alt="Vídeo 30s" style={{ width: "100%", borderRadius: "10px", marginBottom: "15px" }} />
-        <h3>VÍDEO 30s — R$ 10,00</h3>
-        <div id="paypal-video" style={{ marginTop: "15px" }}></div>
+        <img
+          src="https://deixacomigoweb.netlify.app/video.gif"
+          alt="Vídeo 30s"
+          style={{ width: "100%", borderRadius: "10px", marginBottom: "15px" }}
+        />
+        <h3>VÍДЕО 30s — R$ 10,00</h3>
+        <div id="paypal-video" style={{ marginTop: "20px", minHeight: "60px" }}></div>
         <button style={btn} onClick={() => alert("Carregando PayPal... aguarde uns segundos")}>
-          Pagar com PayPal ou Cartão
+          Pagar com PayPal, Cartão ou Pix
         </button>
       </div>
     </div>
@@ -122,7 +154,7 @@ const btn = {
   fontWeight: "bold",
   cursor: "pointer",
   width: "100%",
-  marginTop: "10px",
+  marginTop: "15px",
 };
 
 export default Servicos;
