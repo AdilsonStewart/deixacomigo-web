@@ -3,12 +3,21 @@ import { useEffect } from "react";
 const Retorno = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tipo = params.get("custom");
+    // ✅ CORRIGIDO: pega o parâmetro "tipo" correto
+    const tipo = params.get("tipo");
+    const status = params.get("status");
+    const orderID = params.get("orderID");
 
-    if (tipo === "audio") {
-      window.location.href = "/audiorecord";
-    } else if (tipo === "video") {
-      window.location.href = "/videorecord";
+    console.log("Parâmetros recebidos:", { tipo, status, orderID });
+
+    if (status === "success") {
+      if (tipo === "audio") {
+        window.location.href = "/audiorecord";
+      } else if (tipo === "video") {
+        window.location.href = "/videorecord";
+      } else {
+        window.location.href = "/";
+      }
     } else {
       window.location.href = "/";
     }
