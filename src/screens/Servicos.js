@@ -10,7 +10,7 @@ const Servicos = () => {
     const script = document.createElement("script");
     // <<< AQUI: COLE SEU CLIENT-ID COMPLETO E EXATO (sem espaços extras!) >>>
     // Exemplo: AWcGR2Fa2OoZ8lTaDiGTI... inteiro até o final
-    script.src = `https://www.paypal.com/sdk/js?client-id=AWcGR2Fa2OoZ8lTaDiGTIxxxxxxxxxxxxxxxxxxxxxxxx&currency=BRL&intent=capture&disable-funding=credit`;
+    script.src = `https://www.sandbox.paypal.com/sdk/js?client-id=AbVXySGm2-btmazUt7U8b3qTsWCZzTmNTtLweYfuO3PAp5ymTxPZBZ_dSqiMCY6Z27NsObp9pk5s__Uu&currency=BRL&intent=capture&disable-funding=credit`;
     // Se quiser adicionar Pix: &enable-funding=pix no final, mas testa sem primeiro
 
     script.async = true;
