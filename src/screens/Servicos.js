@@ -1,28 +1,22 @@
 import React, { useEffect } from "react";
 
 const Servicos = () => {
-  // ==================== CARREGA O PAYPAL CORRETAMENTE ====================
   useEffect(() => {
-    // Remove script antigo se já existir (evita duplicatas)
     const existente = document.querySelector('script[src*="paypal.com/sdk/js"]');
     if (existente) existente.remove();
 
     const script = document.createElement("script");
-    // <<< AQUI: COLE SEU CLIENT-ID COMPLETO E EXATO (sem espaços extras!) >>>
-    // Exemplo: AWcGR2Fa2OoZ8lTaDiGTI... inteiro até o final
     script.src = `https://www.sandbox.paypal.com/sdk/js?client-id=AVD417LfpK64Lm3pLnztDsPwYfq2LlnDP4r9oqR5csBs3T4foZIBpmQM-fzAqXO_FjezfaVNWr2BmcYV&currency=BRL&intent=capture&disable-funding=credit`;
-    // Se quiser adicionar Pix: &enable-funding=pix no final, mas testa sem primeiro
-
     script.async = true;
     script.onload = () => {
-      console.log("PayPal SDK carregado! Botões vão aparecer agora.");
-      setTimeout(iniciarBotoesPayPal, 500); // Delayzinho pra garantir
+      console.log("PayPal SDK carregado!");
+      setTimeout(iniciarBotoesPayPal, 500);
     };
     script.onerror = (e) => {
       console.error("Erro no SDK:", e);
-      alert("Erro ao carregar PayPal (código 400). Pode ser o client-id ou ativação da conta. Me manda print do erro!");
+      alert("Erro ao carregar PayPal. Verifique o Client ID!");
     };
-    document.head.appendChild(script); // Muda pro head, às vezes ajuda
+    document.head.appendChild(script);
 
     return () => {
       if (document.head.contains(script)) {
@@ -31,10 +25,9 @@ const Servicos = () => {
     };
   }, []);
 
-  // ==================== CRIA OS BOTÕES DO PAYPAL ====================
   const iniciarBotoesPayPal = () => {
     if (!window.paypal) {
-      console.error("PayPal não carregou ainda. Espera 2s e recarrega.");
+      console.error("PayPal não carregou ainda.");
       return;
     }
 
@@ -55,6 +48,7 @@ const Servicos = () => {
         return actions.order.capture().then((details) => {
           const nome = details.payer.name?.given_name || "amigo";
           alert(`Obrigado, ${nome}! Seu áudio de 30s já está na fila de produção.`);
+          // ✅ REDIRECIONA COM TIPO CORRETO
           window.location.href = `https://deixacomigoweb.netlify.app/retorno?tipo=audio&status=success&orderID=${data.orderID}`;
         });
       },
@@ -63,7 +57,7 @@ const Servicos = () => {
       },
       onError: (err) => {
         console.error("Erro no pagamento:", err);
-        alert("Ops, erro no PayPal. Tenta de novo ou me avisa!");
+        alert("Ops, erro no PayPal. Tenta de novo!");
       },
     }).render("#paypal-audio");
 
@@ -84,6 +78,7 @@ const Servicos = () => {
         return actions.order.capture().then((details) => {
           const nome = details.payer.name?.given_name || "amigo";
           alert(`Valeu, ${nome}! Seu vídeo de 30s já tá na fila de produção.`);
+          // ✅ REDIRECIONA COM TIPO CORRETO
           window.location.href = `https://deixacomigoweb.netlify.app/retorno?tipo=video&status=success&orderID=${data.orderID}`;
         });
       },
@@ -92,7 +87,7 @@ const Servicos = () => {
       },
       onError: (err) => {
         console.error("Erro no pagamento:", err);
-        alert("Ops, erro no PayPal. Tenta de novo ou me avisa!");
+        alert("Ops, erro no PayPal. Tenta de novo!");
       },
     }).render("#paypal-video");
   };
@@ -101,7 +96,6 @@ const Servicos = () => {
     <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
       <h2>Escolha seu serviço</h2>
 
-      {/* CARD ÁUDIO */}
       <div style={cardStyle}>
         <img
           src="https://deixacomigoweb.netlify.app/audio.gif"
@@ -112,13 +106,12 @@ const Servicos = () => {
         <div id="paypal-audio" style={{ marginTop: "20px", minHeight: "60px" }}></div>
         <button 
           style={btn} 
-          onClick={() => alert("Carregando opções de pagamento... Aguarde o botão azul do PayPal aparecer!")}
+          onClick={() => alert("Aguarde o botão azul do PayPal aparecer!")}
         >
           Pagar com PayPal, Cartão ou Pix
         </button>
       </div>
 
-      {/* CARD VÍDEO */}
       <div style={cardStyle}>
         <img
           src="https://deixacomigoweb.netlify.app/video.gif"
@@ -129,7 +122,7 @@ const Servicos = () => {
         <div id="paypal-video" style={{ marginTop: "20px", minHeight: "60px" }}></div>
         <button 
           style={btn} 
-          onClick={() => alert("Carregando opções de pagamento... Aguarde o botão azul do PayPal aparecer!")}
+          onClick={() => alert("Aguarde o botão azul do PayPal aparecer!")}
         >
           Pagar com PayPal, Cartão ou Pix
         </button>
