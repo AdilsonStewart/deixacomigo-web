@@ -6,19 +6,24 @@ export default function Cadastro() {
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
 
-  const handleCadastro = () => {
-    if (!nome || !telefone) {
-      alert("Preencha nome e telefone!");
+  const handleCadastro = async () => {
+    if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
+      setErro("Preencha todos os campos!");
       return;
     }
 
     setLoading(true);
-    
-    // Modo local (sem Firebase por enquanto)
+    setErro("");
+
+    // Simulação de cadastro (sem Firebase)
     setTimeout(() => {
-      localStorage.setItem("clienteId", "teste_" + Date.now());
+      localStorage.setItem("clienteId", "temp_" + Date.now());
       localStorage.setItem("clienteNome", nome);
       localStorage.setItem("clienteTelefone", telefone);
       navigate("/servicos");
@@ -37,6 +42,7 @@ export default function Cadastro() {
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             className="cadastro-input"
+            autoComplete="off"
           />
           <input
             type="tel"
@@ -44,15 +50,42 @@ export default function Cadastro() {
             value={telefone}
             onChange={(e) => setTelefone(e.target.value)}
             className="cadastro-input"
+            autoComplete="off"
           />
-          
+          <input
+            type="text"
+            placeholder="Data de nascimento"
+            value={dataNascimento}
+            onChange={(e) => setDataNascimento(e.target.value)}
+            className="cadastro-input"
+            autoComplete="off"
+          />
+          <input
+            type="text"
+            placeholder="CPF ou CNPJ"
+            value={cpfCnpj}
+            onChange={(e) => setCpfCnpj(e.target.value)}
+            className="cadastro-input"
+            autoComplete="off"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="cadastro-input"
+            autoComplete="off"
+          />
+
           <button
             className="cadastro-botao"
             onClick={handleCadastro}
             disabled={loading}
           >
-            {loading ? "Salvando…" : "Cadastrar"}
+            {loading ? "Salvando…" : "Cadastrar e Continuar"}
           </button>
+
+          {erro && <p className="cadastro-erro">{erro}</p>}
         </div>
       </div>
     </div>
