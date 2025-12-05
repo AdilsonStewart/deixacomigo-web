@@ -1,20 +1,14 @@
-# Use a imagem base do Node.js
-FROM node:20-alpine
+FROM node:18-alpine
 
-# Diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copiar os arquivos de definição de dependências
 COPY package*.json ./
 
-# Instalar as dependências
-RUN npm install
+RUN npm install --only=production
 
-# Copiar o restante do código da aplicação
-COPY . .
+COPY api.js ./
+COPY serviceAccountKey.json ./
 
-# Expor a porta que a aplicação vai rodar (ajuste se necessário)
 EXPOSE 3000
 
-# Comando para iniciar a aplicação
-CMD ["npm", "start"]
+CMD ["node", "api.js"]
