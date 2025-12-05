@@ -1,20 +1,29 @@
-# Use Node.js 20 (versão estável)
+# Build do React
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Servidor Node.js com API + React
 FROM node:20-alpine
 
-# Diretório da aplicação
 WORKDIR /app
 
-# Copiar arquivos de dependências
+# Copiar package.json e instalar SOMENTE dependências de produção
 COPY package*.json ./
+RUN npm install --only=production
 
-# Instalar dependências
-RUN npm install
+# Copiar build do React
+COPY --from=builder /app/build ./build
 
-# Copiar todo o código da aplicação (incluindo api.js)
-COPY . .
+# Copiar API
+COPY api.js ./
 
-# Expor a porta 3000
-EXPOSE 3000
+# Expor porta 8080 (Fly.io usa esta porta)
+EXPOSE 8080
 
-# Comando para iniciar a aplicação (agora com a API)
+# Iniciar servidor
 CMD ["node", "api.js"]
