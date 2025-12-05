@@ -32,3 +32,8 @@ primary_region = "gru"
     protocol = "http"
     timeout = 2000
     tls_skip_verify = false
+
+# 🔥 ESSA PARTE AQUI RESOLVE OS 404 DO REACT ROUTER
+[[statics]]
+  guest_path = "/usr/share/nginx/html"
+  url_prefix = "/"
