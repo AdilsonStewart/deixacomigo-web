@@ -5,3 +5,10 @@
   force = true
   [build.environment]
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  [[functions]]
+directory = "netlify/functions"  # ou "functions" se preferir
+
+[[scheduled_functions]]
+from = "verificar-mensagens.js"
+schedule = "0 9,12,15,18,21 * * *"  # 9h,12h,15h,18h,21h todo dia
+
