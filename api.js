@@ -84,3 +84,13 @@ app.listen(PORT, () => {
   console.log(`API rodando na porta ${PORT}`);
   console.log(`Projeto Firebase: ${serviceAccount.project_id}`);
 });
+// Servir arquivos do React
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Todas as rotas não-API vão para o React
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  }
+});
