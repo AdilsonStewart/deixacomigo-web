@@ -1,6 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 import "./Cadastro.css";
+
+// Configuração do Firebase (USE SUAS CHAVES REAIS)
+const firebaseConfig = {
+  apiKey: "AIzaSyDIFHEAVeX0uCZxGQjgBjFMEKpYskw7JhM",
+  authDomain: "deixacomigo-727ff.firebaseapp.com",
+  projectId: "deixacomigo-727ff",
+  storageBucket: "deixacomigo-727ff.appspot.com",
+  messagingSenderId: "446640688394",
+  appId: "1:446640688394:web:11e1662ae7d9fbf38d6f7b"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -43,25 +59,19 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // ✅ VOLTOU O NOME ORIGINAL QUE FUNCIONAVA!
-     const response = await fetch("/api/salvar-cliente", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome,
-          telefone,
-          dataNascimento: nascimentoISO,
-          cpfCnpj,
-          email,
-        }),
+      // Salva DIRETAMENTE no Firebase
+      const docRef = await addDoc(collection(db, "clientes"), {
+        nome,
+        telefone,
+        dataNascimento: nascimentoISO,
+        cpfCnpj,
+        email,
+        criadoEm: new Date().toISOString(),
+        status: "ativo"
       });
 
-      const data = await response.json();
-
-      if (!data.success) throw new Error(data.error || "Erro desconhecido");
-
-      // AQUI GUARDAMOS NO LOCALSTORAGE PRA USAR NAS PRÓXIMAS TELAS
-      localStorage.setItem("clienteId", data.clienteId);
+      // Guarda no localStorage
+      localStorage.setItem("clienteId", docRef.id);
       localStorage.setItem("clienteNome", nome);
       localStorage.setItem("clienteTelefone", telefone);
 
