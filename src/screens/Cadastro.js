@@ -12,6 +12,14 @@ export default function Cadastro() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
+  const seguroSet = (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn("⚠ localStorage bloqueado:", e);
+    }
+  };
+
   const handleCadastro = async () => {
     if (!nome || !telefone || !dataNascimento || !cpfCnpj || !email) {
       setErro("Preencha todos os campos!");
@@ -21,13 +29,14 @@ export default function Cadastro() {
     setLoading(true);
     setErro("");
 
-    // Simulação de cadastro (sem Firebase)
+    // Simulação de cadastro
     setTimeout(() => {
-      localStorage.setItem("clienteId", "temp_" + Date.now());
-      localStorage.setItem("clienteNome", nome);
-      localStorage.setItem("clienteTelefone", telefone);
-      navigate("/servicos");
+      seguroSet("clienteId", "temp_" + Date.now());
+      seguroSet("clienteNome", nome);
+      seguroSet("clienteTelefone", telefone);
+
       setLoading(false);
+      navigate("/servicos");
     }, 1000);
   };
 
@@ -44,6 +53,7 @@ export default function Cadastro() {
             className="cadastro-input"
             autoComplete="off"
           />
+
           <input
             type="tel"
             placeholder="Telefone"
@@ -52,6 +62,7 @@ export default function Cadastro() {
             className="cadastro-input"
             autoComplete="off"
           />
+
           <input
             type="text"
             placeholder="Data de nascimento"
@@ -60,6 +71,7 @@ export default function Cadastro() {
             className="cadastro-input"
             autoComplete="off"
           />
+
           <input
             type="text"
             placeholder="CPF ou CNPJ"
@@ -68,6 +80,7 @@ export default function Cadastro() {
             className="cadastro-input"
             autoComplete="off"
           />
+
           <input
             type="email"
             placeholder="Email"
