@@ -1,27 +1,26 @@
-# Build do React
-FROM node:20-alpine AS builder
+# Usar Node.js 18 (versão mais estável para Create React App)
+FROM node:18-alpine
 
+# Diretório da aplicação
 WORKDIR /app
 
+# Copiar arquivos de dependências
 COPY package*.json ./
-RUN npm install
 
+# Instalar dependências
+RUN npm install --legacy-peer-deps
+
+# Copiar todo o código da aplicação
 COPY . .
+
+# Build do React
 RUN npm run build
 
-# Servir arquivos estáticos
-FROM node:20-alpine
-
-WORKDIR /app
-
-# Instalar servidor estático
+# Instalar servidor estático simples
 RUN npm install -g serve
 
-# Copiar build do React
-COPY --from=builder /app/build ./build
-
-# Expor porta 3000
+# Expor a porta 3000
 EXPOSE 3000
 
-# Iniciar servidor
+# Comando para iniciar
 CMD ["serve", "-s", "build", "-l", "3000"]
