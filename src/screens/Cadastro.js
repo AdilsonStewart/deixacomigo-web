@@ -1,32 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Cadastro.css";
-
-// Tenta importar o Firebase, mas não quebra o build se falhar
-let firebaseInitialized = false;
-let db = null;
-
-try {
-  // Importações dinâmicas para evitar erros de build
-  const firebaseConfig = {
-    apiKey: "AIzaSyC1Xv2mPNf4s2oY-Jeh2ev3x0O6qkKNqt4",
-    authDomain: "deixacomigo-727ff.firebaseapp.com",
-    projectId: "deixacomigo-727ff",
-    storageBucket: "deixacomigo-727ff.firebasestorage.app",
-    messagingSenderId: "304342645043",
-    appId: "1:304342645043:web:893af23b41547a29a1a646"
-  };
-
-  const { initializeApp } = require("firebase/app");
-  const { getFirestore, collection, addDoc } = require("firebase/firestore");
-  
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  firebaseInitialized = true;
-  console.log("Firebase inicializado com sucesso!");
-} catch (error) {
-  console.warn("Firebase não inicializado. Modo de simulação ativado.", error);
-}
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -69,10 +43,14 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      if (firebaseInitialized && db) {
-        // Salva no Firebase
-        const { collection, addDoc } = require("firebase/firestore");
-        const docRef = await addDoc(collection(db, "clientes"), {
+      // Tenta usar Firebase se disponível
+      let clienteId = "local_" + Date.now();
+      
+      if (typeof window.firebase !== 'undefined') {
+        // Firebase está disponível, tenta salvar
+        const firebase = window.firebase;
+        const db = firebase.firestore();
+        const docRef = await db.collection("clientes").add({
           nome,
           telefone,
           dataNascimento: nascimentoISO,
@@ -81,22 +59,20 @@ export default function Cadastro() {
           criadoEm: new Date().toISOString(),
           status: "ativo"
         });
-
-        console.log("Cliente salvo no Firebase com ID:", docRef.id);
-        localStorage.setItem("clienteId", docRef.id);
+        clienteId = docRef.id;
       } else {
-        // Modo simulação
-        console.log("Modo simulação: salvando localmente");
-        localStorage.setItem("clienteId", "simulado_" + Date.now());
+        console.warn("Firebase não disponível. Usando modo local.");
       }
 
+      // Guarda no localStorage
+      localStorage.setItem("clienteId", clienteId);
       localStorage.setItem("clienteNome", nome);
       localStorage.setItem("clienteTelefone", telefone);
 
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
-      setErro("Erro ao salvar. Tente novamente. " + err.message);
+      setErro("Erro ao salvar. Tente novamente.");
     } finally {
       setLoading(false);
     }
