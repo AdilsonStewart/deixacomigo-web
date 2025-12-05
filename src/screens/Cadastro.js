@@ -43,7 +43,8 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      const response = await fetch("/.netlify/functions/cadastrar-cliente", {
+      // ✅ VOLTOU O NOME ORIGINAL QUE FUNCIONAVA!
+      const response = await fetch("/.netlify/functions/salvar-cliente", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
