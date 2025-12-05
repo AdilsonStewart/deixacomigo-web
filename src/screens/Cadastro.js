@@ -1,8 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc } from "firebase/firestore";
-import { db } from "./firebase"; // Ajuste o caminho se necessário
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import firebaseConfig from "./firebaseConfig";
 import "./Cadastro.css";
+
+// Inicializa Firebase UMA ÚNICA VEZ
+let app, db;
+try {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  console.log("Firebase inicializado com sucesso!");
+} catch (error) {
+  console.error("Erro ao inicializar Firebase:", error);
+}
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -45,7 +56,12 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // Salva no Firebase Firestore
+      // Verifica se Firebase está inicializado
+      if (!db) {
+        throw new Error("Firebase não inicializado");
+      }
+
+      // Salva no Firebase
       const docRef = await addDoc(collection(db, "clientes"), {
         nome,
         telefone,
@@ -64,7 +80,7 @@ export default function Cadastro() {
       navigate("/servicos");
     } catch (err) {
       console.error("Erro ao cadastrar:", err);
-      setErro("Erro ao salvar. Tente novamente.");
+      setErro("Erro ao salvar. Tente novamente. " + err.message);
     } finally {
       setLoading(false);
     }
