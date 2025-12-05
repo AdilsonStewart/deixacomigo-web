@@ -12,7 +12,9 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -37,9 +39,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "overrides": {
-    "ajv": "8.12.0",
-    "ajv-keywords": "5.1.0"
   }
 }
