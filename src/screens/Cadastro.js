@@ -4,14 +4,14 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import "./Cadastro.css";
 
-// Configuração do Firebase (USE SUAS CHAVES REAIS)
+// Configuração do Firebase (use as chaves que você me mostrou)
 const firebaseConfig = {
-  apiKey: "AIzaSyDIFHEAVeX0uCZxGQjgBjFMEKpYskw7JhM",
+  apiKey: "AIzaSyC1Xv2mPNf4s2oY-Jeh2ev3x0O6qkKNqt4",
   authDomain: "deixacomigo-727ff.firebaseapp.com",
   projectId: "deixacomigo-727ff",
-  storageBucket: "deixacomigo-727ff.appspot.com",
-  messagingSenderId: "446640688394",
-  appId: "1:446640688394:web:11e1662ae7d9fbf38d6f7b"
+  storageBucket: "deixacomigo-727ff.firebasestorage.app",
+  messagingSenderId: "304342645043",
+  appId: "1:304342645043:web:893af23b41547a29a1a646"
 };
 
 // Inicializar Firebase
