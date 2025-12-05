@@ -1,6 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 import "./Cadastro.css";
+
+// Configuração do Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyC1Xv2mPNf4s2oY-Jeh2ev3x0O6qkKNqt4",
+  authDomain: "deixacomigo-727ff.firebaseapp.com",
+  projectId: "deixacomigo-727ff",
+  storageBucket: "deixacomigo-727ff.firebasestorage.app",
+  messagingSenderId: "304342645043",
+  appId: "1:304342645043:web:893af23b41547a29a1a646"
+};
+
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -43,29 +59,19 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // Tenta usar Firebase se disponível
-      let clienteId = "local_" + Date.now();
-      
-      if (typeof window.firebase !== 'undefined') {
-        // Firebase está disponível, tenta salvar
-        const firebase = window.firebase;
-        const db = firebase.firestore();
-        const docRef = await db.collection("clientes").add({
-          nome,
-          telefone,
-          dataNascimento: nascimentoISO,
-          cpfCnpj,
-          email,
-          criadoEm: new Date().toISOString(),
-          status: "ativo"
-        });
-        clienteId = docRef.id;
-      } else {
-        console.warn("Firebase não disponível. Usando modo local.");
-      }
+      // Salva no Firebase
+      const docRef = await addDoc(collection(db, "clientes"), {
+        nome,
+        telefone,
+        dataNascimento: nascimentoISO,
+        cpfCnpj,
+        email,
+        criadoEm: new Date().toISOString(),
+        status: "ativo"
+      });
 
       // Guarda no localStorage
-      localStorage.setItem("clienteId", clienteId);
+      localStorage.setItem("clienteId", docRef.id);
       localStorage.setItem("clienteNome", nome);
       localStorage.setItem("clienteTelefone", telefone);
 
