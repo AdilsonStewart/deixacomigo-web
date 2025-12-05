@@ -1,22 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "./firebase"; // Ajuste o caminho se necessário
 import "./Cadastro.css";
-
-// Configuração do Firebase (use as chaves que você me mostrou)
-const firebaseConfig = {
-  apiKey: "AIzaSyC1Xv2mPNf4s2oY-Jeh2ev3x0O6qkKNqt4",
-  authDomain: "deixacomigo-727ff.firebaseapp.com",
-  projectId: "deixacomigo-727ff",
-  storageBucket: "deixacomigo-727ff.firebasestorage.app",
-  messagingSenderId: "304342645043",
-  appId: "1:304342645043:web:893af23b41547a29a1a646"
-};
-
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -59,7 +45,7 @@ export default function Cadastro() {
     setErro("");
 
     try {
-      // Salva DIRETAMENTE no Firebase
+      // Salva no Firebase Firestore
       const docRef = await addDoc(collection(db, "clientes"), {
         nome,
         telefone,
