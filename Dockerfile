@@ -1,26 +1,19 @@
-# Usar Node.js 18 (versão mais estável para Create React App)
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine as build
 
-# Diretório da aplicação
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY package*.json ./
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
 
-# Instalar dependências
-RUN npm install --legacy-peer-deps
-
-# Copiar todo o código da aplicação
 COPY . .
-
-# Build do React
 RUN npm run build
 
-# Instalar servidor estático simples
-RUN npm install -g serve
+# Production stage
+FROM nginx:alpine
 
-# Expor a porta 3000
-EXPOSE 3000
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Comando para iniciar
-CMD ["serve", "-s", "build", "-l", "3000"]
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
