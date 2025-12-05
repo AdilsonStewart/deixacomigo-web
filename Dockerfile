@@ -1,21 +1,12 @@
-# Usa Node 16, totalmente compatível com CRA
-FROM node:16-alpine AS builder
-
+# Build
+FROM node:18 AS build
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm install --legacy-peer-deps
-
+RUN npm install
 COPY . .
-
 RUN npm run build
 
-# Servir com nginx
+# Serve com NGINX
 FROM nginx:alpine
-
-COPY --from=builder /app/build /usr/share/nginx/html
-
+COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
