@@ -1,4 +1,4 @@
-// Configuração do Firebase - ÚNICA fonte
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyC1Xv2mPNf4s2oY-Jeh2ev3x0O6qkKNqt4",
   authDomain: "deixacomigo-727ff.firebaseapp.com",
