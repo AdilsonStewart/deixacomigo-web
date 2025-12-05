@@ -1,5 +1,5 @@
 # Usar Node.js 20 (exigido pelo react-router 7.9.6)
-FROM node:20-alpine as builder
+FROM node:18-alpine as builder
 
 WORKDIR /app
 
