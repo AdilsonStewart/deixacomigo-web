@@ -1,15 +1,15 @@
-# Build do React
-FROM node:18-alpine as build
+# Usar Node.js 20 (exigido pelo react-router 7.9.6)
+FROM node:20-alpine as builder
 
 WORKDIR /app
 
-# Copia os arquivos de dependência
+# Copiar package.json
 COPY package.json .
 
-# Instala dependências - IGNORA package-lock.json
+# Instalar dependências com override
 RUN npm install --legacy-peer-deps
 
-# Copia o restante do código
+# Copiar código
 COPY . .
 
 # Build do React
@@ -18,11 +18,11 @@ RUN npm run build
 # Servir com nginx
 FROM nginx:alpine
 
-# Copia o build do React para o nginx
-COPY --from=build /app/build /usr/share/nginx/html
+# Copiar build
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# Expõe a porta 80
+# Configuração para React Router
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
-
-# Comando para iniciar o nginx
 CMD ["nginx", "-g", "daemon off;"]
