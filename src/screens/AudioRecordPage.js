@@ -91,6 +91,7 @@ const AudioRecorder = () => {
       const base64data = reader.result;
 
       try {
+        // URL CORRETA DO APP NO FLY.IO
         const response = await fetch("https://deixacomigo-web.fly.dev/upload", {
           method: "POST",
           headers: { 
@@ -138,7 +139,6 @@ const AudioRecorder = () => {
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: "600px", margin: "0 auto" }}>
       <h2>🎤 Gravador de Áudio - Máx 30s</h2>
       
-      {/* CONTADOR SEMPRE VISÍVEL - TOPO DA PÁGINA */}
       <div style={{ 
         fontSize: "24px", 
         color: "#dc3545", 
@@ -257,4 +257,29 @@ const AudioRecorder = () => {
           fontSize: "20px",
           background: (!audioBlob || isUploading) ? "#6c757d" : "#28a745",
           color: "white",
-          border
+          border: "none",
+          borderRadius: "12px",
+          cursor: (!audioBlob || isUploading) ? "not-allowed" : "pointer",
+          width: "100%"
+        }}
+      >
+        {isUploading ? "📤 Enviando... Aguarde" : "🚀 Enviar Pedido com Áudio"}
+      </button>
+
+      {isUploading && (
+        <div style={{
+          marginTop: "15px",
+          padding: "10px",
+          background: "#e3f2fd",
+          borderRadius: "8px",
+          textAlign: "center",
+          fontWeight: "bold"
+        }}>
+          ⏳ Enviando para Fly.io... Não feche a página!
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AudioRecorder;
