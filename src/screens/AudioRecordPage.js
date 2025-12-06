@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -9,9 +9,20 @@ const AudioRecorder = () => {
   const [dataEntrega, setDataEntrega] = useState("");
   const [horaEntrega, setHoraEntrega] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [tempoRestante, setTempoRestante] = useState(30);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const tempoIntervalRef = useRef(null);
+
+  // Para quando a página carregar
+  useEffect(() => {
+    return () => {
+      if (tempoIntervalRef.current) {
+        clearInterval(tempoIntervalRef.current);
+      }
+    };
+  }, []);
 
   const startRecording = async () => {
     try {
@@ -19,6 +30,7 @@ const AudioRecorder = () => {
       audioChunksRef.current = [];
       setAudioURL(null);
       setAudioBlob(null);
+      setTempoRestante(30);
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = (event) => {
@@ -30,11 +42,26 @@ const AudioRecorder = () => {
         setAudioBlob(blob);
         setAudioURL(URL.createObjectURL(blob));
         stream.getTracks().forEach((track) => track.stop());
+        if (tempoIntervalRef.current) {
+          clearInterval(tempoIntervalRef.current);
+        }
       };
 
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
+
+      // TEMPORIZADOR DE 30 SEGUNDOS
+      tempoIntervalRef.current = setInterval(() => {
+        setTempoRestante((prev) => {
+          if (prev <= 1) {
+            stopRecording();
+            return 30;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
     } catch (error) {
       alert("Não consegui acessar o microfone. Verifique as permissões.");
     }
@@ -44,6 +71,10 @@ const AudioRecorder = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      if (tempoIntervalRef.current) {
+        clearInterval(tempoIntervalRef.current);
+      }
+      setTempoRestante(30);
     }
   };
 
@@ -62,9 +93,13 @@ const AudioRecorder = () => {
       const base64data = reader.result;
 
       try {
-        const response = await fetch("https://deixacomigo-backup.fly.dev/upload", {
+        // URL CORRIGIDA PARA FLY.IO - ajuste se necessário
+        const response = await fetch("https://deixacomigo-backup.fly.dev/api/upload", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
           body: JSON.stringify({
             audioBase64: base64data,
             nome,
@@ -75,24 +110,27 @@ const AudioRecorder = () => {
           }),
         });
 
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}`);
+        }
+
         const result = await response.json();
 
         if (result.success) {
-          alert("Áudio enviado com sucesso!\n\nLink permanente:\n" + result.url);
+          alert("✅ Áudio enviado com sucesso!\n\nLink: " + result.url);
           setAudioURL(null);
           setAudioBlob(null);
           setNome("");
           setTelefone("");
           setDataEntrega("");
           setHoraEntrega("");
-          // Salva o link para o agendamento
           localStorage.setItem("lastRecordingUrl", result.url);
         } else {
-          alert("Erro do servidor: " + (result.error || "tente novamente"));
+          alert("❌ Erro do servidor: " + (result.error || "Tente novamente"));
         }
       } catch (err) {
-        alert("Erro de conexão. Verifique sua internet e tente de novo.");
-        console.error(err);
+        console.error("Erro completo:", err);
+        alert("❌ Sem conexão com servidor Fly.io.\n1. Verifique se o app está online\n2. Confirme a URL no fly.toml\n3. Tente em 1 minuto");
       } finally {
         setIsUploading(false);
       }
@@ -101,22 +139,57 @@ const AudioRecorder = () => {
 
   return (
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: "600px", margin: "0 auto" }}>
-      <h2>Gravador de Áudio / Vídeo Mensagem</h2>
+      <h2>🎤 Gravador de Áudio - Máx 30s</h2>
 
       {!isRecording ? (
-        <button onClick={startRecording} style={{ fontSize: "18px", padding: "12px 24px" }}>
-          Gravar
+        <button 
+          onClick={startRecording} 
+          style={{ 
+            fontSize: "20px", 
+            padding: "15px 30px",
+            background: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "10px",
+            cursor: "pointer"
+          }}
+        >
+          🎙️ Iniciar Gravação
         </button>
       ) : (
-        <button onClick={stopRecording} style={{ fontSize: "18px", padding: "12px 24px", background: "#c00", color: "white" }}>
-          Parar Gravação
-        </button>
+        <div>
+          <button 
+            onClick={stopRecording} 
+            style={{ 
+              fontSize: "20px", 
+              padding: "15px 30px",
+              background: "#dc3545",
+              color: "white",
+              border: "none",
+              borderRadius: "10px",
+              cursor: "pointer",
+              marginRight: "10px"
+            }}
+          >
+            ⏹️ Parar ({tempoRestante}s)
+          </button>
+          <span style={{ 
+            fontSize: "18px", 
+            color: "#dc3545", 
+            fontWeight: "bold",
+            background: "#ffebee",
+            padding: "10px 15px",
+            borderRadius: "20px"
+          }}>
+            ⏱️ {tempoRestante}s restantes
+          </span>
+        </div>
       )}
 
       {audioURL && (
         <div style={{ marginTop: 30 }}>
-          <p><strong>Prévia do áudio:</strong></p>
-          <audio controls src={audioURL} style={{ width: "100%" }} />
+          <p><strong>✅ Áudio gravado (pronto para enviar):</strong></p>
+          <audio controls src={audioURL} style={{ width: "100%", marginBottom: "20px" }} />
         </div>
       )}
 
@@ -125,30 +198,30 @@ const AudioRecorder = () => {
       <div style={{ display: "grid", gap: "15px" }}>
         <input
           type="text"
-          placeholder="Nome do destinatário"
+          placeholder="👤 Nome do destinatário"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
+          style={{ padding: "12px", fontSize: "16px", borderRadius: "8px", border: "1px solid #ddd" }}
         />
         <input
           type="tel"
-          placeholder="Telefone com DDD (ex: 11999999999)"
+          placeholder="📱 Telefone com DDD (ex: 11999999999)"
           value={telefone}
           onChange={(e) => setTelefone(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
+          style={{ padding: "12px", fontSize: "16px", borderRadius: "8px", border: "1px solid #ddd" }}
         />
         <input
           type="date"
           value={dataEntrega}
           onChange={(e) => setDataEntrega(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
+          style={{ padding: "12px", fontSize: "16px", borderRadius: "8px", border: "1px solid #ddd" }}
         />
         <select
           value={horaEntrega}
           onChange={(e) => setHoraEntrega(e.target.value)}
-          style={{ padding: "10px", fontSize: "16px" }}
+          style={{ padding: "12px", fontSize: "16px", borderRadius: "8px", border: "1px solid #ddd" }}
         >
-          <option value="">Horário de entrega</option>
+          <option value="">🕒 Escolha o horário</option>
           <option value="09:00">09:00</option>
           <option value="10:00">10:00</option>
           <option value="11:00">11:00</option>
@@ -161,20 +234,34 @@ const AudioRecorder = () => {
 
       <button
         onClick={enviarDados}
-        disabled={isUploading}
+        disabled={!audioBlob || isUploading}
         style={{
           marginTop: 30,
-          padding: "15px 30px",
-          fontSize: "18px",
-          background: isUploading ? "#666" : "#28a745",
+          padding: "18px 40px",
+          fontSize: "20px",
+          background: (!audioBlob || isUploading) ? "#6c757d" : "#28a745",
           color: "white",
           border: "none",
-          borderRadius: "8px",
-          cursor: isUploading ? "not-allowed" : "pointer"
+          borderRadius: "12px",
+          cursor: (!audioBlob || isUploading) ? "not-allowed" : "pointer",
+          width: "100%"
         }}
       >
-        {isUploading ? "Enviando áudio, aguarde…" : "Enviar Pedido"}
+        {isUploading ? "📤 Enviando... Aguarde" : "🚀 Enviar Pedido com Áudio"}
       </button>
+
+      {isUploading && (
+        <div style={{
+          marginTop: "15px",
+          padding: "10px",
+          background: "#e3f2fd",
+          borderRadius: "8px",
+          textAlign: "center",
+          fontWeight: "bold"
+        }}>
+          ⏳ Enviando para Fly.io... Não feche a página!
+        </div>
+      )}
     </div>
   );
 };
