@@ -29,7 +29,7 @@ const AudioRecorder = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
         setAudioURL(URL.createObjectURL(blob));
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -71,7 +71,7 @@ const AudioRecorder = () => {
             telefone,
             dataEntrega,
             horaEntrega,
-            clienteId: localStorage.getItem("clienteId") || "sem-cadastro"
+            clienteId: localStorage.getItem("clienteId") || "sem-cadastro",
           }),
         });
 
@@ -85,11 +85,14 @@ const AudioRecorder = () => {
           setTelefone("");
           setDataEntrega("");
           setHoraEntrega("");
+          // Salva o link para o agendamento
+          localStorage.setItem("lastRecordingUrl", result.url);
         } else {
           alert("Erro do servidor: " + (result.error || "tente novamente"));
         }
       } catch (err) {
         alert("Erro de conexão. Verifique sua internet e tente de novo.");
+        console.error(err);
       } finally {
         setIsUploading(false);
       }
