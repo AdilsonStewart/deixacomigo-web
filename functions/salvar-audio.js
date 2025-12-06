@@ -1,7 +1,8 @@
 const express = require('express');
+const fetch = require('node-fetch');
 const router = express.Router();
 
-// Rota POST /upload (mudei de '/' para '/upload')
+// Rota POST /upload
 router.post('/upload', async (req, res) => {
   try {
     const { audioBase64 } = req.body;
