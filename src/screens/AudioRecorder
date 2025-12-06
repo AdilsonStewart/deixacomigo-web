@@ -13,9 +13,6 @@ const AudioRecorder = () => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
-  // ----------------------------
-  // Iniciar gravação
-  // ----------------------------
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -43,9 +40,6 @@ const AudioRecorder = () => {
     }
   };
 
-  // ----------------------------
-  // Parar gravação
-  // ----------------------------
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -53,9 +47,6 @@ const AudioRecorder = () => {
     }
   };
 
-  // ----------------------------
-  // Enviar áudio (ajustado para Fly.io)
-  // ----------------------------
   const enviarDados = async () => {
     if (!audioBlob) {
       alert("Grave um áudio antes de enviar.");
@@ -80,7 +71,7 @@ const AudioRecorder = () => {
             telefone,
             dataEntrega,
             horaEntrega,
-            clienteId: localStorage.getItem("clienteId") || "sem-cadastro",
+            clienteId: localStorage.getItem("clienteId") || "sem-cadastro"
           }),
         });
 
@@ -88,7 +79,6 @@ const AudioRecorder = () => {
 
         if (result.success) {
           alert("Áudio enviado com sucesso!\n\nLink permanente:\n" + result.url);
-          // limpa tudo pra próxima gravação
           setAudioURL(null);
           setAudioBlob(null);
           setNome("");
