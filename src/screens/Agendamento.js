@@ -40,7 +40,9 @@ const Agendamento = () => {
     setLoading(true);
 
     try {
-      // ←←← SALVA DIRETO NO FIRESTORE (SEM FUNCTION, SEM 500)
+      // ——————————————————————————————
+      // 1) SALVA NO FIRESTORE (igual já fazia)
+      // ——————————————————————————————
       await addDoc(collection(db, 'agendamentos'), {
         nome: nome.trim(),
         telefone: telefoneFull,
@@ -57,6 +59,28 @@ const Agendamento = () => {
         dataEntrega: selectedDate,
         horario: selectedTime
       }));
+
+      // ——————————————————————————————
+      // 2) ENVIA PARA O SERVIDOR FLY.IO
+      // ——————————————————————————————
+      try {
+        await fetch('https://deixacomigo-sender.fly.dev/agendar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            nome: nome.trim(),
+            telefone: telefoneFull,
+            data: selectedDate,
+            hora: selectedTime,
+            linkMidia: linkMensagem
+          })
+        });
+        console.log('📡 Agendamento enviado ao servidor com sucesso');
+      } catch (serverError) {
+        console.error('❌ Erro ao enviar para o servidor:', serverError);
+      }
 
       alert("Agendamento confirmado! O cliente receberá o áudio automaticamente no horário escolhido.");
       navigate('/saida');
@@ -156,11 +180,4 @@ const Agendamento = () => {
             cursor: loading ? "not-allowed" : "pointer"
           }}
         >
-          {loading ? "Salvando..." : "Confirmar Agendamento"}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default Agendamento;
+          {loading
