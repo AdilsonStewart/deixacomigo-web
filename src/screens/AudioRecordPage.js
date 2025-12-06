@@ -62,7 +62,7 @@ const AudioRecorder = () => {
       const base64data = reader.result;
 
       try {
-        const response = await fetch("https://deixacomigo-sender.fly.dev/upload", {
+        const response = await fetch("https://deixacomigo-backup.fly.dev/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
