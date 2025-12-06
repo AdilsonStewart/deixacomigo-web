@@ -1,9 +1,8 @@
 const express = require('express');
 const admin = require('firebase-admin');
-const fetch = require('node-fetch'); // ADICIONADO AQUI
+const fetch = require('node-fetch');
 const app = express();
 
-// Pega a chave do Firebase das variáveis de ambiente
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!serviceAccountJson) {
@@ -19,7 +18,6 @@ try {
   process.exit(1);
 }
 
-// Inicializa o Firebase
 try {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -31,16 +29,12 @@ try {
   process.exit(1);
 }
 
-// Aumenta limite para áudio em base64
 app.use(express.json({ limit: '50mb' }));
 
-// Rota para salvar cliente - IDÊNTICA ao Netlify
 app.post('/api/salvar-cliente', async (req, res) => {
   try {
     const dados = req.body;
     console.log("Recebendo dados do cliente:", dados);
-    
-    // Salva no Firebase Firestore
     const db = admin.firestore();
     const docRef = await db.collection('clientes').add({
       ...dados,
@@ -49,7 +43,6 @@ app.post('/api/salvar-cliente', async (req, res) => {
     });
 
     console.log("Cliente salvo no Firebase com ID:", docRef.id);
-    
     return res.status(200).json({
       success: true,
       clienteId: docRef.id,
@@ -64,26 +57,19 @@ app.post('/api/salvar-cliente', async (req, res) => {
   }
 });
 
-// Rota para salvar áudio - NOVA ROTA ADICIONADA
 app.post('/api/upload', async (req, res) => {
   try {
     const { audioBase64 } = req.body;
-
     if (!audioBase64) {
       return res.status(400).json({ 
         success: false, 
         error: 'audioBase64 é obrigatório no corpo da requisição' 
       });
     }
-
-    // Remove o prefixo data:audio/webm;base64, se existir
     const base64 = audioBase64.includes(',') 
       ? audioBase64.split(',')[1] 
       : audioBase64;
-    
     const fileName = `audios/gravacao_${Date.now()}.webm`;
-
-    // Upload para Firebase Storage
     await fetch(
       `https://firebasestorage.googleapis.com/v0/b/deixacomigo-727ff.appspot.com/o?name=${encodeURIComponent(fileName)}`,
       {
@@ -92,15 +78,11 @@ app.post('/api/upload', async (req, res) => {
         body: Buffer.from(base64, 'base64'),
       }
     );
-
-    // URL de acesso ao arquivo
     const url = `https://firebasestorage.googleapis.com/v0/b/deixacomigo-727ff.appspot.com/o/${encodeURIComponent(fileName)}?alt=media`;
-
     return res.status(200).json({ 
       success: true, 
       url 
     });
-
   } catch (error) {
     console.error('Erro no upload:', error);
     return res.status(500).json({ 
@@ -110,7 +92,6 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
-// Rota de saúde para verificar se a API está online
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'API funcionando',
@@ -119,23 +100,20 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Rota raiz
 app.get('/', (req, res) => {
   res.json({ 
     mensagem: 'API do DeixaComigo',
     rotas: [
       'POST /api/salvar-cliente',
-      'POST /api/upload',  // NOVA ROTA ADICIONADA AQUI
+      'POST /api/upload',
       'GET /api/health'
     ]
   });
 });
 
-// Servir arquivos do React
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'build')));
 
-// Todas as rotas não-API vão para o React
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
