@@ -15,7 +15,6 @@ const AudioRecorder = () => {
   const audioChunksRef = useRef([]);
   const tempoIntervalRef = useRef(null);
 
-  // Para quando a página carregar
   useEffect(() => {
     return () => {
       if (tempoIntervalRef.current) {
@@ -30,7 +29,6 @@ const AudioRecorder = () => {
       audioChunksRef.current = [];
       setAudioURL(null);
       setAudioBlob(null);
-      setTempoRestante(30);
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = (event) => {
@@ -45,13 +43,13 @@ const AudioRecorder = () => {
         if (tempoIntervalRef.current) {
           clearInterval(tempoIntervalRef.current);
         }
+        setTempoRestante(30);
       };
 
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
 
-      // TEMPORIZADOR DE 30 SEGUNDOS
       tempoIntervalRef.current = setInterval(() => {
         setTempoRestante((prev) => {
           if (prev <= 1) {
@@ -93,7 +91,6 @@ const AudioRecorder = () => {
       const base64data = reader.result;
 
       try {
-        // URL CORRIGIDA PARA FLY.IO - ajuste se necessário
         const response = await fetch("https://deixacomigo-backup.fly.dev/api/upload", {
           method: "POST",
           headers: { 
@@ -140,49 +137,68 @@ const AudioRecorder = () => {
   return (
     <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: "600px", margin: "0 auto" }}>
       <h2>🎤 Gravador de Áudio - Máx 30s</h2>
+      
+      {/* CONTADOR SEMPRE VISÍVEL - TOPO DA PÁGINA */}
+      <div style={{ 
+        fontSize: "24px", 
+        color: "#dc3545", 
+        fontWeight: "bold",
+        background: "#ffebee",
+        padding: "15px 25px",
+        borderRadius: "25px",
+        textAlign: "center",
+        marginBottom: "20px",
+        boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+      }}>
+        ⏱️ Tempo máximo: {tempoRestante}s
+      </div>
 
       {!isRecording ? (
         <button 
           onClick={startRecording} 
           style={{ 
-            fontSize: "20px", 
-            padding: "15px 30px",
+            fontSize: "22px", 
+            padding: "18px 35px",
             background: "#007bff",
             color: "white",
             border: "none",
-            borderRadius: "10px",
-            cursor: "pointer"
+            borderRadius: "12px",
+            cursor: "pointer",
+            width: "100%",
+            marginBottom: "20px"
           }}
         >
-          🎙️ Iniciar Gravação
+          🎙️ Iniciar Gravação (30s máx)
         </button>
       ) : (
-        <div>
+        <div style={{ marginBottom: "20px" }}>
           <button 
             onClick={stopRecording} 
             style={{ 
-              fontSize: "20px", 
-              padding: "15px 30px",
+              fontSize: "22px", 
+              padding: "18px 35px",
               background: "#dc3545",
               color: "white",
               border: "none",
-              borderRadius: "10px",
+              borderRadius: "12px",
               cursor: "pointer",
-              marginRight: "10px"
+              width: "100%",
+              marginBottom: "15px"
             }}
           >
-            ⏹️ Parar ({tempoRestante}s)
+            ⏹️ Parar Gravação ({tempoRestante}s)
           </button>
-          <span style={{ 
-            fontSize: "18px", 
+          <div style={{ 
+            fontSize: "20px", 
             color: "#dc3545", 
             fontWeight: "bold",
-            background: "#ffebee",
-            padding: "10px 15px",
-            borderRadius: "20px"
+            background: "#fff3cd",
+            padding: "12px 20px",
+            borderRadius: "20px",
+            textAlign: "center"
           }}>
-            ⏱️ {tempoRestante}s restantes
-          </span>
+            ⏳ Gravando... {tempoRestante} segundos restantes
+          </div>
         </div>
       )}
 
