@@ -1,262 +1,182 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 
-const AudioRecordPage = () => {
-  const navigate = useNavigate();
-
-  const [recording, setRecording] = useState(false);
-  const [audioURL, setAudioURL] = useState("");
-  const [time, setTime] = useState(0);
-  const [saving, setSaving] = useState(false);
+const AudioRecorder = () => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [dataEntrega, setDataEntrega] = useState("");
+  const [horaEntrega, setHoraEntrega] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const timerRef = useRef(null);
-  const alreadyStoppedRef = useRef(false);
-
-  const saveRecordingToFirebase = async (audioBlob) => {
-    setSaving(true);
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = async () => {
-        const base64data = reader.result;
-
-        const res = await fetch("/.netlify/functions/salvar-audio", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            audioBase64: base64data,
-            tipo: "audio",
-            duracao: time,
-            clienteId: localStorage.getItem("clienteId") || "anônimo",
-          }),
-        });
-
-        const json = await res.json();
-        if (json.success) {
-          localStorage.setItem("lastRecordingUrl", json.url);
-          alert("Áudio salvo com sucesso!");
-        } else {
-          alert("Erro ao salvar: " + (json.error || "tente novamente"));
-        }
-        setSaving(false);
-      };
-    } catch (err) {
-      alert("Erro ao salvar o áudio.");
-      setSaving(false);
-    }
-  };
-
-  const stopRecordingCentral = () => {
-    if (alreadyStoppedRef.current) return;
-    alreadyStoppedRef.current = true;
-
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
-    }
-    setRecording(false);
-    clearInterval(timerRef.current);
-  };
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-
-      mediaRecorderRef.current = mediaRecorder;
-      alreadyStoppedRef.current = false;
       audioChunksRef.current = [];
+      setAudioURL(null);
+      setAudioBlob(null);
 
-      mediaRecorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
-        setAudioURL(url);
-        saveRecordingToFirebase(blob);
+        setAudioBlob(blob);
+        setAudioURL(URL.createObjectURL(blob));
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
-      setRecording(true);
-      setAudioURL("");
-      setTime(0);
-
-      timerRef.current = setInterval(() => {
-        setTime((prev) => {
-          const novo = prev + 1;
-          if (novo >= 30) stopRecordingCentral();
-          return novo;
-        });
-      }, 1000);
-    } catch (err) {
-      alert("Erro ao acessar o microfone.");
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+    } catch (error) {
+      alert("Não consegui acessar o microfone. Verifique as permissões.");
     }
   };
 
-  const stopRecording = () => stopRecordingCentral();
-  const playAudio = () => audioURL && new Audio(audioURL).play();
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
-  const formatTime = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+  const enviarDados = async () => {
+    if (!audioBlob) {
+      alert("Grave um áudio antes de enviar.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    const reader = new FileReader();
+    reader.readAsDataURL(audioBlob);
+
+    reader.onloadend = async () => {
+      const base64data = reader.result;
+
+      try {
+        const response = await fetch("https://deixacomigo-sender.fly.dev/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            audioBase64: base64data,
+            nome,
+            telefone,
+            dataEntrega,
+            horaEntrega,
+            clienteId: localStorage.getItem("clienteId") || "sem-cadastro",
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert("Áudio enviado com sucesso!\n\nLink permanente:\n" + result.url);
+          setAudioURL(null);
+          setAudioBlob(null);
+          setNome("");
+          setTelefone("");
+          setDataEntrega("");
+          setHoraEntrega("");
+          // Salva o link para o agendamento
+          localStorage.setItem("lastRecordingUrl", result.url);
+        } else {
+          alert("Erro do servidor: " + (result.error || "tente novamente"));
+        }
+      } catch (err) {
+        alert("Erro de conexão. Verifique sua internet e tente de novo.");
+        console.error(err);
+      } finally {
+        setIsUploading(false);
+      }
+    };
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
-        color: "white",
-        fontFamily: "'Segoe UI', sans-serif",
-      }}
-    >
-      {/* CORUJINHA ORIGINAL */}
-      <img
-        src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjJvb3Zudjg1c2lnNHptdHI5aHQ1amduMXI4OHM1OG4wZHJ0OXVzeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/F6Vj7mncrFOYmgVHKb/giphy.gif"
-        alt="Corujinha dançando"
-        style={{ width: "180px", marginBottom: "20px" }}
-      />
+    <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: "600px", margin: "0 auto" }}>
+      <h2>Gravador de Áudio / Vídeo Mensagem</h2>
 
-      <h1 style={{ fontSize: "2.5rem", margin: "0 0 20px 0" }}>Gravar Áudio</h1>
-
-      <div style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "20px" }}>
-        {formatTime(time)}
-      </div>
-
-      {recording && (
-        <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <p style={{ margin: "0 0 10px 0" }}>Tempo máximo: 30 segundos</p>
-          <div style={{ width: "280px", height: "12px", background: "rgba(255,255,255,0.3)", borderRadius: "6px", overflow: "hidden" }}>
-            <div
-              style={{
-                height: "100%",
-                width: `${(time / 30) * 100}%`,
-                background: "#fff",
-                transition: "width 0.4s ease",
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* GRAVANDO */}
-      {!audioURL && !saving && (
-        <div style={{ textAlign: "center" }}>
-          {!recording ? (
-            <button
-              onClick={startRecording}
-              style={{
-                padding: "18px 40px",
-                fontSize: "1.4rem",
-                background: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "50px",
-                cursor: "pointer",
-                boxShadow: "0 8px 15px rgba(0,0,0,0.3)",
-              }}
-            >
-              Iniciar Gravação
-            </button>
-          ) : (
-            <div style={{ position: "relative", display: "inline-block" }}>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: "-20px",
-                  border: "4px solid rgba(255,255,255,0.4)",
-                  borderRadius: "50%",
-                  animation: "pulse 1.5s infinite",
-                }}
-              />
-              <button
-                onClick={stopRecording}
-                style={{
-                  padding: "18px 40px",
-                  fontSize: "1.4rem",
-                  background: "#f44336",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "50px",
-                  cursor: "pointer",
-                  position: "relative",
-                  zIndex: 1,
-                }}
-              >
-                Parar Gravação
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* REPRODUZIR */}
-      {audioURL && !saving && (
-        <div style={{ textAlign: "center", margin: "30px 0" }}>
-          <button
-            onClick={playAudio}
-            style={{
-              padding: "14px 30px",
-              fontSize: "1.2rem",
-              background: "#2196F3",
-              color: "white",
-              border: "none",
-              borderRadius: "50px",
-              cursor: "pointer",
-            }}
-          >
-            Ouvir Gravação
-          </button>
-          <p style={{ margin: "20px 0 0 0", fontSize: "1.3rem" }}>
-            Áudio salvo com sucesso!
-          </p>
-        </div>
-      )}
-
-      {/* SALVANDO */}
-      {saving && (
-        <p style={{ fontSize: "1.4rem", margin: "30px 0" }}>
-          Guardando seu áudio...
-        </p>
-      )}
-
-      {/* AGENDAR */}
-      {audioURL && !saving && (
-        <button
-          onClick={() => navigate("/agendamento")}
-          style={{
-            marginTop: "40px",
-            padding: "18px 50px",
-            fontSize: "1.5rem",
-            background: "#FF9800",
-            color: "white",
-            border: "none",
-            borderRadius: "50px",
-            cursor: "pointer",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-          }}
-        >
-          Ir para Agendamento
+      {!isRecording ? (
+        <button onClick={startRecording} style={{ fontSize: "18px", padding: "12px 24px" }}>
+          Gravar
+        </button>
+      ) : (
+        <button onClick={stopRecording} style={{ fontSize: "18px", padding: "12px 24px", background: "#c00", color: "white" }}>
+          Parar Gravação
         </button>
       )}
 
-      <style jsx>{`
-        @keyframes pulse {
-          0% { transform: scale(0.8); opacity: 0.7; }
-          70% { transform: scale(1.1); opacity: 0.3; }
-          100% { transform: scale(1.3); opacity: 0; }
-        }
-      `}</style>
+      {audioURL && (
+        <div style={{ marginTop: 30 }}>
+          <p><strong>Prévia do áudio:</strong></p>
+          <audio controls src={audioURL} style={{ width: "100%" }} />
+        </div>
+      )}
+
+      <hr style={{ margin: "40px 0" }} />
+
+      <div style={{ display: "grid", gap: "15px" }}>
+        <input
+          type="text"
+          placeholder="Nome do destinatário"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          style={{ padding: "10px", fontSize: "16px" }}
+        />
+        <input
+          type="tel"
+          placeholder="Telefone com DDD (ex: 11999999999)"
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          style={{ padding: "10px", fontSize: "16px" }}
+        />
+        <input
+          type="date"
+          value={dataEntrega}
+          onChange={(e) => setDataEntrega(e.target.value)}
+          style={{ padding: "10px", fontSize: "16px" }}
+        />
+        <select
+          value={horaEntrega}
+          onChange={(e) => setHoraEntrega(e.target.value)}
+          style={{ padding: "10px", fontSize: "16px" }}
+        >
+          <option value="">Horário de entrega</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+        </select>
+      </div>
+
+      <button
+        onClick={enviarDados}
+        disabled={isUploading}
+        style={{
+          marginTop: 30,
+          padding: "15px 30px",
+          fontSize: "18px",
+          background: isUploading ? "#666" : "#28a745",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          cursor: isUploading ? "not-allowed" : "pointer"
+        }}
+      >
+        {isUploading ? "Enviando áudio, aguarde…" : "Enviar Pedido"}
+      </button>
     </div>
   );
 };
 
-export default AudioRecordPage;
+export default AudioRecorder;
