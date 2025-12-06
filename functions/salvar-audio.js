@@ -1,31 +1,57 @@
-exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") return { statusCode: 405 };
+const express = require('express');
+const router = express.Router();
+
+// Rota POST /upload
+router.post('/', async (req, res) => {
+  // Verifica se o método é POST (já é, mas por via das dúvidas)
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método não permitido' });
+  }
 
   try {
-    const { audioBase64 } = JSON.parse(event.body);
+    const { audioBase64 } = req.body;
 
-    const base64 = audioBase64.split(",")[1];
+    // Validação básica
+    if (!audioBase64) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'audioBase64 é obrigatório no corpo da requisição' 
+      });
+    }
+
+    // Remove o prefixo data:audio/webm;base64, se existir
+    const base64 = audioBase64.includes(',') 
+      ? audioBase64.split(',')[1] 
+      : audioBase64;
+    
     const fileName = `audios/gravacao_${Date.now()}.webm`;
 
+    // Upload para Firebase Storage
     await fetch(
       `https://firebasestorage.googleapis.com/v0/b/deixacomigo-727ff.appspot.com/o?name=${encodeURIComponent(fileName)}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "audio/webm" },
-        body: Buffer.from(base64, "base64"),
+        method: 'POST',
+        headers: { 'Content-Type': 'audio/webm' },
+        body: Buffer.from(base64, 'base64'),
       }
     );
 
+    // URL de acesso ao arquivo
     const url = `https://firebasestorage.googleapis.com/v0/b/deixacomigo-727ff.appspot.com/o/${encodeURIComponent(fileName)}?alt=media`;
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true, url }),
-    };
-  } catch (e) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ success: false, error: e.message }),
-    };
+    // Resposta no mesmo formato
+    return res.status(200).json({ 
+      success: true, 
+      url 
+    });
+
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
-};
+});
+
+module.exports = router;
