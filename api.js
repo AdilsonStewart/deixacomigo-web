@@ -1,5 +1,6 @@
 const express = require('express');
 const admin = require('firebase-admin');
+const fetch = require('node-fetch'); // ADICIONADO AQUI
 const app = express();
 
 // Pega a chave do Firebase das variáveis de ambiente
@@ -30,10 +31,8 @@ try {
   process.exit(1);
 }
 
-app.use(express.json());
-
-// Importa o router de upload de áudio
-const uploadAudioRouter = require('./functions/salvar-audio');
+// Aumenta limite para áudio em base64
+app.use(express.json({ limit: '50mb' }));
 
 // Rota para salvar cliente - IDÊNTICA ao Netlify
 app.post('/api/salvar-cliente', async (req, res) => {
@@ -65,8 +64,51 @@ app.post('/api/salvar-cliente', async (req, res) => {
   }
 });
 
-// Usa o router de upload de áudio (a rota será /api/upload, porque o router está definido com a rota /upload e aqui prefixamos com /api)
-app.use('/api', uploadAudioRouter);
+// Rota para salvar áudio - NOVA ROTA ADICIONADA
+app.post('/api/upload', async (req, res) => {
+  try {
+    const { audioBase64 } = req.body;
+
+    if (!audioBase64) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'audioBase64 é obrigatório no corpo da requisição' 
+      });
+    }
+
+    // Remove o prefixo data:audio/webm;base64, se existir
+    const base64 = audioBase64.includes(',') 
+      ? audioBase64.split(',')[1] 
+      : audioBase64;
+    
+    const fileName = `audios/gravacao_${Date.now()}.webm`;
+
+    // Upload para Firebase Storage
+    await fetch(
+      `https://firebasestorage.googleapis.com/v0/b/deixacomigo-727ff.appspot.com/o?name=${encodeURIComponent(fileName)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'audio/webm' },
+        body: Buffer.from(base64, 'base64'),
+      }
+    );
+
+    // URL de acesso ao arquivo
+    const url = `https://firebasestorage.googleapis.com/v0/b/deixacomigo-727ff.appspot.com/o/${encodeURIComponent(fileName)}?alt=media`;
+
+    return res.status(200).json({ 
+      success: true, 
+      url 
+    });
+
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
 
 // Rota de saúde para verificar se a API está online
 app.get('/api/health', (req, res) => {
@@ -81,14 +123,12 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({ 
     mensagem: 'API do DeixaComigo',
-    rotas: ['POST /api/salvar-cliente', 'POST /api/upload', 'GET /api/health']
+    rotas: [
+      'POST /api/salvar-cliente',
+      'POST /api/upload',  // NOVA ROTA ADICIONADA AQUI
+      'GET /api/health'
+    ]
   });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`API rodando na porta ${PORT}`);
-  console.log(`Projeto Firebase: ${serviceAccount.project_id}`);
 });
 
 // Servir arquivos do React
@@ -100,4 +140,11 @@ app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
   }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ API rodando na porta ${PORT}`);
+  console.log(`📁 Projeto Firebase: ${serviceAccount.project_id}`);
+  console.log(`📤 Rota de upload disponível: POST /api/upload`);
 });
