@@ -32,6 +32,9 @@ try {
 
 app.use(express.json());
 
+// Importa o router de upload de áudio
+const uploadAudioRouter = require('./functions/salvar-audio');
+
 // Rota para salvar cliente - IDÊNTICA ao Netlify
 app.post('/api/salvar-cliente', async (req, res) => {
   try {
@@ -62,6 +65,9 @@ app.post('/api/salvar-cliente', async (req, res) => {
   }
 });
 
+// Usa o router de upload de áudio (a rota será /api/upload, porque o router está definido com a rota /upload e aqui prefixamos com /api)
+app.use('/api', uploadAudioRouter);
+
 // Rota de saúde para verificar se a API está online
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -75,7 +81,7 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({ 
     mensagem: 'API do DeixaComigo',
-    rotas: ['POST /api/salvar-cliente', 'GET /api/health']
+    rotas: ['POST /api/salvar-cliente', 'POST /api/upload', 'GET /api/health']
   });
 });
 
@@ -84,6 +90,7 @@ app.listen(PORT, () => {
   console.log(`API rodando na porta ${PORT}`);
   console.log(`Projeto Firebase: ${serviceAccount.project_id}`);
 });
+
 // Servir arquivos do React
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'build')));
