@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/firebase-client';  // ← usa o Firestore direto
+import { db } from '../firebase/firebase-client'; // Firestore
 
 const Agendamento = () => {
   const navigate = useNavigate();
+
+  // Estados
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -12,9 +14,25 @@ const Agendamento = () => {
   const [loading, setLoading] = useState(false);
 
   const linkMensagem = localStorage.getItem('lastRecordingUrl') || '';
-
   const horariosFixos = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
 
+  // Formata telefone
+  const formatPhone = (v) => {
+    const n = v.replace(/\D/g, '');
+    if (n.length <= 11) {
+      return n.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    return v;
+  };
+
+  // Data mínima (2 dias à frente)
+  const minDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().split('T')[0];
+  };
+
+  // Função de agendamento
   const handleSchedule = async () => {
     if (!nome || !telefone || !selectedDate || !selectedTime) {
       alert('Preencha todos os campos!');
@@ -40,6 +58,7 @@ const Agendamento = () => {
     setLoading(true);
 
     try {
+      // 1) Salva no Firestore
       await addDoc(collection(db, 'agendamentos'), {
         nome: nome.trim(),
         telefone: telefoneFull,
@@ -50,18 +69,18 @@ const Agendamento = () => {
         criadoEm: serverTimestamp()
       });
 
+      // Salva no localStorage pra tela de saída
       localStorage.setItem('lastAgendamento', JSON.stringify({
         nome: nome.trim(),
         dataEntrega: selectedDate,
         horario: selectedTime
       }));
 
+      // 2) Envia para o servidor Fly.io
       try {
         await fetch('https://deixacomigo-sender.fly.dev/agendar', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             nome: nome.trim(),
             telefone: telefoneFull,
@@ -77,26 +96,13 @@ const Agendamento = () => {
 
       alert("Agendamento confirmado! O cliente receberá o áudio automaticamente no horário escolhido.");
       navigate('/saida');
+
     } catch (err) {
       console.error('Erro no Firestore:', err);
       alert("Erro ao salvar agendamento. Tente novamente.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatPhone = (v) => {
-    const n = v.replace(/\D/g, '');
-    if (n.length <= 11) {
-      return n.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    }
-    return v;
-  };
-
-  const minDate = () => {
-    const d = new Date();
-    d.setDate(d.getDate() + 2);
-    return d.toISOString().split('T')[0];
   };
 
   return (
@@ -121,9 +127,7 @@ const Agendamento = () => {
         maxWidth: "500px",
         backdropFilter: "blur(10px)"
       }}>
-        <label style={{ fontSize: "1.3rem", fontWeight: "bold", marginBottom: "8px", display: "block" }}>
-          Enviar para:
-        </label>
+        <label style={{ fontSize: "1.3rem", fontWeight: "bold", marginBottom: "8px", display: "block" }}>Enviar para:</label>
         <input
           type="text"
           placeholder="Nome do destinatário"
