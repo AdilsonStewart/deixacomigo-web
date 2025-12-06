@@ -1,13 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-// Rota POST /upload
-router.post('/', async (req, res) => {
-  // Verifica se o método é POST (já é, mas por via das dúvidas)
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Método não permitido' });
-  }
-
+// Rota POST /upload (mudei de '/' para '/upload')
+router.post('/upload', async (req, res) => {
   try {
     const { audioBase64 } = req.body;
 
