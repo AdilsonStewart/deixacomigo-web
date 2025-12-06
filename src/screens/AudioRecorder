@@ -26,13 +26,12 @@ const AudioRecorder = () => {
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data);
-      });
+      };
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
         setAudioURL(URL.createObjectURL(blob));
-        // Para o microfone
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -55,7 +54,7 @@ const AudioRecorder = () => {
   };
 
   // ----------------------------
-  // Enviar áudio (já sem CORS!)
+  // Enviar áudio (ajustado para Fly.io)
   // ----------------------------
   const enviarDados = async () => {
     if (!audioBlob) {
@@ -72,7 +71,7 @@ const AudioRecorder = () => {
       const base64data = reader.result;
 
       try {
-        const response = await fetch("/.netlify/functions/salvar-audio", {
+        const response = await fetch("https://deixacomigo-sender.fly.dev/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -135,25 +134,25 @@ const AudioRecorder = () => {
           type="text"
           placeholder="Nome do destinatário"
           value={nome}
-          onChange={(e => setNome(e.target.value))
+          onChange={(e) => setNome(e.target.value)}
           style={{ padding: "10px", fontSize: "16px" }}
         />
         <input
           type="tel"
           placeholder="Telefone com DDD (ex: 11999999999)"
           value={telefone}
-          onChange={(e) => setTelefone(e.target.value))}
+          onChange={(e) => setTelefone(e.target.value)}
           style={{ padding: "10px", fontSize: "16px" }}
         />
         <input
           type="date"
           value={dataEntrega}
-          onChange={(e => setDataEntrega(e.target.value))}
+          onChange={(e) => setDataEntrega(e.target.value)}
           style={{ padding: "10px", fontSize: "16px" }}
         />
         <select
           value={horaEntrega}
-          onChange={(e => setHoraEntrega(e.target.value))}
+          onChange={(e) => setHoraEntrega(e.target.value)}
           style={{ padding: "10px", fontSize: "16px" }}
         >
           <option value="">Horário de entrega</option>
