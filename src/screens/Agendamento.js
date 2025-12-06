@@ -40,9 +40,6 @@ const Agendamento = () => {
     setLoading(true);
 
     try {
-      // ——————————————————————————————
-      // 1) SALVA NO FIRESTORE (igual já fazia)
-      // ——————————————————————————————
       await addDoc(collection(db, 'agendamentos'), {
         nome: nome.trim(),
         telefone: telefoneFull,
@@ -53,16 +50,12 @@ const Agendamento = () => {
         criadoEm: serverTimestamp()
       });
 
-      // Salva no localStorage pra tela de saída
       localStorage.setItem('lastAgendamento', JSON.stringify({
         nome: nome.trim(),
         dataEntrega: selectedDate,
         horario: selectedTime
       }));
 
-      // ——————————————————————————————
-      // 2) ENVIA PARA O SERVIDOR FLY.IO
-      // ——————————————————————————————
       try {
         await fetch('https://deixacomigo-sender.fly.dev/agendar', {
           method: 'POST',
@@ -180,4 +173,11 @@ const Agendamento = () => {
             cursor: loading ? "not-allowed" : "pointer"
           }}
         >
-          {loading
+          {loading ? "Agendando..." : "Confirmar Agendamento"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Agendamento;
