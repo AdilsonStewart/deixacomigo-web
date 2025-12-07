@@ -4,10 +4,8 @@ const crypto = require('crypto');
 
 const app = express();
 
-// ==================== CONFIGURAÇÃO SUPABASE ====================
 console.log('API DeixaComigo com Supabase iniciando...');
 
-// Configuração Supabase
 const supabase = createClient(
   'https://kuwsgvhjmjnhkteleczc.supabase.co',
   'sb_publishable_Rgq_kYySn7XB-zPyDG1_Iw_YEVt8O2P',
@@ -22,11 +20,9 @@ const supabaseAdmin = createClient(
 
 const BUCKET_NAME = 'audios';
 
-// ==================== MIDDLEWARE ====================
 app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true })); // ESSENCIAL para PayPal
+app.use(express.urlencoded({ extended: true }));
 
-// ==================== ROTA RAIZ ====================
 app.get('/', (req, res) => {
   res.json({ 
     message: 'API DeixaComigo com Supabase', 
@@ -41,7 +37,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// ==================== HEALTH CHECK ====================
 app.get('/api/health', async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin.storage.getBucket(BUCKET_NAME);
@@ -56,7 +51,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// ==================== UPLOAD DE ÁUDIO ====================
 app.post('/api/upload', async (req, res) => {
   try {
     const { audioBase64 } = req.body;
@@ -68,7 +62,6 @@ app.post('/api/upload', async (req, res) => {
       });
     }
     
-    // Remove data URL se presente
     const base64Data = audioBase64.includes(',') 
       ? audioBase64.split(',')[1] 
       : audioBase64;
@@ -76,7 +69,6 @@ app.post('/api/upload', async (req, res) => {
     const buffer = Buffer.from(base64Data, 'base64');
     const fileName = `${crypto.randomUUID()}.webm`;
     
-    // Upload usando admin para ter permissões
     const { data, error } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(fileName, buffer, { 
@@ -86,7 +78,6 @@ app.post('/api/upload', async (req, res) => {
     
     if (error) throw error;
     
-    // Gera URL pública
     const { data: { publicUrl } } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
@@ -106,12 +97,10 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
-// ==================== WEBHOOK PAYPAL ====================
 app.post('/paypal-webhook', async (req, res) => {
   try {
     console.log('📩 Webhook PayPal recebido:', req.body);
     
-    // PayPal envia como x-www-form-urlencoded
     const {
       payment_status,
       txn_id,
@@ -122,10 +111,8 @@ app.post('/paypal-webhook', async (req, res) => {
       item_name,
     } = req.body;
     
-    // SEMPRE retorne 200 OK para PayPal imediatamente
     res.status(200).send('OK');
     
-    // Processa em background
     processPaypalWebhook({
       payment_status,
       txn_id,
@@ -138,16 +125,14 @@ app.post('/paypal-webhook', async (req, res) => {
     
   } catch (error) {
     console.error('Erro no webhook:', error);
-    res.status(200).send('OK'); // PayPal requer 200 mesmo em erro
+    res.status(200).send('OK');
   }
 });
 
-// Função para processar webhook em background
 async function processPaypalWebhook(data) {
   try {
     console.log('🔄 Processando webhook em background:', data.txn_id);
     
-    // Parse dos dados customizados
     let customData = {};
     try {
       customData = data.custom ? JSON.parse(data.custom) : {};
@@ -155,11 +140,9 @@ async function processPaypalWebhook(data) {
       console.log('Erro ao parsear custom:', e);
     }
     
-    // Verificar se pagamento foi concluído
     if (data.payment_status === 'Completed' || data.payment_status === 'Processed') {
       console.log(`✅ Pagamento confirmado: ${data.txn_id} - R$${data.mc_gross}`);
       
-      // 1. SALVAR NO SUPABASE (tabela pagamentos)
       const { data: pagamento, error } = await supabaseAdmin
         .from('pagamentos')
         .insert([
@@ -182,7 +165,6 @@ async function processPaypalWebhook(data) {
       } else {
         console.log('✅ Pagamento salvo no Supabase:', pagamento);
         
-        // 2. ATUALIZAR STATUS DO CLIENTE (se necessário)
         if (customData.userId) {
           const { error: clienteError } = await supabaseAdmin
             .from('clientes')
@@ -207,79 +189,22 @@ async function processPaypalWebhook(data) {
   }
 }
 
-// ==================== ROTA RETORNO (para frontend React) ====================
 app.get('/retorno', (req, res) => {
-  const { tipo, status, orderID } = req.query;
+  const { tipo, status } = req.query;
   
-  console.log('🔗 Redirecionamento usuário:', { tipo, status, orderID });
+  console.log('Redirecionando usuário após PayPal:', { tipo, status });
   
-  // Página HTML simples para redirecionamento
-  const html = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>Processando pagamento...</title>
-    <style>
-      body { 
-        font-family: Arial, sans-serif; 
-        text-align: center; 
-        margin-top: 80px; 
-        background: #f5f5f5;
-      }
-      .container {
-        background: white;
-        padding: 40px;
-        border-radius: 10px;
-        display: inline-block;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      }
-      .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h2>Processando retorno do pagamento...</h2>
-      <div class="spinner"></div>
-      <p>Aguarde, estamos redirecionando você.</p>
-    </div>
-    <script>
-      // Redireciona baseado nos parâmetros (igual ao seu componente React)
-      const params = new URLSearchParams(window.location.search);
-      const tipo = params.get('tipo');
-      const status = params.get('status');
-      
-      if (status === 'success') {
-        if (tipo === 'video') {
-          window.location.href = '/videorecord';
-        } else if (tipo === 'audio') {
-          window.location.href = '/audiorecord';
-        } else {
-          window.location.href = '/';
-        }
-      } else {
-        window.location.href = '/';
-      }
-    </script>
-  </body>
-  </html>
-  `;
+  if (status === 'success') {
+    if (tipo === 'video') {
+      return res.redirect(302, '/videorecord');
+    } else if (tipo === 'audio') {
+      return res.redirect(302, '/audiorecord');
+    }
+  }
   
-  res.send(html);
+  return res.redirect(302, '/');
 });
 
-// ==================== INICIAR SERVIDOR ====================
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API rodando na porta ${PORT}`);
