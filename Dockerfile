@@ -1,19 +1,28 @@
-# Build
-FROM node:18 AS build
+# Estágio de build (se necessário)
+FROM node:18 AS builder
+
 WORKDIR /app
+
+# Copia os arquivos de dependência
 COPY package*.json ./
-RUN npm install
+
+# Instala as dependências
+RUN npm install --only=production
+
+# Copia o código da aplicação
 COPY . .
-RUN npm run build
 
-# Serve com NGINX
-FROM nginx:alpine
+# Estágio de produção
+FROM node:18-slim
 
-# Copia o nginx.conf personalizado
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copia o build
-COPY --from=build /app/build /usr/share/nginx/html
+# Copia as dependências do estágio de build
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app .
 
-EXPOSE 80
+# Expõe a porta que a API vai rodar
+EXPOSE 8080
 
+# Comando para iniciar a API
+CMD [ "node", "api.js" ]
