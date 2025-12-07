@@ -8,7 +8,7 @@ primary_region = "gru"
   internal_port = 80
   force_https = true
   auto_start_machines = true
-  auto_stop_machines = true
+  auto_stop_machines = false
   min_machines_running = 1
 
   [[http_service.ports]]
@@ -33,11 +33,9 @@ primary_region = "gru"
     timeout = 2000
     tls_skip_verify = false
 
-# Define env para forçar a app a escutar na porta 80 (o proxy conecta na 80)
 [env]
   PORT = "80"
 
-# 🔥 ESSA PARTE AQUI RESOLVE OS 404 DO REACT ROUTER
 [[statics]]
   guest_path = "/usr/share/nginx/html"
   url_prefix = "/"
