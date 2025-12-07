@@ -1,5 +1,5 @@
 # Estágio de build (se necessário)
-FROM node:18 AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ RUN npm install --only=production
 COPY . .
 
 # Estágio de produção
-FROM node:18-slim
+FROM node:20-slim
 
 WORKDIR /app
 
