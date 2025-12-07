@@ -4,8 +4,10 @@ const crypto = require('crypto');
 
 const app = express();
 
+// ==================== CONFIGURAÇÃO SUPABASE ====================
 console.log('API DeixaComigo com Supabase iniciando...');
 
+// Configuração Supabase
 const supabase = createClient(
   'https://kuwsgvhjmjnhkteleczc.supabase.co',
   'sb_publishable_Rgq_kYySn7XB-zPyDG1_Iw_YEVt8O2P',
@@ -20,9 +22,11 @@ const supabaseAdmin = createClient(
 
 const BUCKET_NAME = 'audios';
 
+// ==================== MIDDLEWARE ====================
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// ==================== ROTA RAIZ ====================
 app.get('/', (req, res) => {
   res.json({ 
     message: 'API DeixaComigo com Supabase', 
@@ -37,6 +41,7 @@ app.get('/', (req, res) => {
   });
 });
 
+// ==================== HEALTH CHECK ====================
 app.get('/api/health', async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin.storage.getBucket(BUCKET_NAME);
@@ -51,6 +56,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// ==================== UPLOAD DE ÁUDIO ====================
 app.post('/api/upload', async (req, res) => {
   try {
     const { audioBase64 } = req.body;
@@ -97,6 +103,7 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
+// ==================== WEBHOOK PAYPAL ====================
 app.post('/paypal-webhook', async (req, res) => {
   try {
     console.log('📩 Webhook PayPal recebido:', req.body);
@@ -129,6 +136,7 @@ app.post('/paypal-webhook', async (req, res) => {
   }
 });
 
+// Função para processar webhook em background
 async function processPaypalWebhook(data) {
   try {
     console.log('🔄 Processando webhook em background:', data.txn_id);
@@ -189,6 +197,7 @@ async function processPaypalWebhook(data) {
   }
 }
 
+// ==================== ROTA RETORNO (REDIRECIONAMENTO APÓS PAYPAL) ====================
 app.get('/retorno', (req, res) => {
   const { tipo, status } = req.query;
   
@@ -205,11 +214,19 @@ app.get('/retorno', (req, res) => {
   return res.redirect(302, '/');
 });
 
+// ==================== INICIAR SERVIDOR ====================
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
+
+// Tratamento de erro para o servidor
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API rodando na porta ${PORT}`);
   console.log(`✅ Supabase Storage: ${BUCKET_NAME}`);
   console.log(`✅ Webhook PayPal: /paypal-webhook`);
   console.log(`✅ Rota de retorno: /retorno`);
   console.log(`✅ Health check: /api/health`);
+});
+
+server.on('error', (error) => {
+  console.error('❌ Erro ao iniciar servidor:', error);
+  process.exit(1);
 });
