@@ -217,7 +217,8 @@ app.get('/retorno', (req, res) => {
 // ==================== INICIAR SERVIDOR ====================
 const PORT = process.env.PORT || 8080;
 
-// Tratamento de erro para o servidor
+console.log('Iniciando servidor na porta:', PORT);
+
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API rodando na porta ${PORT}`);
   console.log(`✅ Supabase Storage: ${BUCKET_NAME}`);
@@ -229,4 +230,21 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 server.on('error', (error) => {
   console.error('❌ Erro ao iniciar servidor:', error);
   process.exit(1);
+});
+
+// Manter o processo ativo
+process.on('SIGINT', () => {
+  console.log('Recebido SIGINT. Encerrando servidor...');
+  server.close(() => {
+    console.log('Servidor encerrado.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGTERM', () => {
+  console.log('Recebido SIGTERM. Encerrando servidor...');
+  server.close(() => {
+    console.log('Servidor encerrado.');
+    process.exit(0);
+  });
 });
