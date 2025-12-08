@@ -106,6 +106,63 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
+// --- Incluir abaixo no api.js: endpoints para PayPal webhook (GET/HEAD para validação + POST para receber eventos) ---
+app.get('/paypal-webhook', (req, res) => {
+  // PayPal e alguns validadores chamam a URL com GET/HEAD para verificar reachability.
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  return res.status(200).send('OK');
+});
+
+app.head('/paypal-webhook', (req, res) => {
+  return res.sendStatus(200);
+});
+
+app.post('/paypal-webhook', express.json({ type: '*/*' }), async (req, res) => {
+  try {
+    const body = req.body || {};
+    console.log('PayPal webhook received:', JSON.stringify(body).slice(0, 2000));
+
+    // Processa apenas eventos de pagamento concluído
+    const evt = body.event_type;
+    if (evt === 'PAYMENT.CAPTURE.COMPLETED' || evt === 'PAYMENT.SALE.COMPLETED') {
+      const resource = body.resource || {};
+      const custom = resource.custom; // id do pedido enviado na criação do pagamento
+      const transactionId = resource.id;
+      const payerEmail = resource.payer?.email_address || '';
+
+      if (custom) {
+        // Atualiza pedido no Supabase (usa supabaseAdmin que já existe em api.js)
+        try {
+          await supabaseAdmin
+            .from('pedidos')
+            .update({
+              status: 'PAGO',
+              transactionId,
+              payerEmail,
+              pagoEm: new Date().toISOString(),
+            })
+            .eq('id', custom);
+
+          console.log(`Pedido ${custom} marcado como PAGO via webhook PayPal.`);
+        } catch (dbErr) {
+          console.error('Erro atualizando pedido no Supabase:', dbErr);
+        }
+      } else {
+        console.warn('Webhook PayPal recebido sem campo resource.custom — não atualizou pedido.');
+      }
+    } else {
+      console.log('Evento PayPal ignorado:', evt);
+    }
+
+    // Responde 200 para PayPal
+    return res.status(200).send('Webhook processado');
+  } catch (err) {
+    console.error('Erro no endpoint /paypal-webhook:', err);
+    return res.status(500).send('Erro ao processar Webhook');
+  }
+});
+// --- fim do bloco PayPal webhook ---
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
