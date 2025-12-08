@@ -3,13 +3,13 @@ import React, { useEffect } from "react";
 const Servicos = () => {
   useEffect(() => {
     // Substitua YOUR_PAYPAL_CLIENT_ID pelo seu client id do PayPal
-    const PAYPAL_CLIENT_ID = "YOUR_PAYPAL_CLIENT_ID";
+    const PAYPAL_CLIENT_ID = "AWcGR2Fa2OoZ8lTaDiGTIvQh0q7t-OPAZun6x3ixjad1CYn-CMc0Sp8Xm3NtGF6JvSJpZK9_Sd4b4Pqb";
 
     // evita múltiplas inserções do script
     if (!document.getElementById("paypal-sdk")) {
       const script = document.createElement("script");
       script.id = "paypal-sdk";
-      script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=BRL`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${AWcGR2Fa2OoZ8lTaDiGTIvQh0q7t-OPAZun6x3ixjad1CYn-CMc0Sp8Xm3NtGF6JvSJpZK9_Sd4b4Pqb}&currency=BRL`;
       script.async = true;
       script.onload = () => renderButtons();
       document.body.appendChild(script);
