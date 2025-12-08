@@ -1,31 +1,20 @@
-# Stage 1: build do frontend/backend
-FROM node:18 AS builder
+# Imagem base leve com Node 20 (pedido em package.json: "node": ">=20")
+FROM node:20-alpine
+
 WORKDIR /app
 
-# Instala dependências
+# Copia apenas package*.json para aproveitar cache e instalar dependências
 COPY package*.json ./
-RUN npm ci
 
-# Copia o projeto e roda o build (CRA -> /build, Vite -> /dist)
+# Instala dependências de produção
+RUN npm ci --production
+
+# Copia o restante do projeto
 COPY . .
-RUN npm run build || true
 
-# Stage 2: imagem final que executa a API e coloca os estáticos em /usr/share/nginx/html
-FROM node:18-alpine
-WORKDIR /app
+# Porta que a aplicação deve escutar (a app deve ler process.env.PORT)
+ENV PORT=8080
+EXPOSE 8080
 
-# Copia artefatos e node_modules do builder
-COPY --from=builder /app ./
-
-# Garante a pasta que o fly.toml espera para [[statics]]
-RUN mkdir -p /usr/share/nginx/html
-
-# Copia build do frontend (tenta tanto /build quanto /dist)
-COPY --from=builder /app/build /usr/share/nginx/html
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-ENV PORT=80
-EXPOSE 80
-
-# Ajuste o comando final se o entrypoint do seu backend for diferente
-CMD ["node","api.js"]
+# Comando para iniciar sua API
+CMD ["node", "api.js"]
