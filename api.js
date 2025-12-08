@@ -31,11 +31,12 @@ const supabaseAdmin = createClient(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve arquivos estáticos do build (quando existir)
+// Serve arquivos estáticos do build quando existir
 const buildPath = path.join(__dirname, 'build');
-if (require('fs').existsSync(buildPath)) {
+const fs = require('fs');
+if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
-  // para qualquer rota que não seja API, devolver index.html (SPA)
+  // Para qualquer rota que não seja API, devolver o index.html (SPA)
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/paypal-webhook') || req.path.startsWith('/retorno')) return next();
     res.sendFile(path.join(buildPath, 'index.html'));
@@ -43,7 +44,7 @@ if (require('fs').existsSync(buildPath)) {
 }
 
 app.get('/', (req, res) => {
-  // se o build existir, o middleware acima já terá servido o index.html, então este JSON só aparece quando não há build
+  // Se o build existir, a middleware acima já terá servido index.html; caso contrário retorna o JSON da API
   res.json({
     message: 'API DeixaComigo com Supabase',
     status: 'OK',
