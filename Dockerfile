@@ -1,20 +1,18 @@
-# Imagem base leve com Node 20 (pedido em package.json: "node": ">=20")
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copia apenas package*.json para aproveitar cache e instalar dependências
+# Copia package*.json para aproveitar cache
 COPY package*.json ./
 
 # Instala dependências de produção
 RUN npm ci --production
 
-# Copia o restante do projeto
+# Copia o restante do código
 COPY . .
 
-# Porta que a aplicação deve escutar (a app deve ler process.env.PORT)
-ENV PORT=8080
-EXPOSE 8080
+# Porta padrão (coincide com o fallback em api.js)
+ENV PORT=80
+EXPOSE 80
 
-# Comando para iniciar sua API
 CMD ["node", "api.js"]
