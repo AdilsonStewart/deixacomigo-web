@@ -6,10 +6,12 @@ const app = express();
 
 console.log('API DeixaComigo com Supabase iniciando...');
 
-// IMPORTANT: supply these as environment variables in production (and locally via .env during dev)
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// IMPORTANT: prefer using environment variables / secrets in production.
+// The placeholders below (XXXXXXXXXXXXXXXX...) are for quick local testing only.
+// DO NOT commit real keys to source control. Prefer flyctl secrets set (recommended).
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://kuwsgvhjmjnhkteleczc.supabase.co";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_sb_publishable_Rgq_kYySn7XB-zPyDG1_Iw_YEVt8O2P";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "sb_secret_sb_secret_p4x9IRq1WoKdjJ7ZwSYeAg_K-SOzlW0";
 const BUCKET_NAME = process.env.BUCKET_NAME || 'audios';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -86,11 +88,11 @@ app.post('/api/upload', async (req, res) => {
 
     if (error) throw error;
 
-    const { data: publicUrlData } = supabase
+    const { data: publicUrlData } = await supabase
+      .storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
-    // if using getPublicUrl from storage client, adjust accordingly
     const publicUrl = publicUrlData?.publicUrl || null;
 
     return res.status(200).json({
