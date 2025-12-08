@@ -205,10 +205,13 @@ app.get('/retorno', (req, res) => {
   return res.redirect(302, '/');
 });
 
-const PORT = process.env.PORT || 8080;
+// Use the PORT environment variable if set, otherwise fallback to 80.
+// This ensures compatibility with Fly's internal_port=80 configuration.
+const PORT = process.env.PORT ? Number(process.env.PORT) : 80;
 
 console.log('Iniciando servidor na porta:', PORT);
 
+// Bind to 0.0.0.0 so the Fly load‑balancer can connect to the instance.
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API rodando na porta ${PORT}`);
   console.log(`✅ Supabase Storage: ${BUCKET_NAME}`);
