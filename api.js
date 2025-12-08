@@ -133,7 +133,7 @@ app.post('/paypal-webhook', express.json({ type: '*/*' }), async (req, res) => {
       if (custom) {
         // Atualiza pedido no Supabase (usa supabaseAdmin que já existe em api.js)
         try {
-          await supabaseAdmin
+          const { data, error } = await supabaseAdmin
             .from('pedidos')
             .update({
               status: 'PAGO',
@@ -143,7 +143,11 @@ app.post('/paypal-webhook', express.json({ type: '*/*' }), async (req, res) => {
             })
             .eq('id', custom);
 
-          console.log(`Pedido ${custom} marcado como PAGO via webhook PayPal.`);
+          if (error) {
+            console.error('Erro atualizando pedido no Supabase:', error);
+          } else {
+            console.log(`Pedido ${custom} marcado como PAGO via webhook PayPal.`);
+          }
         } catch (dbErr) {
           console.error('Erro atualizando pedido no Supabase:', dbErr);
         }
