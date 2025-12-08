@@ -1,7 +1,7 @@
 {
-  "name": "deixacomigo-api",
+  "name": "deixacomigo-web",
   "version": "1.0.0",
-  "description": "API para DeixaComigo com Supabase e PayPal",
+  "description": "Frontend + API for DeixaComigo",
   "main": "api.js",
   "scripts": {
     "start": "node api.js",
@@ -11,6 +11,8 @@
   "dependencies": {
     "express": "^4.18.2",
     "@supabase/supabase-js": "^2.39.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"
   },
   "engines": {
