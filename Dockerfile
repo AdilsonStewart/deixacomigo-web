@@ -2,11 +2,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copia package.json e instala dependências (inclui react-scripts)
+# Copia package.json e package-lock.json e instala dependências
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copia tudo e gera o build do frontend
+# Copia todo o código e gera o build do frontend
 COPY . .
 RUN npm run build
 
